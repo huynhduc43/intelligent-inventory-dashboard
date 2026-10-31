@@ -50,6 +50,18 @@ Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `da
 
 Everything in §6 (refresh tokens, ETag/304, keyset pagination, CSV import, If-Match, audit table, OTel, etc.) is deliberately deferred with a stated trigger. Don't build it unless asked; mark deliberate shortcuts in code with a `shortcut:` comment (e.g. the in-memory login throttler).
 
+## Agent workflow
+
+Branch, commit and PR rules are in `CONTRIBUTING.md`. On top of those:
+
+- **Worktree per piece of work**, from the first edit: `git worktree add ../intelligent-inventory-dashboard-<issue>-<topic> -b <branch> dev` (drop `<issue>` if there is none). A parallel session can switch the shared checkout's branch. Check the current branch immediately before every commit.
+- Once the work is done and `pnpm verify` passes, commit, push and open the PR without waiting to be asked. Merge only when the user says so, and then merge immediately without waiting for CI unless told to. After the merge, `git worktree remove <path>` and `git branch -d <branch>`; if the worktree still has uncommitted or unpushed work, leave it and say so.
+- Never create a GitHub issue without asking first. Once agreed, pick the title yourself.
+- **Steps outside the repo** (see `CONTRIBUTING.md`): a change is not done until the step is in `docs/environment-setup.md` and the final reply tells the user which steps remain and in which environment.
+- **Reading code:** prefer Serena's symbol tools (`get_symbols_overview`, `find_symbol`, `find_referencing_symbols`) over reading whole files. Find every caller before changing a signature. Plain text search is fine for strings, config keys and docs.
+- **Transactions (Drizzle):** inside `db.transaction(async (tx) => …)` every statement goes through `tx`, never `db` (it can deadlock on the held lock). One service method = one transaction; callers never wrap service calls in a transaction. New transaction logic gets an integration test against Testcontainers Postgres with a short timeout so a hang fails fast. Prefer the conditional-SQL writes above over transactions where they suffice.
+- **Communication:** reply in the user's language; code, comments and docs stay in English. For decisions that are the user's, number each question, label options A, B, C and name your recommendation. No features, abstractions or error handling beyond the request; mention unrelated dead code instead of deleting it.
+
 ## Agent skills
 
 ### Issue tracker

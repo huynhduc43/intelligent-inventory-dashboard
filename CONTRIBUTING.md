@@ -6,11 +6,19 @@ Node 24 (`nvm use`) and pnpm via corepack (`corepack enable`, version pinned in 
 
 ## Branches
 
-`<type>/<kebab-description>`, for example `feat/vehicle-list-filters` or `fix/dst-day-count`. Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`. Branch off `dev` and open PRs into `dev`; `main` is the release branch. The pre-push hook rejects other names.
+Never commit or push directly to `dev` or `main`: they only receive changes through a PR. Branch off `dev` and open PRs into `dev`; `main` is the release branch.
+
+`<type>/<kebab-description>`, for example `feat/vehicle-list-filters` or `fix/dst-day-count`. When the work tracks an issue, put its number first: `feat/12-vehicle-list-filters`. Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`. The pre-push hook rejects other names.
 
 ## Commits
 
-[Conventional Commits](https://www.conventionalcommits.org/), checked by commitlint (`@commitlint/config-conventional`): `type(scope?): subject`, e.g. `feat(inventory): add tier filter`. Scope is optional, usually the module name.
+[Conventional Commits](https://www.conventionalcommits.org/), checked by commitlint (`@commitlint/config-conventional`, scope required): `type(scope): subject (#NNN)`, e.g. `feat(inventory): add tier filter (#12)`. The scope is the module or area touched (`inventory`, `auth`, `shared`, `docs`, `ci`, `deps`). The `(#NNN)` suffix only when the work tracks an issue; never invent one.
+
+## Pull requests
+
+- Target `dev`. Title `<type>: <summary>`, with `(closes #NNN)` when the PR closes an issue or `(#NNN)` when it only references one; link the issue in the description.
+- Run `pnpm verify` (the same checks as CI: `format:check`, `lint`, `typecheck`, `test:cov`; needs Docker) before opening a PR. Add new checks to that script.
+- A change that needs a step outside the repo (env var or secret, DB migration to run, cloud/console setting) records it in `docs/environment-setup.md` in the same PR, per environment, and lists it under **Manual steps** in the PR description.
 
 ## Hooks
 

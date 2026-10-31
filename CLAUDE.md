@@ -49,3 +49,17 @@ Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `da
 ## Out of scope for the MVP
 
 Everything in §6 (refresh tokens, ETag/304, keyset pagination, CSV import, If-Match, audit table, OTel, etc.) is deliberately deferred with a stated trigger. Don't build it unless asked; mark deliberate shortcuts in code with a `shortcut:` comment (e.g. the in-memory login throttler).
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `huynhduc43/intelligent-inventory-dashboard`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.

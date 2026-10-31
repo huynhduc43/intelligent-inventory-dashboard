@@ -538,12 +538,14 @@ docker-compose.yml, README.md   # repo root
 ### 4.16 Build order
 
 1. Skeleton: config, DB, migrations, health, problem+json, pino, Docker Compose.
-2. `AgingPolicy` with unit tests; vehicles list and detail; seed.
-3. Dashboard query.
-4. Actions.
-5. Auth: login, JWT guard, dealership guard, permissions, `/me`.
+2. Auth: login, JWT guard, dealership guard, permissions, `/me`; seed dealerships and users.
+3. `AgingPolicy` with unit tests; vehicles list and detail; seed vehicles.
+4. Dashboard query.
+5. Actions; seed actions.
 6. Vehicle create, status change, settings.
 7. README (build/run/test, AI narrative, `EXPLAIN ANALYZE`), `curl-examples.sh`, exported `openapi.json`.
+
+Auth comes before the first dealership route so every route is built behind `JwtAuthGuard` and `DealershipGuard` from the start, and each step adds its routes to the D15/D16 route × role test instead of retrofitting guards at the end. It also follows the module graph (§4.2): `dealerships` and `inventory` depend on `auth`.
 
 **Stretch, only if time is left:** OpenTelemetry tracing + metrics (§5.2).
 

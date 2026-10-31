@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": ["tsconfig.base.json", "eslint.config.mjs"],
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "dev": { "cache": false, "persistent": true },
+    "lint": {},
+    "typecheck": {},
+    "test": {},
+    "test:integration": {},
+    "test:cov": { "outputs": ["coverage/**"] }
+  }
+}

@@ -1,0 +1,11 @@
+branch=$(git rev-parse --abbrev-ref HEAD)
+case "$branch" in
+  dev | main) ;;
+  *)
+    if ! echo "$branch" | grep -Eq '^(feat|fix|docs|chore|refactor|test|ci|perf|build)/[a-z0-9]+(-[a-z0-9]+)*$'; then
+      echo "Branch '$branch' must match <type>/<kebab-description>, see CONTRIBUTING.md" >&2
+      exit 1
+    fi
+    ;;
+esac
+pnpm turbo run typecheck test

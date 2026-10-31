@@ -141,17 +141,17 @@ Both inserts succeed and both stay in the history. "Current" is the newest by `i
 
 ### 4.1 Stack
 
-| Concern     | Choice                                                                                                                       | Why                                                                                                                                                                                                                                                                                                                                                                                         |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Runtime     | Node.js 24 LTS (≥ 24.7) + TypeScript strict                                                                                  | Built-in `crypto.argon2` (added in v24.7.0, supports `argon2id`) ([Node crypto](https://nodejs.org/api/crypto.html)), so no native addon.                                                                                                                                                                                                                                                   |
-| Framework   | NestJS 11                                                                                                                    | Modules and DI give clear boundaries ([modules](https://docs.nestjs.com/modules)). `ValidationPipe` ([docs](https://docs.nestjs.com/techniques/validation)), OpenAPI from decorators ([docs](https://docs.nestjs.com/openapi/introduction)), Terminus health checks ([docs](https://docs.nestjs.com/recipes/terminus)), throttler ([docs](https://docs.nestjs.com/security/rate-limiting)). |
-| DB          | PostgreSQL (pinned image tag)                                                                                                | Transactions, constraints, partial indexes, `LATERAL`, aggregate `FILTER`, `AT TIME ZONE`.                                                                                                                                                                                                                                                                                                  |
-| Data access | Drizzle ORM + drizzle-kit SQL migrations                                                                                     | SQL-first, typed `sql` templates ([docs](https://orm.drizzle.team/docs/sql)), transactions with isolation level ([docs](https://orm.drizzle.team/docs/transactions)), migrations ([docs](https://orm.drizzle.team/docs/migrations)).                                                                                                                                                        |
-| JWT         | `@nestjs/jwt`, HS256, 256-bit secret, algorithm allowlist, `iss`/`aud`/`exp` checked                                         | RFC 8725 §3.1: libraries "MUST enable the caller to specify a supported set of algorithms" ([RFC 8725](https://www.rfc-editor.org/rfc/rfc8725)).                                                                                                                                                                                                                                            |
-| Logging     | `nestjs-pino`                                                                                                                | Request-scoped JSON logs, request IDs, redaction ([repo](https://github.com/iamolegga/nestjs-pino)).                                                                                                                                                                                                                                                                                        |
-| Errors      | RFC 9457 problem+json via one exception filter                                                                               | One error shape for every client ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)).                                                                                                                                                                                                                                                                                                      |
-| Tests       | Jest + Supertest + Testcontainers `@testcontainers/postgresql` ([docs](https://node.testcontainers.org/modules/postgresql/)) | Date maths and SQL filters need a real Postgres.                                                                                                                                                                                                                                                                                                                                            |
-| Packaging   | Multi-stage Dockerfile + `docker-compose.yml` (api, postgres)                                                                | One command for reviewers.                                                                                                                                                                                                                                                                                                                                                                  |
+| Concern     | Choice                                                                                                                         | Why                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime     | Node.js 24 LTS (≥ 24.7) + TypeScript strict                                                                                    | Built-in `crypto.argon2` (added in v24.7.0, supports `argon2id`) ([Node crypto](https://nodejs.org/api/crypto.html)), so no native addon.                                                                                                                                                                                                                                                   |
+| Framework   | NestJS 12                                                                                                                      | Modules and DI give clear boundaries ([modules](https://docs.nestjs.com/modules)). `ValidationPipe` ([docs](https://docs.nestjs.com/techniques/validation)), OpenAPI from decorators ([docs](https://docs.nestjs.com/openapi/introduction)), Terminus health checks ([docs](https://docs.nestjs.com/recipes/terminus)), throttler ([docs](https://docs.nestjs.com/security/rate-limiting)). |
+| DB          | PostgreSQL (pinned image tag)                                                                                                  | Transactions, constraints, partial indexes, `LATERAL`, aggregate `FILTER`, `AT TIME ZONE`.                                                                                                                                                                                                                                                                                                  |
+| Data access | Drizzle ORM + drizzle-kit SQL migrations                                                                                       | SQL-first, typed `sql` templates ([docs](https://orm.drizzle.team/docs/sql)), transactions with isolation level ([docs](https://orm.drizzle.team/docs/transactions)), migrations ([docs](https://orm.drizzle.team/docs/migrations)).                                                                                                                                                        |
+| JWT         | `@nestjs/jwt`, HS256, 256-bit secret, algorithm allowlist, `iss`/`aud`/`exp` checked                                           | RFC 8725 §3.1: libraries "MUST enable the caller to specify a supported set of algorithms" ([RFC 8725](https://www.rfc-editor.org/rfc/rfc8725)).                                                                                                                                                                                                                                            |
+| Logging     | `nestjs-pino`                                                                                                                  | Request-scoped JSON logs, request IDs, redaction ([repo](https://github.com/iamolegga/nestjs-pino)).                                                                                                                                                                                                                                                                                        |
+| Errors      | RFC 9457 problem+json via one exception filter                                                                                 | One error shape for every client ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)).                                                                                                                                                                                                                                                                                                      |
+| Tests       | Vitest + Supertest + Testcontainers `@testcontainers/postgresql` ([docs](https://node.testcontainers.org/modules/postgresql/)) | Date maths and SQL filters need a real Postgres.                                                                                                                                                                                                                                                                                                                                            |
+| Packaging   | Multi-stage Dockerfile + `docker-compose.yml` (api, postgres)                                                                  | One command for reviewers.                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### 4.2 Modules
 
@@ -246,13 +246,13 @@ erDiagram
 
 ```ts
 // inventory/domain/aging-policy.ts. Pure: no I/O, no time zones.
-export type Tier = "FRESH" | "WATCH" | "AGING";
+export type Tier = 'FRESH' | 'WATCH' | 'AGING';
 export const tierOf = (
   days: number,
   t: { watch: number; aging: number },
-): Tier => (days > t.aging ? "AGING" : days >= t.watch ? "WATCH" : "FRESH");
+): Tier => (days > t.aging ? 'AGING' : days >= t.watch ? 'WATCH' : 'FRESH');
 export const bucketOf = (d: number) =>
-  d <= 30 ? "0-30" : d <= 60 ? "31-60" : d <= 90 ? "61-90" : "90+";
+  d <= 30 ? '0-30' : d <= 60 ? '31-60' : d <= 90 ? '61-90' : '90+';
 // days >= N ⇔ stocked_on <= today − N ;  days <= M ⇔ stocked_on >= today − M
 // AGING ⇔ stocked_on < today − aging ;  WATCH ⇔ today − aging <= stocked_on <= today − watch ;  FRESH ⇔ stocked_on > today − watch
 ```
@@ -481,22 +481,23 @@ flowchart LR
 ### 4.12 Folder structure
 
 ```
-inventory-api/
+apps/api/                  # the monolith (Turborepo workspace package @inventory/api)
 ├─ src/
 │  ├─ main.ts              # pino, ValidationPipe, problem filter, swagger, enableShutdownHooks
 │  ├─ app.module.ts
 │  ├─ shared/{config.ts, clock.ts, db.ts, schema.ts, problem-details.filter.ts}
-│  └─ modules/
-│     ├─ auth/{auth.controller.ts, auth.service.ts, jwt-auth.guard.ts, dealership.guard.ts, permissions.ts, password.ts}
+│  └─ modules/             # domain/ = pure rules, no I/O, 100% coverage
+│     ├─ auth/{auth.controller.ts, auth.service.ts, jwt-auth.guard.ts, dealership.guard.ts, password.ts, domain/permissions.ts}
 │     ├─ dealerships/{settings.controller.ts, settings.service.ts}
-│     ├─ inventory/{vehicles.controller.ts, vehicles.service.ts, aging-policy.ts, vehicle-status.ts, vin.ts}
+│     ├─ inventory/{vehicles.controller.ts, vehicles.service.ts, domain/{aging-policy.ts, vehicle-status.ts, vin.ts}}
 │     ├─ actions/{actions.controller.ts, actions.service.ts, action-type.ts}
 │     ├─ dashboard/{dashboard.controller.ts, dashboard.query.ts}
 │     └─ health/health.controller.ts
 ├─ db/{migrations/, seed.ts}
 ├─ test/{unit/, integration/}
-├─ docs/api/{openapi.json, curl-examples.sh}
-├─ Dockerfile, docker-compose.yml, .env.example, README.md
+└─ Dockerfile, .env.example
+docs/api/{openapi.json, curl-examples.sh}
+docker-compose.yml, README.md   # repo root
 ```
 
 ### 4.13 Configuration (validated at startup)
@@ -509,7 +510,7 @@ inventory-api/
 | `JWT_SECRET`              | —              | required, ≥ 32 random bytes |
 | `JWT_TTL_S`               | `3600`         |                             |
 
-### 4.14 Seed data (`npm run db:seed`, idempotent)
+### 4.14 Seed data (`pnpm db:seed`, idempotent)
 
 - **Dealerships:** `Europe/London` (60/90), `America/New_York` (45/75, to show per-dealership thresholds), `Australia/Sydney` (60/90).
 - **Users:** `admin@…` (Admin in all three), `manager@…` (Manager in London and New York), `viewer@…` (Viewer in London). Passwords come from env or are printed once.
@@ -640,7 +641,7 @@ This is the source for the design doc's trade-off section. Each row says what th
 | Requirement                            | Design                                                                                        | Where                                                                                          |
 | -------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | CR1 filterable list (make, model, age) | Tenant-scoped query; age and tier filters become `stocked_on` bounds                          | `GET …/vehicles`; `inventory/vehicles.service.ts`; index `(dealership_id, status, stocked_on)` |
-| CR2 identify aging (>90 d)             | `today_local − stocked_on`, `tierOf` (AGING > aging threshold, default 90). No stored flag.   | `inventory/aging-policy.ts`; `dealership.aging_days`                                           |
+| CR2 identify aging (>90 d)             | `today_local − stocked_on`, `tierOf` (AGING > aging threshold, default 90). No stored flag.   | `inventory/domain/aging-policy.ts`; `dealership.aging_days`                                    |
 | CR2 prominently display                | Oldest-first default; `tier` on every item; dashboard `byTier.AGING` and `agingWithoutAction` | `GET …/dashboard`, `GET …/vehicles?tier=AGING`                                                 |
 | CR3 log and persist an action          | Append-only `vehicle_action`, enum + note, latest is current                                  | `POST …/vehicles/{v}/actions`; `vehicle_action`                                                |
 | REST + persistent DB                   | Resource URIs, RFC status codes, problem+json; Postgres with migrations                       | controllers; `db/migrations`                                                                   |

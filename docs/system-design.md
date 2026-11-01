@@ -56,6 +56,8 @@ Module rules (§4.2): only the owning module writes a table, `dashboard` is the 
 | `vehicle`         | VIN, make, model, year, mileage, price, `status`, **`stocked_on` (date)**, `sold_at`, `updated_by/at` (D19) | Partial `UNIQUE (dealership_id, vin) WHERE status <> 'SOLD'` (D18); `CHECK (status = 'SOLD') = (sold_at IS NOT NULL)` |
 | `vehicle_action`  | `action_type` (enum, D4), optional note ≤ 1,000 chars, `created_by/at`                                      | Identity `id`; index `(vehicle_id, id DESC)` for "latest action"                                                      |
 
+![Schema: five tables with primary and foreign keys, CHECK constraints and indexes; `dealership` and `app_user` are referenced by `vehicle`, `vehicle_action` and `user_dealership`.](diagrams/schema-er.svg)
+
 Every row carries `dealership_id`, and every query filters on it. There is no stored age or tier column (§3.2).
 
 ---

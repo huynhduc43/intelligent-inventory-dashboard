@@ -47,7 +47,6 @@ describe('database', () => {
 
       expect(Object.keys(defs).sort()).toEqual([
         'app_user_email_lower_uq',
-        'user_dealership_user_id_dealership_id_pk',
         'vehicle_action_vehicle_id_idx',
         'vehicle_dealership_make_model_idx',
         'vehicle_dealership_status_stocked_idx',
@@ -55,9 +54,6 @@ describe('database', () => {
       ]);
       expect(defs.app_user_email_lower_uq).toContain(
         'UNIQUE INDEX app_user_email_lower_uq ON public.app_user USING btree (lower(email))',
-      );
-      expect(defs.user_dealership_user_id_dealership_id_pk).toContain(
-        '(user_id, dealership_id)',
       );
       expect(defs.vehicle_dealership_vin_open_uq).toContain(
         "UNIQUE INDEX vehicle_dealership_vin_open_uq ON public.vehicle USING btree (dealership_id, vin) WHERE (status <> 'SOLD'::text)",
@@ -71,6 +67,25 @@ describe('database', () => {
       expect(defs.vehicle_action_vehicle_id_idx).toContain(
         '(vehicle_id, id DESC)',
       );
+    });
+
+    it('names every primary key <table>_pkey', async () => {
+      const { rows } = await pool.query<{ conname: string; def: string }>(
+        `SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
+          WHERE contype = 'p' AND connamespace = 'public'::regnamespace
+          ORDER BY conname`,
+      );
+
+      expect(rows).toEqual([
+        { conname: 'app_user_pkey', def: 'PRIMARY KEY (id)' },
+        { conname: 'dealership_pkey', def: 'PRIMARY KEY (id)' },
+        {
+          conname: 'user_dealership_pkey',
+          def: 'PRIMARY KEY (user_id, dealership_id)',
+        },
+        { conname: 'vehicle_action_pkey', def: 'PRIMARY KEY (id)' },
+        { conname: 'vehicle_pkey', def: 'PRIMARY KEY (id)' },
+      ]);
     });
 
     it('creates the §4.3 CHECK constraints', async () => {

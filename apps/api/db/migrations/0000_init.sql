@@ -20,7 +20,7 @@ CREATE TABLE "user_dealership" (
 	"user_id" uuid NOT NULL,
 	"dealership_id" uuid NOT NULL,
 	"role" text NOT NULL,
-	CONSTRAINT "user_dealership_user_id_dealership_id_pk" PRIMARY KEY("user_id","dealership_id"),
+	CONSTRAINT "user_dealership_pkey" PRIMARY KEY("user_id","dealership_id"),
 	CONSTRAINT "user_dealership_role_chk" CHECK ("user_dealership"."role" IN ('ADMIN','MANAGER','VIEWER'))
 );
 --> statement-breakpoint

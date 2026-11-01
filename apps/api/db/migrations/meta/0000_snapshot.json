@@ -1,5 +1,5 @@
 {
-  "id": "1182fa8e-4d54-4d2e-a877-6e001249370e",
+  "id": "9bc169ff-4b4e-4cec-8318-78376f6dcb83",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -166,8 +166,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "user_dealership_user_id_dealership_id_pk": {
-          "name": "user_dealership_user_id_dealership_id_pk",
+        "user_dealership_pkey": {
+          "name": "user_dealership_pkey",
           "columns": ["user_id", "dealership_id"]
         }
       },

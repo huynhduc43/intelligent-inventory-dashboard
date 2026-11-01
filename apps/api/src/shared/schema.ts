@@ -65,7 +65,10 @@ export const userDealership = pgTable(
     role: text('role', { enum: ['ADMIN', 'MANAGER', 'VIEWER'] }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.userId, t.dealershipId] }),
+    primaryKey({
+      name: 'user_dealership_pkey',
+      columns: [t.userId, t.dealershipId],
+    }),
     check(
       'user_dealership_role_chk',
       sql`${t.role} IN ('ADMIN','MANAGER','VIEWER')`,
@@ -101,8 +104,8 @@ export const vehicle = pgTable(
       .defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
-      .defaultNow()
-      .$onUpdate(() => sql`now()`),
+      // No $onUpdate: each update sets updatedAt from the injected Clock so tests can pin it.
+      .defaultNow(),
   },
   (t) => [
     uniqueIndex('vehicle_dealership_vin_open_uq')

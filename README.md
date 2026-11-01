@@ -93,7 +93,7 @@ The code, tests and docs here were written by an AI agent (Claude Code, Claude O
 
 - **Design before code.** The agent researched primary sources and drafted the design ([`backend-architecture.md`](docs/research/backend-architecture.md)). Every decision is numbered and marked as mine (**U**, 14 of 19) or the agent's assumption (**A**, 5), and the assumptions are listed in the System Design Document. Later decisions are ADRs.
 - **Rules the agent can't miss.** `CLAUDE.md` holds the invariants that are easy to get wrong (aging is derived, time zones only in Postgres, race-free conditional writes, 404 for non-members, append-only actions), so every session and every agent starts from them.
-- **One requirement at a time, through fixed roles.** The `/deliver` skill (`.claude/skills/deliver/`) takes one issue through analyst, architect, contract, implementer, code reviewer, business reviewer and tester. I approve at the gates (decisions, contract); when an agent hits a choice the spec doesn't settle, it stops with `decision-needed` instead of guessing.
+- **One requirement at a time, through fixed roles.** The `/deliver` skill (`.claude/skills/deliver/`) takes one issue through analyst, architect, contract, implementer, code reviewer, business reviewer and tester. Its gates can stop for my approval (`grill=manual`, `approve=manual`) or let the agent take its own recommendation (`auto`). So far everything after the design research ran in `auto`: the agent made the build decisions and picked the contract options, and the independent reviewers below were the check. When an agent hits a choice the spec doesn't settle, it stops with `decision-needed` instead of guessing.
 
 **Verification: the author never approves its own work.**
 

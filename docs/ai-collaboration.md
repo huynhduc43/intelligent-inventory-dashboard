@@ -1,0 +1,96 @@
+# AI collaboration log
+
+How the AI was directed, checked and corrected while building this project. The strategy is summarised in the README (**AI Collaboration Narrative**) and the design-phase story in [`system-design.md`](system-design.md) §8; this file is the evidence behind both.
+
+Every entry links to an issue, PR or comment, so a claim here can be checked against the record. It logs the moments that show judgement, not every prompt.
+
+**Tools.** Claude Code (Claude Opus) does the work, driven by the `/deliver` skill and its role agents in `.claude/`. ChatGPT was used once as a second opinion on the workflow (case C6). The skills come from `mattpocock-skills` (research, grilling, domain modeling, spec, tickets, TDD, code review, PR, retro), `diagram-design` and `ponytail` (lazy, anti-over-engineering review).
+
+## How to add an entry
+
+`/deliver` adds one at its **Finish** step; any other session that directs or corrects the AI adds one the same way, in the same PR.
+
+1. One row in **By PR**: PR, what it did, what the AI did, how it was verified, what a human decided.
+2. One case in **Cases** for each moment worth a reviewer's time: a review finding or Tester failure that caught an agent's mistake, a `decision-needed`, an `Amended:` comment, a proposal the user rejected or changed. Use the fields below and link the source. `Decided by` is `user`, or `agent (approve=auto)` / `agent (grill=auto)` when the workflow let the agent take its own recommendation.
+
+```md
+### C<n>: <title> (#<PR>)
+
+- **Problem:** what had to be decided or what went wrong.
+- **AI proposal:** what the agent proposed or built.
+- **Decided by:** user | agent (mode).
+- **Decision and reasoning:** what was chosen and why.
+- **Verification:** the test, review comment or transcript that settled it.
+- **Outcome:** what changed (code, ADR, rule).
+```
+
+## By PR
+
+| PR                                                                           | What                                                            | What the AI did                                                                                                  | Verification                                                                                                    | Human decisions                                                                                         |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [#1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/1)   | Architecture research (`docs/research/backend-architecture.md`) | Extracted the brief, researched primary sources, drafted decisions over four revisions, cut to one buildable MVP | Every decision traced to a brief requirement (§7); sources linked inline                                        | 14 of 19 decisions (D-rows marked **U**); 5 are AI assumptions (C1); the scope cut was the agent's call |
+| [#2](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/2)   | Workspace, standards, health check, `AgingPolicy`               | Scaffolded Turborepo + NestJS, lint, hooks, CI, coverage gate                                                    | `pnpm verify`; 100% coverage on `domain/**`                                                                     | None: the agent decided                                                                                 |
+| [#3](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/3)   | `/deliver` skill and role agents                                | Wrote the seven-role workflow                                                                                    | First used on #6 (#17)                                                                                          | None: the agent decided                                                                                 |
+| [#5](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/5)   | Auth moved to build step 2                                      | Reordered §4.16 and split the seed across steps                                                                  | `pnpm verify`                                                                                                   | None: the agent decided                                                                                 |
+| [#16](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/16) | System Design Document                                          | Condensed the architecture doc; drew three diagrams                                                              | Each diagram rendered and read before commit                                                                    | Diagram tool (C2)                                                                                       |
+| [#17](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17) | Skeleton: config, Drizzle, migrations, readiness, Compose (#6)  | `/deliver` end to end: decisions, contract, implementation, two reviewers, tester                                | 2 review rounds, 3 findings fixed (C3–C5); tester walked 6 criteria against the running Compose stack, all pass | None: decisions (`grill=auto`) and contract choices were the agent's recommendations                    |
+| [#18](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/18) | ER diagram in the design doc                                    | Drew the schema diagram from #6                                                                                  | Rendered and read                                                                                               | —                                                                                                       |
+| [#19](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/19) | ADRs 0001–0004 for #6                                           | Recorded four hard-to-reverse decisions                                                                          | —                                                                                                               | Written after #17 merged, which exposed doc drift (C6)                                                  |
+| [#20](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/20) | `/deliver` keeps docs in sync, logs AI collaboration            | Audited the repo against the brief, compared two workflow proposals, changed the skill and agents                | `pnpm verify`                                                                                                   | Four workflow decisions (C6)                                                                            |
+| [#21](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/21) | This log, README narrative, design doc §8, Status fixes         | Rebuilt the history above from GitHub                                                                            | Every row links its source                                                                                      | Log format                                                                                              |
+
+## Cases
+
+### C1: Design decisions are labelled user or AI (#1)
+
+- **Problem:** the brief is ambiguous (what "age" counts from, what "real-time" means, who may log actions) and asks for assumptions to be documented.
+- **AI proposal:** a decision table (D1–D19) drafted from the brief and primary sources, each row marked **U** (user decision) or **A** (AI assumption), with the AI-filled details inside user rows called out (e.g. D3 "U (bounds A)").
+- **Decided by:** user for the 14 **U** rows; the 5 **A** rows (D2, D11, D17, D18, D19) stayed assumptions. Cutting revision 4 to one buildable MVP was the agent's call.
+- **Decision and reasoning:** the assumptions are surfaced, not buried: they are listed in `system-design.md` §6 for the reviewer.
+- **Verification:** §7 of the architecture doc traces each brief requirement (CR1–CR3, REST, tests) to its design and code location.
+- **Outcome:** later steps cite decisions by number; the reviewers check PRs against them.
+
+### C2: Diagrams with `diagram-design`, not Mermaid (#16)
+
+- **Problem:** the System Design Document needs an architecture diagram.
+- **AI proposal:** Mermaid blocks in the Markdown.
+- **Decided by:** user.
+- **Decision and reasoning:** use the `diagram-design` skill instead: an HTML source per diagram, exported to SVG and embedded as an image.
+- **Verification:** whoever renders a diagram reads a scaled copy of the image before publishing and checks it shows what it claims (`/deliver` ground rules).
+- **Outcome:** `docs/diagrams/*.{html,svg}`; the rule is in the agents' memory and in `CONTRIBUTING.md` **Doc impact**.
+
+### C3: Reviewer caught a timestamp that tests could not pin (#17)
+
+- **Problem:** `vehicle.updated_at` needed a value on every update.
+- **AI proposal:** the contract asked for an application-set `updated_at`; the implementer used Drizzle `$onUpdate(() => sql\`now()\`)`.
+- **Decided by:** reviewer finding, fixed by a fresh implementer; recorded as an `Amended:` comment on #6.
+- **Decision and reasoning:** the independent code reviewer showed the failure: a schema callback cannot reach the injected `Clock`, so a test pinning time cannot assert `updatedAt`, which breaks the CLAUDE.md invariant that `now` comes from `Clock`. Each service update sets `updatedAt: clock.now()` instead.
+- **Verification:** [code-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17) finding on `schema.ts:105`; fixed in `92c22c6`; r2 clean.
+- **Outcome:** [ADR 0002](adr/0002-updated-at-set-from-clock.md).
+
+### C4: "None from the spec" that was a spec deviation (#17)
+
+- **Problem:** the contract declared `PRIMARY KEY (user_id, dealership_id)`, which Postgres names `user_dealership_pkey`.
+- **AI proposal:** Drizzle's default name `user_dealership_user_id_dealership_id_pk`, listed by the implementer as an "implementation note" under "Deviations: None from the spec", with a test that baked the odd name in.
+- **Decided by:** reviewer rule (every difference from the spec is a finding unless recorded).
+- **Decision and reasoning:** build the spec: name the key `user_dealership_pkey`.
+- **Verification:** [business-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17); fixed in `92c22c6` with a new test asserting every PK is `<table>_pkey`.
+- **Outcome:** the implementer's own summary is treated as a claim to check, not a record.
+
+### C5: Coverage gate and documented rule disagreed (#17)
+
+- **Problem:** the PR excluded `src/shared/schema.ts` from coverage, but `CONTRIBUTING.md` listed only `main.ts` and `*.module.ts`.
+- **AI proposal:** the exclusion, without updating the standard.
+- **Decided by:** reviewer finding, accepted.
+- **Decision and reasoning:** keep the exclusion (declarations only; the migration generated from it is checked by an integration test) and document it.
+- **Verification:** [business-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17) Standards finding; fixed in `92c22c6`.
+- **Outcome:** `CONTRIBUTING.md` **Tests and coverage** matches `vitest.config.ts`.
+
+### C6: Docs drifted from code; workflow changed to keep them in sync (#20, #21)
+
+- **Problem:** the ADRs for #6 were written in a separate PR after the code merged (#19); README's Status still said the database was not built; the design doc lacked the GenAI section the brief requires, and the README lacked the AI Collaboration Narrative; `/deliver` read skills from an unversioned folder outside the repo.
+- **AI proposal:** the agent audited the repo against the brief and found the gaps above, then compared two workflow proposals: ChatGPT's (a `requirements.md`, `business-rules.md`, ADRs, an AI collaboration log, a plan-before-code prompt) and the `mattpocock-skills` main flow (grill-with-docs → to-spec → to-tickets → implement with TDD and code review → PR → retro). It recommended keeping `/deliver`'s extra roles, adopting grill-with-docs, to-spec/to-tickets and retro, and rejecting the ChatGPT parts that clash with the design: separate requirements and business-rules files (a fifth source of truth), "use transactions for multi-step mutations" (the design prefers conditional SQL, P2) and CSV import in scope (deferred, §6).
+- **Decided by:** user, four numbered questions.
+- **Decision and reasoning:** (1) log AI collaboration in this file, summarised in the README; (2) the architecture doc is frozen, new decisions are ADRs, `system-design.md` shows the current state; (3) adopt grill-with-docs and to-spec/to-tickets; (4) run retro after every PR, proposals only, applied after the user's go.
+- **Verification:** `pnpm verify`; the next `/deliver` run is the real test.
+- **Outcome:** #20 (workflow: **Doc impact** in every PR, business reviewer checks it, Finish appends to this log) and #21 (the missing sections, Status fixes, this log).

@@ -14,3 +14,4 @@ await migrate(db, {
   migrationsFolder: `${import.meta.dirname}/migrations`,
 });
 await db.$client.end();
+process.stdout.write('Migrations applied\n');

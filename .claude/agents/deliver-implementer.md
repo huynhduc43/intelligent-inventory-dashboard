@@ -13,7 +13,7 @@ Work only in `worktree`, on its branch.
 
 ## The spec
 
-The issue `#<issue>`, the PRD it links to, its `## Decisions`, its `Contract` and `Chosen:` comments and any `Amended:` comment after them (`gh issue view <n> --comments`) are the spec, together with the sections of `docs/research/backend-architecture.md` its `## Design refs` names. The chosen contract is the spec for the API and the schema. Build exactly what they say, inside the invariants in CLAUDE.md.
+The issue `#<issue>`, the spec issue it links to, its `## Decisions`, its `Contract` and `Chosen:` comments and any `Amended:` comment after them (`gh issue view <n> --comments`) are the spec, together with the sections of `docs/research/backend-architecture.md` and the ADRs its `## Design refs` names. The chosen contract is the spec for the API and the schema. Build exactly what they say, inside the invariants in CLAUDE.md.
 
 When some part of the spec cannot or should not be built as written, stop and return `decision-needed:` with the part, the reason, the options and your recommendation. The answer comes back as `decision: … recorded: <URL>`; carry on from there. The PR body's **Deviations** section lists each decision that changed the spec, with that link.
 
@@ -23,8 +23,8 @@ Your first prompt gives `issue`, `worktree`, `branch` and `bug` (yes or no).
 
 1. Read the spec.
 2. When `bug=yes`, write the regression test first and run it against the unfixed code; keep its failing output for the PR body.
-3. Read and follow `~/.agents/skills/implement/SKILL.md`, but skip its closing `/code-review` step: the reviewers replace it. Test at the seams the PRD names: pure rules in `src/modules/<module>/domain/` get unit tests (100% coverage there); SQL, guards and endpoints get integration tests against Testcontainers Postgres, with a short timeout on any test that opens a transaction.
-4. Run `pnpm verify` (needs Docker) until it passes. Commit and push following CONTRIBUTING.md and CLAUDE.md **Agent workflow**, then open the PR into `dev`, with its body written by `mattpocock-skills:pr`. The body carries `Closes #<issue>`, the **Evidence** (each acceptance criterion → the test that proves it; for a bug, the failing output from step 2), the **Deviations** and the **Manual steps** (CONTRIBUTING.md **Pull requests**; each also recorded in `docs/environment-setup.md`).
+3. Build test-first with `mattpocock-skills:tdd` at the seams the spec names; run `pnpm typecheck` and single test files as you go, the full suite at the end. There is no self-review step: the reviewers replace it. Test at those seams: pure rules in `src/modules/<module>/domain/` get unit tests (100% coverage there); SQL, guards and endpoints get integration tests against Testcontainers Postgres, with a short timeout on any test that opens a transaction.
+4. Run `pnpm verify` (needs Docker) until it passes. Commit and push following CONTRIBUTING.md and CLAUDE.md **Agent workflow**, then open the PR into `dev`, with its body written by `mattpocock-skills:pr`. The body carries `Closes #<issue>`, the **Evidence** (each acceptance criterion → the test that proves it; for a bug, the failing output from step 2), the **Deviations**, the **Manual steps** (each also recorded in `docs/environment-setup.md`) and the **Doc impact**, with each doc it lists updated in the PR (CONTRIBUTING.md **Pull requests**).
 5. Return one line: `pr <number>`.
 
 ## Answer findings

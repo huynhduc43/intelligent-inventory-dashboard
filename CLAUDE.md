@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`; read the relevant section before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: validated config, the Drizzle schema and migration, `Clock`, the `health` module (`/health/live`, `/health/ready` with a DB ping), Docker Compose, and `AgingPolicy` with its unit tests. Build order is in §4.16.
+Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`, extended and superseded by the ADRs in `docs/adr/`; read the relevant section and ADRs before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: validated config, the Drizzle schema and migration, `Clock`, the `health` module (`/health/live`, `/health/ready` with a DB ping), Docker Compose, and `AgingPolicy` with its unit tests. Build order is in §4.16.
 
 Conventions (branches, commits, naming, hooks, coverage) are in `CONTRIBUTING.md`.
 
@@ -54,10 +54,12 @@ Everything in §6 (refresh tokens, ETag/304, keyset pagination, CSV import, If-M
 
 Branch, commit and PR rules are in `CONTRIBUTING.md`. On top of those:
 
-- **Worktree per piece of work**, from the first edit: `git worktree add ../intelligent-inventory-dashboard-<issue>-<topic> -b <branch> dev` (drop `<issue>` if there is none). A parallel session can switch the shared checkout's branch. Check the current branch immediately before every commit.
+- **Worktree per piece of work**, from the first edit: `git fetch origin && git worktree add ../intelligent-inventory-dashboard-<issue>-<topic> -b <branch> origin/dev` (drop `<issue>` if there is none; the local `dev` is not kept up to date). A parallel session can switch the shared checkout's branch. Check the current branch immediately before every commit.
 - Once the work is done and `pnpm verify` passes, commit, push and open the PR without waiting to be asked. Merge only when the user says so, and then merge immediately without waiting for CI unless told to. After the merge, `git worktree remove <path>` and `git branch -d <branch>`; if the worktree still has uncommitted or unpushed work, leave it and say so.
 - Never create a GitHub issue without asking first. Once agreed, pick the title yourself.
 - **Steps outside the repo** (see `CONTRIBUTING.md`): a change is not done until the step is in `docs/environment-setup.md` and the final reply tells the user which steps remain and in which environment.
+- **Docs move with the code, in the same PR** (the PR's **Doc impact**, `CONTRIBUTING.md`). `docs/research/backend-architecture.md` is frozen research: D1–D19 and P1–P3 are accepted decisions, and the only edit allowed is marking one superseded, with a link to its ADR. A new or changed decision is an ADR in `docs/adr/`, listed in its README. `docs/system-design.md`, `docs/diagrams/` and the **Status** lines in this file and README.md describe the system as it is now. A moment that shows how the AI was directed or corrected goes in `docs/ai-collaboration.md`.
+- **Tests and dependencies:** never weaken, skip or delete a test to make code pass. Ask before adding a dependency.
 - **Reading code:** prefer Serena's symbol tools (`get_symbols_overview`, `find_symbol`, `find_referencing_symbols`) over reading whole files. Find every caller before changing a signature. Plain text search is fine for strings, config keys and docs.
 - **Transactions (Drizzle):** inside `db.transaction(async (tx) => …)` every statement goes through `tx`, never `db` (it can deadlock on the held lock). One service method = one transaction; callers never wrap service calls in a transaction. New transaction logic gets an integration test against Testcontainers Postgres with a short timeout so a hang fails fast. Prefer the conditional-SQL writes above over transactions where they suffice.
 - **Communication:** reply in the user's language; code, comments and docs stay in English. For decisions that are the user's, number each question, label options A, B, C and name your recommendation. No features, abstractions or error handling beyond the request; mention unrelated dead code instead of deleting it.

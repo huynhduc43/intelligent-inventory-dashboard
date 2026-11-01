@@ -14,13 +14,16 @@ export default defineConfig({
         test: {
           name: 'integration',
           include: ['test/integration/**/*.spec.ts'],
+          // Container start-up (and the first image pull) is slow; tests themselves keep short timeouts.
+          hookTimeout: 120_000,
         },
       },
     ],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/main.ts', 'src/**/*.module.ts'],
+      // schema.ts is declarations only; the migration generated from it is checked by test/integration/db.spec.ts.
+      exclude: ['src/main.ts', 'src/**/*.module.ts', 'src/shared/schema.ts'],
       thresholds: {
         lines: 80,
         branches: 80,

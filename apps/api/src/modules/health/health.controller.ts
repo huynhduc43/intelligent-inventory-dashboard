@@ -1,10 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
+import { DatabaseHealthIndicator } from './database.health.js';
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly health: HealthCheckService) {}
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly database: DatabaseHealthIndicator,
+  ) {}
 
+  // Liveness never touches the DB: a DB outage must not get the process restarted.
   @Get('live')
   @HealthCheck()
   live() {
@@ -14,7 +19,6 @@ export class HealthController {
   @Get('ready')
   @HealthCheck()
   ready() {
-    // shortcut: no dependencies to check yet; add the Postgres ping (503 when down) with the DB in build step 1.
-    return this.health.check([]);
+    return this.health.check([() => this.database.ping()]);
   }
 }

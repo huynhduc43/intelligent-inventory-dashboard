@@ -1,2 +1,10 @@
 packages:
   - apps/*
+
+# Install scripts not needed: esbuild ships its binary as an optional dependency;
+# cpu-features/ssh2/protobufjs come via testcontainers and work without them.
+allowBuilds:
+  cpu-features: false
+  esbuild: false
+  protobufjs: false
+  ssh2: false

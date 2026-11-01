@@ -1,0 +1,41 @@
+# Local stack: `docker compose up --build`, then http://localhost:3000/health/ready.
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory
+      POSTGRES_DB: inventory
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inventory -d inventory']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Applies migrations once before the api starts; the app never migrates at boot.
+  migrate:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    command: ['node', 'db/migrate.ts']
+    environment:
+      DATABASE_URL: postgres://inventory:inventory@postgres:5432/inventory
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment:
+      DATABASE_URL: postgres://inventory:inventory@postgres:5432/inventory
+      # Dev-only placeholder; never reuse outside this Compose file.
+      JWT_SECRET: dev-only-jwt-secret-not-for-production-use
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:

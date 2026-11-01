@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`; read the relevant section before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: the `health` module (`/health/live`, `/health/ready` via Terminus; readiness gets the DB ping in build step 1) and `AgingPolicy` with its unit tests. Build order is in §4.16.
+Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`; read the relevant section before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: validated config, the Drizzle schema and migration, `Clock`, the `health` module (`/health/live`, `/health/ready` with a DB ping), Docker Compose, and `AgingPolicy` with its unit tests. Build order is in §4.16.
 
 Conventions (branches, commits, naming, hooks, coverage) are in `CONTRIBUTING.md`.
 
@@ -24,7 +24,7 @@ pnpm --filter @inventory/api exec vitest run -t "tierOf"                        
 
 ## Stack
 
-Node 24, TypeScript 6 strict (pinned `~6.0`: typescript-eslint supports only TS < 6.1), NestJS 12 (**ESM**: relative imports need the `.js` suffix), Vitest 4, ESLint 10 flat config (root `eslint.config.mjs`), Prettier. Planned: PostgreSQL, Drizzle ORM + drizzle-kit, `nestjs-pino`, Testcontainers.
+Node 24, TypeScript 6 strict (pinned `~6.0`: typescript-eslint supports only TS < 6.1), NestJS 12 (**ESM**: relative imports need the `.js` suffix), Vitest 4, ESLint 10 flat config (root `eslint.config.mjs`), Prettier. PostgreSQL 17, Drizzle ORM + drizzle-kit (`pnpm --filter @inventory/api db:generate` / `db:migrate`), zod (config), Testcontainers. Planned: `nestjs-pino`.
 
 ## Architecture (modular monolith in `apps/api`)
 

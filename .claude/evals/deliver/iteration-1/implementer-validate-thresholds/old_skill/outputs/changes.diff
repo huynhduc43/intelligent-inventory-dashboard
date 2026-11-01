@@ -1,0 +1,73 @@
+diff --git a/apps/api/src/modules/inventory/domain/aging-policy.ts b/apps/api/src/modules/inventory/domain/aging-policy.ts
+index b838b69..5c7c405 100644
+--- a/apps/api/src/modules/inventory/domain/aging-policy.ts
++++ b/apps/api/src/modules/inventory/domain/aging-policy.ts
+@@ -14,3 +14,27 @@ export const tierOf = (days: number, t: Thresholds): Tier =>
+ // Fixed buckets, independent of the thresholds (D10).
+ export const bucketOf = (days: number): AgeBucket =>
+   days <= 30 ? '0-30' : days <= 60 ? '31-60' : days <= 90 ? '61-90' : '90+';
++
++export type ThresholdsCheck =
++  { ok: true } | { ok: false; code: 'INVALID_THRESHOLDS'; reason: string };
++
++const invalid = (reason: string): ThresholdsCheck => ({
++  ok: false,
++  code: 'INVALID_THRESHOLDS',
++  reason,
++});
++
++// Mirrors the DB constraint dealership_thresholds_chk: 1 <= watch < aging <= 3650 (D3).
++export const validateThresholds = ({
++  watch,
++  aging,
++}: Thresholds): ThresholdsCheck =>
++  !Number.isInteger(watch) || !Number.isInteger(aging)
++    ? invalid('watch and aging must be integers')
++    : watch < 1
++      ? invalid('watch must be at least 1')
++      : watch >= aging
++        ? invalid('watch must be less than aging')
++        : aging > 3650
++          ? invalid('aging must be at most 3650')
++          : { ok: true };
+diff --git a/apps/api/test/unit/inventory/aging-policy.spec.ts b/apps/api/test/unit/inventory/aging-policy.spec.ts
+index bd18056..ef0a4fe 100644
+--- a/apps/api/test/unit/inventory/aging-policy.spec.ts
++++ b/apps/api/test/unit/inventory/aging-policy.spec.ts
+@@ -1,6 +1,7 @@
+ import {
+   bucketOf,
+   tierOf,
++  validateThresholds,
+ } from '../../../src/modules/inventory/domain/aging-policy.js';
+ 
+ describe('tierOf', () => {
+@@ -30,3 +31,28 @@ describe('bucketOf', () => {
+     expect(bucketOf(days)).toBe(bucket);
+   });
+ });
++
++describe('validateThresholds', () => {
++  it.each([
++    [1, 2],
++    [60, 90],
++    [3649, 3650],
++  ])('accepts watch %i, aging %i', (watch, aging) => {
++    expect(validateThresholds({ watch, aging })).toEqual({ ok: true });
++  });
++
++  it.each([
++    [0, 90, 'watch must be at least 1'],
++    [90, 90, 'watch must be less than aging'],
++    [91, 90, 'watch must be less than aging'],
++    [60, 3651, 'aging must be at most 3650'],
++    [60.5, 90, 'watch and aging must be integers'],
++    [60, 90.5, 'watch and aging must be integers'],
++  ])('rejects watch %d, aging %d: %s', (watch, aging, reason) => {
++    expect(validateThresholds({ watch, aging })).toEqual({
++      ok: false,
++      code: 'INVALID_THRESHOLDS',
++      reason,
++    });
++  });
++});

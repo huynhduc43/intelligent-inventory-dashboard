@@ -1,0 +1,87 @@
+{
+  "expectations": [
+    {
+      "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+      "passed": false,
+      "evidence": "repo-changes.diff is empty. The old Finish only reports."
+    },
+    {
+      "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+      "passed": false,
+      "evidence": "The diff is empty, so no case was added."
+    },
+    {
+      "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+      "passed": false,
+      "evidence": "There are no log entries, added or edited."
+    },
+    {
+      "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+      "passed": false,
+      "evidence": "There is no retro.md. user_notes.md: 'The old skill's Finish has no retrospective'."
+    },
+    {
+      "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+      "passed": false,
+      "evidence": "There is no retro.md, and report.md proposes no check."
+    },
+    {
+      "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+      "passed": false,
+      "evidence": "report.md mentions only that the Amended comment 'sau \u0111\u00f3 th\u00e0nh ADR 0002'. It does not call the late ADRs a gap."
+    },
+    {
+      "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+      "passed": false,
+      "evidence": "The diff is empty, so the first half holds. But there are no candidates, and nothing says any await the user's go, so the second half is not met."
+    },
+    {
+      "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+      "passed": false,
+      "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng' and Tester 'pass' 6/6, but it has no log cases and no retro candidates."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 8,
+    "total": 8,
+    "pass_rate": 0.0
+  },
+  "timing": {
+    "executor_duration_seconds": 83.4,
+    "total_duration_seconds": 83.4
+  },
+  "claims": [
+    {
+      "claim": "The old skill's Finish has two steps (Deviations check, report) and no retrospective.",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript step 1 reads old SKILL.md and says so. The empty diff and missing retro.md agree."
+    },
+    {
+      "claim": "Finish step 1 would not catch a deviation hidden as an 'implementation note'.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "user_notes.md raises this as a skill gap. It is accurate per record finding 2, but it was not acted on."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Manual steps checked only against environment-setup.md"
+    ],
+    "needs_review": [
+      "Post-merge worktree cleanup not done"
+    ],
+    "workarounds": [
+      "Outputs written via Bash because Write was blocked"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "The old skill faithfully did what it says: report only, with an accurate Vietnamese report. The 0/8 reflects missing features, not poor execution. That is expected for a baseline."
+      }
+    ],
+    "overall": "The baseline behaved as designed: an accurate report, no log, no retro. The assertions separate the new skill from the old one cleanly."
+  }
+}

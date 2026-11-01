@@ -1,0 +1,13 @@
+{
+  "eval_name": "architect-grill-append-only-conflict",
+  "prompt": "Run only role 2 step 1 (Grill) of /deliver, in `grill=auto`, for this requirement:\n\n\"Managers sometimes log an action with a typo in its note. Let the manager who logged an action fix its note within 15 minutes of logging it.\"\n\nRead the skill and the repo docs it points to first. Answer each question yourself with your recommended answer, as `grill=auto` says. Write every question with its answer, in order, to `decisions.md` in the outputs folder. Make any repo file changes the step calls for in the sandbox (do not commit), then save `git -C <sandbox> status --short` and `git -C <sandbox> diff` (plus the content of any new file) to `repo-changes.md` in the outputs folder.\n\nDry run: this is an evaluation. Work only inside the sandbox repo you are given. Never run a `gh` or `git` command that writes to GitHub or a remote (issue/PR create, edit or comment, review, label, push), and never commit outside the sandbox. Write anything you would have posted to GitHub as a file in the outputs folder instead, named as the prompt says.",
+  "assertions": [
+    "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+    "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+    "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+    "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+    "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+    "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+    "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action')."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "eval_name": "implementer-validate-thresholds",
+  "prompt": "Act as the /deliver Implementer (role 4) for the issue in the input file `issue-90.md`, with `bug=no`, working in the sandbox repo as the worktree. Follow the implementer agent file of the skill under test. Do steps 1-4 of its Build section, with these dry-run limits: commit on the sandbox branch but do not push or open a PR; instead of `pnpm verify` (which needs Docker for integration tests) run `pnpm lint`, `pnpm typecheck` and `pnpm --filter @inventory/api exec vitest run --project unit --coverage`. Save to the outputs folder: `pr-body.md` (the PR body you would open), `commands.md` (each check command you ran, in order, with the tail of its output), and `changes.diff` (`git -C <sandbox> diff origin/dev...HEAD`).\n\nDry run: this is an evaluation. Work only inside the sandbox repo you are given. Never run a `gh` or `git` command that writes to GitHub or a remote (issue/PR create, edit or comment, review, label, push), and never commit outside the sandbox. Write anything you would have posted to GitHub as a file in the outputs folder instead, named as the prompt says.\n\nInput files: issue-90.md",
+  "assertions": [
+    "changes.diff adds an exported `validateThresholds` in src/modules/inventory/domain/aging-policy.ts that returns `{ ok: true }` or `{ ok: false, code: 'INVALID_THRESHOLDS', reason }` and does no I/O.",
+    "changes.diff adds unit tests covering (1,2), (60,90), (3649,3650) as valid and watch=0, watch=aging, aging=3651 and a non-integer as invalid.",
+    "The transcript or commands.md shows the new tests run and failing (red) before validateThresholds was implemented.",
+    "commands.md shows lint, typecheck and the unit coverage run passing, with aging-policy.ts at 100% lines and branches.",
+    "changes.diff touches only aging-policy.ts and its unit test (plus, at most, a doc line the change justifies).",
+    "pr-body.md has an Evidence section mapping each acceptance criterion to the test that proves it.",
+    "pr-body.md has a Doc impact section that lists each doc updated or states none with a reason."
+  ]
+}

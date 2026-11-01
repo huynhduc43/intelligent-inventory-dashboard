@@ -1,0 +1,9 @@
+# Notes and departures
+
+- **Contradiction decided by the agent.** The requirement breaks the append-only invariant (D4, §1.2 row 4, P3, CLAUDE.md). The skill calls that a decision for the user; under `grill=auto` I answered it myself (Q1, option A) and wrote ADR-0005 as if accepted. With `approve` left at its default `manual`, the role 2 gate (step 5) is where the user should confirm or reverse it; if reversed, ADR-0005, the README row, the D4 marker and the glossary's "except its note" wording all change.
+- **No research note.** Role 1 did not run in this evaluation, so the grill drew only on the architecture doc, ADRs, CLAUDE.md and the code. The one unknown found (`created_at` defaults to DB `now()`, not `Clock`) came from reading `schema.ts`.
+- **Not committed, no worktree.** The skill says to commit glossary/ADR changes on a `<type>/<topic>` branch in a new worktree; the task said the sandbox is the worktree and not to commit.
+- **CLAUDE.md invariant left as is.** "Never update or delete them" now overstates the rule. I did not edit CLAUDE.md in this step (it governs agents, and the step only asks for GLOSSARY and ADRs); Q12 lists it for the implementation PR's Doc impact along with `docs/system-design.md` and the schema diagram.
+- **Glossary format guessed.** The ADR README points to `mattpocock-skills:domain-modeling` for formats; I was told not to read other skills, so GLOSSARY.md uses a plain term / definition / _Avoid_ layout and ADR-0005 follows the style of ADR-0001…0004.
+- **Status code choices** (403 for a non-author member, 409 `NOTE_EDIT_WINDOW_CLOSED`) and the endpoint shape are recommendations; role 3 (Contract) is where they get fixed.
+- **Ponytail lean:** I recommended reusing `vehicle_action:create` over a new permission and overwrite + `note_edited_at` over keeping the original text. Both are the smaller options; the second loses the original text, which is stated in the ADR.

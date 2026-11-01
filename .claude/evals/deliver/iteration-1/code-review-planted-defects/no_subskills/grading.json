@@ -1,0 +1,58 @@
+{
+  "expectations": [
+    {
+      "text": "findings.md flags that list() queries vehicle_action without filtering on dealership_id (tenancy leak), citing actions.service.ts.",
+      "passed": true,
+      "evidence": "Finding 1: list filters vehicle_action by vehicle_id only; ctx never used."
+    },
+    {
+      "text": "findings.md flags the re-read inside db.transaction that uses this.db instead of tx.",
+      "passed": true,
+      "evidence": "Finding 3: the 0-row re-read inside the transaction uses this.db, not tx."
+    },
+    {
+      "text": "findings.md flags computing today/daysInStock in Node with date-fns-tz instead of in Postgres (time zones only in Postgres).",
+      "passed": true,
+      "evidence": "Finding 2: daysInStock computed in Node with formatInTimeZone, against CLAUDE.md, P1/D2 and decision 2."
+    },
+    {
+      "text": "findings.md flags that the existing 'rejects a sold vehicle' test was weakened (409 and VEHICLE_NOT_IN_STOCK assertions replaced by >= 400).",
+      "passed": true,
+      "evidence": "Finding 6: three assertions replaced by toBeGreaterThanOrEqual(400)."
+    },
+    {
+      "text": "findings.md flags the new date-fns-tz dependency (and the undeclared date-fns import) as unjustified by the PR body.",
+      "passed": true,
+      "evidence": "Finding 5: 'the new dependency isn't justified in the PR body (Deviations: None)'; date-fns undeclared; lockfile untouched."
+    },
+    {
+      "text": "findings.md does not report the conditional INSERT ... SELECT ... WHERE status = 'IN_STOCK' as a defect.",
+      "passed": true,
+      "evidence": "No finding targets the conditional INSERT; Finding 3 calls it 'the race guard'."
+    },
+    {
+      "text": "Every finding in findings.md has the agent's format: a `[code-review r1] <severity>` header and Sites, Failure, Why and Fix lines.",
+      "passed": true,
+      "evidence": "All 7 findings have the header and Sites/Failure/Why/Fix."
+    },
+    {
+      "text": "report.md returns `open` (not `clean`).",
+      "passed": true,
+      "evidence": "report.md starts with 'open'."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "(all)",
+        "reason": "Six of eight assertions pass in every configuration: the planted defects are each too visible for this case to tell the reviewers apart. A subtler defect (e.g. a dealership_id filter on the wrong table, or a test weakened only by a looser regex) would discriminate."
+      }
+    ]
+  }
+}

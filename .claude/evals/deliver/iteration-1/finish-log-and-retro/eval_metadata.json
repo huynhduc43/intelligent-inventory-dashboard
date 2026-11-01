@@ -1,0 +1,14 @@
+{
+  "eval_name": "finish-log-and-retro",
+  "prompt": "Run only the Finish section of /deliver (after the Tester passed) for PR #17 / issue #6, whose full record is the input file `pr17-record.md`. Skip Finish step 1 (Deviations are already linked). For every other Finish step, follow the skill under test as written: edit files in the sandbox repo where it says to (do not commit or push), and save everything else to the outputs folder: the final report to the user as `report.md`, any retrospective as `retro.md`, and `git -C <sandbox> diff` as `repo-changes.diff`. The user's language is Vietnamese.\n\nDry run: this is an evaluation. Work only inside the sandbox repo you are given. Never run a `gh` or `git` command that writes to GitHub or a remote (issue/PR create, edit or comment, review, label, push), and never commit outside the sandbox. Write anything you would have posted to GitHub as a file in the outputs folder instead, named as the prompt says.\n\nInput files: pr17-record.md",
+  "assertions": [
+    "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+    "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+    "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+    "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+    "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+    "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+    "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+    "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates."
+  ]
+}

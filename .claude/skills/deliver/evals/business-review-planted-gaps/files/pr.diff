@@ -1,0 +1,71 @@
+diff --git a/apps/api/src/shared/config.ts b/apps/api/src/shared/config.ts
+--- a/apps/api/src/shared/config.ts
++++ b/apps/api/src/shared/config.ts
+@@ -14,6 +14,7 @@ const schema = z.object({
+   JWT_TTL_S: z.coerce.number().int().positive().default(3600),
++  ACTION_NOTE_MAX_LENGTH: z.coerce.number().int().positive(),
+ });
+diff --git a/apps/api/src/modules/actions/actions.controller.ts b/apps/api/src/modules/actions/actions.controller.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/api/src/modules/actions/actions.controller.ts
+@@ -0,0 +1,32 @@
++import { Body, Controller, ForbiddenException, Get, Param, Post, Req } from '@nestjs/common';
++import { RequirePermission } from '../auth/require-permission.decorator.js';
++import { ActionsService } from './actions.service.js';
++import { LogActionDto } from './log-action.dto.js';
++
++@Controller('api/v1/dealerships/:d/vehicles/:v/actions')
++export class ActionsController {
++  constructor(private readonly actions: ActionsService) {}
++
++  @Get()
++  @RequirePermission('vehicle_action:read')
++  list(@Req() req: AuthedRequest, @Param('v') v: string) {
++    return this.actions.list(req.ctx, v).then((items) => ({ items }));
++  }
++
++  @Post()
++  @RequirePermission('vehicle_action:create')
++  log(@Req() req: AuthedRequest, @Param('d') d: string, @Param('v') v: string, @Body() body: LogActionDto) {
++    if (!req.user.dealershipIds.includes(d)) throw new ForbiddenException({ code: 'FORBIDDEN' });
++    return this.actions.log(req.ctx, v, body);
++  }
++}
+diff --git a/apps/api/src/modules/actions/actions.service.ts b/apps/api/src/modules/actions/actions.service.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/api/src/modules/actions/actions.service.ts
+@@ -0,0 +1,40 @@
++// ... imports
++  async list(ctx: DealershipContext, vehicleId: string) {
++    return this.db.select().from(vehicleAction)
++      .where(and(eq(vehicleAction.vehicleId, vehicleId), eq(vehicleAction.dealershipId, ctx.dealershipId)))
++      .orderBy(desc(vehicleAction.id));
++  }
++
++  async log(ctx: DealershipContext, vehicleId: string, input: LogActionDto) {
++    const res = await this.db.execute(sql`
++      INSERT INTO vehicle_action (dealership_id, vehicle_id, action_type, note, created_by, created_at)
++      SELECT v.dealership_id, v.id, ${input.actionType}, ${input.note ?? null}, ${ctx.userId}, ${this.clock.now()}
++      FROM vehicle v
++      WHERE v.id = ${vehicleId} AND v.dealership_id = ${ctx.dealershipId}
++        AND v.status IN ('IN_STOCK', 'RESERVED')
++      RETURNING *`);
++    if (res.rows[0]) return res.rows[0];
++    const exists = await this.vehicleExists(ctx, vehicleId);
++    if (!exists) throw new NotFoundException({ code: 'NOT_FOUND' });
++    throw new ConflictException({ code: 'NOT_IN_STOCK' });
++  }
+diff --git a/apps/api/src/modules/actions/log-action.dto.ts b/apps/api/src/modules/actions/log-action.dto.ts
+new file mode 100644
+--- /dev/null
++++ b/apps/api/src/modules/actions/log-action.dto.ts
+@@ -0,0 +1,10 @@
++import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
++import { ACTION_TYPES } from './action-type.js';
++
++export class LogActionDto {
++  @IsIn(ACTION_TYPES) actionType!: string;
++  @IsOptional() @IsString() @MaxLength(Number(process.env.ACTION_NOTE_MAX_LENGTH)) note?: string;
++}

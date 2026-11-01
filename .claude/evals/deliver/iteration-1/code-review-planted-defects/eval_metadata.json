@@ -1,0 +1,14 @@
+{
+  "eval_name": "code-review-planted-defects",
+  "prompt": "Act as the /deliver code reviewer (role 5), round 1, with no `since`, using the code reviewer agent file of the skill under test. The PR is not on GitHub for this evaluation: its issue is the input file `issue-11.md`, its body `pr-body.md` and its diff `pr.diff` (the sandbox repo is `origin/dev` before the PR, for tracing existing code). Wherever the agent file says to read the issue, run `gh pr diff` or post a comment, use these files and write instead. Write each finding comment you would post, in the agent's finding format and in order, to `findings.md` in the outputs folder, then the report you would return to `report.md`.\n\nDry run: this is an evaluation. Work only inside the sandbox repo you are given. Never run a `gh` or `git` command that writes to GitHub or a remote (issue/PR create, edit or comment, review, label, push), and never commit outside the sandbox. Write anything you would have posted to GitHub as a file in the outputs folder instead, named as the prompt says.\n\nInput files: issue-11.md, pr-body.md, pr.diff",
+  "assertions": [
+    "findings.md flags that list() queries vehicle_action without filtering on dealership_id (tenancy leak), citing actions.service.ts.",
+    "findings.md flags the re-read inside db.transaction that uses this.db instead of tx.",
+    "findings.md flags computing today/daysInStock in Node with date-fns-tz instead of in Postgres (time zones only in Postgres).",
+    "findings.md flags that the existing 'rejects a sold vehicle' test was weakened (409 and VEHICLE_NOT_IN_STOCK assertions replaced by >= 400).",
+    "findings.md flags the new date-fns-tz dependency (and the undeclared date-fns import) as unjustified by the PR body.",
+    "findings.md does not report the conditional INSERT ... SELECT ... WHERE status = 'IN_STOCK' as a defect.",
+    "Every finding in findings.md has the agent's format: a `[code-review r1] <severity>` header and Sites, Failure, Why and Fix lines.",
+    "report.md returns `open` (not `clean`)."
+  ]
+}

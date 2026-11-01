@@ -1,0 +1,10 @@
+# User notes
+
+- **Seam confirmation (tdd skill).** The tdd skill says to confirm the seams with the user before writing tests. As a spawned implementer I have no user channel, and the issue's Decision 1 already fixes the seam (`validateThresholds`, pure, in `aging-policy.ts`). I treated that as the pre-agreed seam and did not stop to ask.
+- **Spec read from a file, not GitHub.** In the dry run, the issue came from `inputs/issue-90.md`, and there were no `Contract`/`Chosen:`/`Amended:` comments to read. The Contract role does not apply here anyway: no endpoint, permission or schema change.
+- **`pnpm verify` replaced** by lint, typecheck, unit-only coverage and format:check, as instructed. The unit-only coverage command exits 1 on the **global** 80% gate (the health and db files only get integration coverage). The base commit fails the same way (60% lines), so the change does not cause it, and the domain 100% gate passes. Under the real `pnpm verify` (all projects) the global gate should pass; I did not check that, since it needs Docker.
+- **Reason strings are my wording.** The issue only asks for "a reason naming the broken rule". The four reasons are new strings that the tests pin. When several rules break at once, the first failing check wins, in this order: integer, watch ≥ 1, watch < aging, aging ≤ 3650. So (0, 0) reports "watch must be at least 1".
+- **HTTP status.** The issue says "a clear 400". §4.8 lists `400 VALIDATION_FAILED` and `422` for "valid shape, invalid meaning". The domain code is `INVALID_THRESHOLDS` as the issue specifies; the status mapping belongs to build step 6, which wires the endpoint, and is left to it.
+- **Doc edits beyond the code.** I updated one line each in `CLAUDE.md` and `docs/system-design.md`, because CONTRIBUTING.md's Doc impact rule asks for them. A reviewer could call this scope creep; it is two lines.
+- **No Mermaid** in the PR body, despite the pr skill suggesting it, because the repo prefers non-Mermaid diagrams.
+- Branch naming: the real flow would use `feat/90-validate-thresholds`; the task fixed the branch as `eval`, and the PR body's comment header notes the intended name.

@@ -1,0 +1,33 @@
+diff --git a/docs/ai-collaboration.md b/docs/ai-collaboration.md
+index 0076ffc..fa196cb 100644
+--- a/docs/ai-collaboration.md
++++ b/docs/ai-collaboration.md
+@@ -62,8 +62,8 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
+ ### C3: Reviewer caught a timestamp that tests could not pin (#17)
+ 
+ - **Problem:** `vehicle.updated_at` needed a value on every update.
+-- **AI proposal:** the contract asked for an application-set `updated_at`; the implementer used Drizzle `$onUpdate(() => sql\`now()\`)`.
+-- **Decided by:** reviewer finding, fixed by a fresh implementer; recorded as an `Amended:` comment on #6.
++- **AI proposal:** the contract agent asked for an application-set `updated_at` via Drizzle `$onUpdate`; the implementer built it as `$onUpdate(() => sql\`now()\`)`.
++- **Decided by:** agent (approve=auto): the code reviewer's finding was fixed by a fresh implementer and recorded as an `Amended:` comment on #6, with no user gate.
+ - **Decision and reasoning:** the independent code reviewer showed the failure: a schema callback cannot reach the injected `Clock`, so a test pinning time cannot assert `updatedAt`, which breaks the CLAUDE.md invariant that `now` comes from `Clock`. Each service update sets `updatedAt: clock.now()` instead.
+ - **Verification:** [code-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17) finding on `schema.ts:105`; fixed in `92c22c6`; r2 clean.
+ - **Outcome:** [ADR 0002](adr/0002-updated-at-set-from-clock.md).
+@@ -72,7 +72,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
+ 
+ - **Problem:** the contract declared `PRIMARY KEY (user_id, dealership_id)`, which Postgres names `user_dealership_pkey`.
+ - **AI proposal:** Drizzle's default name `user_dealership_user_id_dealership_id_pk`, listed by the implementer as an "implementation note" under "Deviations: None from the spec", with a test that baked the odd name in.
+-- **Decided by:** reviewer rule (every difference from the spec is a finding unless recorded).
++- **Decided by:** agent (approve=auto): the business reviewer's rule (every difference from the spec is a finding unless recorded), fixed by a fresh implementer.
+ - **Decision and reasoning:** build the spec: name the key `user_dealership_pkey`.
+ - **Verification:** [business-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17); fixed in `92c22c6` with a new test asserting every PK is `<table>_pkey`.
+ - **Outcome:** the implementer's own summary is treated as a claim to check, not a record.
+@@ -81,7 +81,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
+ 
+ - **Problem:** the PR excluded `src/shared/schema.ts` from coverage, but `CONTRIBUTING.md` listed only `main.ts` and `*.module.ts`.
+ - **AI proposal:** the exclusion, without updating the standard.
+-- **Decided by:** reviewer finding, accepted.
++- **Decided by:** agent (approve=auto): the business reviewer's finding, accepted by a fresh implementer.
+ - **Decision and reasoning:** keep the exclusion (declarations only; the migration generated from it is checked by an integration test) and document it.
+ - **Verification:** [business-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/17) Standards finding; fixed in `92c22c6`.
+ - **Outcome:** `CONTRIBUTING.md` **Tests and coverage** matches `vitest.config.ts`.

@@ -1,0 +1,6 @@
+schema_version: '1.1'
+name: spec-issue-body
+expected_outcome: |
+  spec.md is a complete spec issue body: problem and solution from the manager's view, numbered user stories, the six decisions under ## Decisions, a ## Diagrams placeholder, ## Design refs citing D4, D5 and §4.x, §4.15-style test rows covering the window boundary and the 403/404/409 paths at the right level, testing seams, and out-of-scope items; labelled ready-for-agent.
+context:
+  scaffold_script: place-files.sh

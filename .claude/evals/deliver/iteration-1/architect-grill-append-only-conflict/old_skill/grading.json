@@ -1,0 +1,74 @@
+{
+  "expectations": [
+    {
+      "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+      "passed": true,
+      "evidence": "A top callout says the requirement contradicts 'CLAUDE.md \"Actions are append-only; \u2026 Never update or delete them\", D4 (\"Append-only\"), \u00a71.2 row 4 ... and P3'."
+    },
+    {
+      "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+      "passed": true,
+      "evidence": "It plans an in-place UPDATE (Q1 A), but the top callout says the deliver skill 'makes that a decision for the user... the one answer the user must confirm at the role-2 gate', and Q1 ends '_User decision: confirm at the gate._'"
+    },
+    {
+      "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+      "passed": true,
+      "evidence": "Q5: '`$now` comes from `Clock` and is passed as a parameter, so tests pin it', with `created_at > $now - interval '15 minutes'`. It also requires created_at to be set from Clock on insert."
+    },
+    {
+      "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+      "passed": true,
+      "evidence": "Covers: non-member 404 (Q7), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q6), author only (Q2)."
+    },
+    {
+      "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+      "passed": false,
+      "evidence": "repo-changes.md says 'None', and the sandbox git status is empty. Q17 explicitly says 'No ADR file' and records the decision as D20 in the architecture doc instead."
+    },
+    {
+      "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+      "passed": true,
+      "evidence": "Literally true: the sandbox has no changes. But Q17 plans a broad rewrite of the frozen doc in the PR (new D20 row, D4 wording, \u00a71.2, P3, \u00a74.3, \u00a74.7, \u00a74.8, \u00a74.15, \u00a77, \u00a78), which is against the intent; it passes only because nothing was written."
+    },
+    {
+      "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+      "passed": false,
+      "evidence": "No GLOSSARY.md was created; repo-changes.md lists no new files."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.71
+  },
+  "claims": [
+    {
+      "claim": "No repo changes were made in the Grill step",
+      "type": "factual",
+      "verified": true,
+      "evidence": "git -C <sandbox>/old_skill status --short is empty."
+    },
+    {
+      "claim": "The D-table is the accepted-decision record for this area, so no ADR is needed",
+      "type": "quality",
+      "verified": false,
+      "evidence": "This follows the old skill's 'same PR updates the architecture doc' rule but conflicts with the repo convention that the architecture doc is frozen and new decisions are ADRs."
+    },
+    {
+      "claim": "Adds a note_edited_at column, making role 3 (Contract) mandatory",
+      "type": "process",
+      "verified": true,
+      "evidence": "Q12 and Q6's UPDATE set note_edited_at = $now."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "repo-changes.md shows no edit to docs/research/backend-architecture.md ...",
+        "reason": "This run passes only because it wrote nothing, while it plans to rewrite the frozen doc in the PR. An assertion on decisions.md's planned doc edits would catch it."
+      }
+    ],
+    "overall": "Good grill content. It fails on the docs workflow (no ADR, no glossary), which is the main difference the eval is meant to measure."
+  }
+}

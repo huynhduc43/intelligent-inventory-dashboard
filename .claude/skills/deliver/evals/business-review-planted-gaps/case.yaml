@@ -1,0 +1,6 @@
+schema_version: '1.1'
+name: business-review-planted-gaps
+expected_outcome: |
+  The reviewer finds each planted gap with its source: non-member gets 403 instead of 404, the 409 code NOT_IN_STOCK differs from the contract's VEHICLE_NOT_IN_STOCK, actions allowed on RESERVED vehicles contradict D5 with no recorded decision (fix: build the spec, or record the decision with an ADR superseding D5), a new required env var with no docs/environment-setup.md entry or Manual steps (and contradicting Decision 3), and no Doc impact while the change contradicts system-design.md; it does not flag the correct dealership-scoped list.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,87 @@
+{
+  "expectations": [
+    {
+      "text": "changes.diff adds an exported `validateThresholds` in src/modules/inventory/domain/aging-policy.ts that returns `{ ok: true }` or `{ ok: false, code: 'INVALID_THRESHOLDS', reason }` and does no I/O.",
+      "passed": true,
+      "evidence": "The diff exports `validateThresholds` returning `ThresholdsCheck`, built through a pure local `invalid(reason)` helper. No I/O."
+    },
+    {
+      "text": "changes.diff adds unit tests covering (1,2), (60,90), (3649,3650) as valid and watch=0, watch=aging, aging=3651 and a non-integer as invalid.",
+      "passed": true,
+      "evidence": "The tests accept [1,2], [60,90] and [3649,3650]. They reject [0,90], [90,90], [91,90], [60,3651], [60.5,90] and [60,90.5]."
+    },
+    {
+      "text": "The transcript or commands.md shows the new tests run and failing (red) before validateThresholds was implemented.",
+      "passed": true,
+      "evidence": "Transcript step 9 records '3 failed | 12 passed (15)' because the function was missing. Step 11 records '6 failed | 15 passed (21)' against the stub, before step 12 implements the rule. commands.md itself has no red run."
+    },
+    {
+      "text": "commands.md shows lint, typecheck and the unit coverage run passing, with aging-policy.ts at 100% lines and branches.",
+      "passed": true,
+      "evidence": "Lint and typecheck exit 0, and all 36 unit tests pass. The domain-only coverage shows Lines 100% (7/7) and Branches 100% (20/20), confirmed by my re-run. The global 80% gate fails (63.15%), the same as the base (60%)."
+    },
+    {
+      "text": "changes.diff touches only aging-policy.ts and its unit test (plus, at most, a doc line the change justifies).",
+      "passed": true,
+      "evidence": "diff --stat shows 2 files: aging-policy.ts and aging-policy.spec.ts."
+    },
+    {
+      "text": "pr-body.md has an Evidence section mapping each acceptance criterion to the test that proves it.",
+      "passed": true,
+      "evidence": "The `## Evidence` table maps each criterion to named tests in aging-policy.spec.ts, with Before/After counts."
+    },
+    {
+      "text": "pr-body.md has a Doc impact section that lists each doc updated or states none with a reason.",
+      "passed": false,
+      "evidence": "pr-body.md has Summary, Evidence, Deviations, Manual steps and Merge Danger, but no Doc impact section. The stale CLAUDE.md 'later validateThresholds' line goes unmentioned."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.86
+  },
+  "timing": {
+    "total_duration_seconds": 178.0
+  },
+  "claims": [
+    {
+      "claim": "36/36 unit tests pass",
+      "type": "factual",
+      "verified": true,
+      "evidence": "My re-run reported 'Tests 36 passed (36)'."
+    },
+    {
+      "claim": "Domain coverage is 100%",
+      "type": "factual",
+      "verified": true,
+      "evidence": "My re-run gave 8/8 statements, 20/20 branches and 7/7 lines."
+    },
+    {
+      "claim": "Followed an older implement skill and invoked tdd",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript step 6 reads ~/.agents/skills/implement/SKILL.md and invokes mattpocock-skills:tdd."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "400 vs 422 for invalid thresholds left to build step 6",
+      "Reason strings are the agent's own wording"
+    ],
+    "needs_review": [],
+    "workarounds": [
+      "/code-review skipped per agent file",
+      "TDD seam taken as pre-agreed"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "No NaN test case here, while the other two runs added one. If NaN or Infinity handling matters, add an assertion for it."
+      }
+    ],
+    "overall": "Doc impact is the assertion that separates this run from the new skill, as intended. All other assertions pass."
+  }
+}

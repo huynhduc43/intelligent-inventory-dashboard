@@ -1,0 +1,73 @@
+{
+  "expectations": [
+    {
+      "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+      "passed": true,
+      "evidence": "Q1 cites D4, \u00a71.2 row 4, P3 and 'the CLAUDE.md invariant (\"Actions are append-only \u2026 Never update or delete them\")' as forbidding the change."
+    },
+    {
+      "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+      "passed": true,
+      "evidence": "It plans an in-place UPDATE, but Q1 says 'Per the skill, this is a **decision for the user**' and '_Confirm at the role 2 gate: this is the user's call, taken here only because `grill=auto`._'"
+    },
+    {
+      "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+      "passed": true,
+      "evidence": "Q5: '`created_at >= $now - interval '15 minutes'` in SQL, with `$now` from the injected `Clock` passed as a parameter', plus setting created_at from Clock on insert."
+    },
+    {
+      "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+      "passed": true,
+      "evidence": "Covers: non-member 404 (Q4), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q6), author only (Q3 and the SQL)."
+    },
+    {
+      "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+      "passed": true,
+      "evidence": "New docs/adr/0005-author-may-fix-action-note-within-15-minutes.md, confirmed in the sandbox. Three paragraphs: the decision with context, why rejected options lost, and the cost. Indexed in README as superseding 'D4 (in part)'."
+    },
+    {
+      "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+      "passed": true,
+      "evidence": "The sandbox diff is a single changed line: D4 gains 'Partly superseded by [ADR-0005](../adr/0005-...)'."
+    },
+    {
+      "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+      "passed": true,
+      "evidence": "New GLOSSARY.md defines Action, Current action, Note, Author and Note edit window, each with _Avoid_ terms."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "D4's row is marked partly superseded, the only edit the frozen doc allows",
+      "type": "factual",
+      "verified": true,
+      "evidence": "A one-line diff in the sandbox. It also touched the D-index row in docs/adr/README.md, which is allowed."
+    },
+    {
+      "claim": "Glossary format was guessed because the domain-modeling skill was not read",
+      "type": "process",
+      "verified": true,
+      "evidence": "user_notes says so. The format is still term/definition/_Avoid_ and of good quality."
+    },
+    {
+      "claim": "Adds a nullable note_edited_at column and a migration",
+      "type": "process",
+      "verified": true,
+      "evidence": "Q2 and Q11. That is a schema change, which the ADR covers in its cost paragraph."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "No assertion checks that a schema or migration change, if one is planned (note_edited_at here), is recorded in the ADR and flagged for role 3. This run handled it; old_skill and with_skill chose differently. That variation is legitimate but unchecked."
+      }
+    ],
+    "overall": "Matches with_skill on every assertion. The diff on the frozen doc is cleaner (one line, no table re-padding). The assertions don't separate with_skill from no_subskills."
+  }
+}

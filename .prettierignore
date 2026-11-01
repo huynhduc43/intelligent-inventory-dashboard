@@ -3,3 +3,7 @@ dist/
 coverage/
 .turbo/
 .serena/
+# Eval evidence and the frozen baseline stay byte-for-byte as produced
+.claude/evals/deliver/skill-snapshot/
+.claude/evals/deliver/iteration-*/
+.claude/skills/deliver/evals/*/files/

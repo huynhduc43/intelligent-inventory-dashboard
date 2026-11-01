@@ -62,6 +62,11 @@ Raised by the runs, independent of the configuration:
 - The implementer's scope assertion ("at most a doc line") penalised the new skill for updating two stale docs, which its Doc impact rule asks for.
 - A harness hook blocked subagents from writing `.md` files; five runs returned their output as text, saved by the orchestrator (`old_skill` business review and all three code reviews, the latter condensed).
 
-## Next iteration
+## Decisions after iteration 1
 
-Fix the finish fixture and the implementer scope assertion; add assertions that separate `grilling`/`domain-modeling`, `tdd`, `ponytail-review` and `code-review` from plain instructions; run each configuration three times.
+Taken by the user on 2026-11-02:
+
+1. **Keep all four "not shown" sub-skills** (`grilling` + `domain-modeling`, `tdd`, `ponytail-review`, `code-review`) and do not evaluate them further.
+2. **Fix skill findings 1–3 in PR #20, without rerunning the evals.** `/deliver` now (1) stops for the user on any conflict with the design in every mode, (2) adds `## Acceptance criteria` to the spec, and (3) has the Contract agent read the CLAUDE.md invariants and the ADRs. These fixes are not measured; the results above are for the skill before them.
+
+Findings 4 (`vehicle_action.created_at` from `Clock`) and 5 (spec-time scope creep) stay open. The finish fixture and the implementer scope assertion still need fixing before the next iteration.

@@ -1,0 +1,97 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index ecdce39..0140b1e 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -37,7 +37,7 @@ Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `da
+ 
+ - **Aging is derived, never stored.** Age = `today_local − stocked_on` (a `date` column). No tier flag, no nightly job.
+ - **Time zones are computed only in Postgres** (`now() AT TIME ZONE d.timezone`). Node never does time-zone maths. `now` comes from the injected `Clock` and is passed into SQL as a parameter so tests can pin it.
+-- **`AgingPolicy`** (`inventory/domain/aging-policy.ts`) is pure TS: `tierOf`, `bucketOf`, later `validateThresholds`, `toStockedOnBounds`. Tier/age filters become `stocked_on` bounds before reaching SQL. Tiers: `FRESH` < watch ≤ `WATCH` ≤ aging < `AGING` (defaults 60/90, per dealership). Buckets (0–30, 31–60, 61–90, 90+) are fixed and independent of thresholds.
++- **`AgingPolicy`** (`inventory/domain/aging-policy.ts`) is pure TS: `tierOf`, `bucketOf`, `validateThresholds`, later `toStockedOnBounds`. Tier/age filters become `stocked_on` bounds before reaching SQL. Tiers: `FRESH` < watch ≤ `WATCH` ≤ aging < `AGING` (defaults 60/90, per dealership). Buckets (0–30, 31–60, 61–90, 90+) are fixed and independent of thresholds.
+ - **Race-free writes via conditional SQL, not locks:** status changes are `UPDATE … WHERE status = ANY($allowedFrom)`; action logging is `INSERT … SELECT … WHERE status = 'IN_STOCK'`. 0 rows → re-read: missing → 404, else 409.
+ - **Actions are append-only;** the newest by `id` is current. Never update or delete them.
+ - **Lifecycle:** `IN_STOCK ⇄ RESERVED`, either → `SOLD` (terminal, sets `sold_at`). Same-state transitions are 409.
+diff --git a/apps/api/src/modules/inventory/domain/aging-policy.ts b/apps/api/src/modules/inventory/domain/aging-policy.ts
+index b838b69..3d54a1f 100644
+--- a/apps/api/src/modules/inventory/domain/aging-policy.ts
++++ b/apps/api/src/modules/inventory/domain/aging-policy.ts
+@@ -14,3 +14,23 @@ export const tierOf = (days: number, t: Thresholds): Tier =>
+ // Fixed buckets, independent of the thresholds (D10).
+ export const bucketOf = (days: number): AgeBucket =>
+   days <= 30 ? '0-30' : days <= 60 ? '31-60' : days <= 90 ? '61-90' : '90+';
++
++export type ThresholdsCheck =
++  { ok: true } | { ok: false; code: 'INVALID_THRESHOLDS'; reason: string };
++
++// Mirrors `dealership_thresholds_chk` (1 ≤ watch < aging ≤ 3650) so bad input is a 400, not a DB error (D3).
++export const validateThresholds = (t: Thresholds): ThresholdsCheck => {
++  const reason =
++    !Number.isInteger(t.watch) || !Number.isInteger(t.aging)
++      ? 'watch and aging must be whole numbers of days'
++      : t.watch < 1
++        ? 'watch must be at least 1'
++        : t.watch >= t.aging
++          ? 'watch must be less than aging'
++          : t.aging > 3650
++            ? 'aging must be at most 3650'
++            : undefined;
++  return reason === undefined
++    ? { ok: true }
++    : { ok: false, code: 'INVALID_THRESHOLDS', reason };
++};
+diff --git a/apps/api/test/unit/inventory/aging-policy.spec.ts b/apps/api/test/unit/inventory/aging-policy.spec.ts
+index bd18056..0e07b69 100644
+--- a/apps/api/test/unit/inventory/aging-policy.spec.ts
++++ b/apps/api/test/unit/inventory/aging-policy.spec.ts
+@@ -1,6 +1,7 @@
+ import {
+   bucketOf,
+   tierOf,
++  validateThresholds,
+ } from '../../../src/modules/inventory/domain/aging-policy.js';
+ 
+ describe('tierOf', () => {
+@@ -30,3 +31,30 @@ describe('bucketOf', () => {
+     expect(bucketOf(days)).toBe(bucket);
+   });
+ });
++
++describe('validateThresholds', () => {
++  it.each([
++    [1, 2],
++    [60, 90],
++    [3649, 3650],
++  ])('accepts watch %i, aging %i', (watch, aging) => {
++    expect(validateThresholds({ watch, aging })).toEqual({ ok: true });
++  });
++
++  it.each([
++    [0, 90, 'watch must be at least 1'],
++    [-5, 90, 'watch must be at least 1'],
++    [90, 90, 'watch must be less than aging'],
++    [91, 90, 'watch must be less than aging'],
++    [60, 3651, 'aging must be at most 3650'],
++    [60.5, 90, 'watch and aging must be whole numbers of days'],
++    [60, 90.5, 'watch and aging must be whole numbers of days'],
++    [Number.NaN, 90, 'watch and aging must be whole numbers of days'],
++  ])('rejects watch %d, aging %d: %s', (watch, aging, reason) => {
++    expect(validateThresholds({ watch, aging })).toEqual({
++      ok: false,
++      code: 'INVALID_THRESHOLDS',
++      reason,
++    });
++  });
++});
+diff --git a/docs/system-design.md b/docs/system-design.md
+index b8b6629..0a5910b 100644
+--- a/docs/system-design.md
++++ b/docs/system-design.md
+@@ -87,7 +87,7 @@ WHERE m.user_id = $userId AND m.dealership_id = $dealershipId;   -- 0 rows ⇒ 4
+ - `stocked_on` is a `date`. Age is `today_local − stocked_on`, in calendar days in the dealership's time zone, so a tier flips at the dealership's midnight and DST can't shift the count.
+ - **Time zones are computed only in Postgres** with `AT TIME ZONE` ([docs](https://www.postgresql.org/docs/current/functions-datetime.html#FUNCTIONS-DATETIME-ZONECONVERT)). Node never does time-zone maths, so there is a single tzdata source.
+ - **`now` comes from an injected `Clock`** and is passed to SQL as `$now`. Tests pin it (e.g. 23:30 vs 00:30 New York time) to prove the day boundary.
+-- **`AgingPolicy`** (pure TypeScript) owns `tierOf` (`FRESH` < watch ≤ `WATCH` ≤ aging < `AGING`), `bucketOf` (fixed 0–30, 31–60, 61–90, 90+) and `toStockedOnBounds`. Tier and age filters become `stocked_on` bounds before they reach SQL, so `?tier=AGING` is an indexed range scan on `(dealership_id, status, stocked_on)`, not a computed-column filter.
++- **`AgingPolicy`** (pure TypeScript) owns `tierOf` (`FRESH` < watch ≤ `WATCH` ≤ aging < `AGING`), `bucketOf` (fixed 0–30, 31–60, 61–90, 90+), `validateThresholds` (`1 ≤ watch < aging ≤ 3650`, the same rule as `dealership_thresholds_chk`) and `toStockedOnBounds`. Tier and age filters become `stocked_on` bounds before they reach SQL, so `?tier=AGING` is an indexed range scan on `(dealership_id, status, stocked_on)`, not a computed-column filter.
+ - There is no tier flag and no nightly job: a vehicle becomes aging because a day passes, with no write (§6.4 rejects the stored flag).
+ 
+ ### 3.3 Dashboard read (D10–D12)

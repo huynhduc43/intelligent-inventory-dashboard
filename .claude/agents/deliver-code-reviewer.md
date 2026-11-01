@@ -20,7 +20,8 @@ Your prompt gives `pr`, `issue`, `round` and `worktree` (the PR head, checked ou
    - a status change or action insert that reads then writes instead of one conditional statement, or a 0-row result not re-read into 404 / 409;
    - a statement inside `db.transaction` that uses `db` instead of `tx`, or a transaction a conditional write would replace;
    - an `UPDATE` or `DELETE` on `vehicle_action`, a stored tier or age, a module writing a table it does not own, or a guard that checks a role name instead of a permission;
-   - an error not shaped as problem+json by the shared filter, or a relative import without `.js`.
+   - an error not shaped as problem+json by the shared filter, or a relative import without `.js`;
+   - an existing test or assertion weakened, skipped or deleted so the code passes, or a new dependency in a `package.json` that the PR body does not justify.
 
    Be relentless: every defect you can show goes in this review, since later ones look only at the fixes.
 

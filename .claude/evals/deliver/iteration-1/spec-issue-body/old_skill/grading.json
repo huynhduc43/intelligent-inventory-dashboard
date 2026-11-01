@@ -1,0 +1,90 @@
+{
+  "expectations": [
+    {
+      "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+      "passed": true,
+      "evidence": "The six grill decisions are copied verbatim under 'Settled by the grill:', and the added 7-11 sit apart under 'Added while writing the PRD'."
+    },
+    {
+      "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+      "passed": true,
+      "evidence": "'## Diagrams' with a placeholder."
+    },
+    {
+      "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+      "passed": true,
+      "evidence": "Cites 'D4 \u2026 extended by ADR 0005', D5, and \u00a74.2/\u00a74.3/\u00a74.6/\u00a74.7/\u00a74.8/\u00a74.15/\u00a74.16."
+    },
+    {
+      "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+      "passed": true,
+      "evidence": "'Clock pinned at +14:59 and +15:00 \u2192 201; at +15:01 \u2192 409', another manager/admin \u2192 403 NOT_ACTION_AUTHOR, non-member \u2192 404, RESERVED/SOLD \u2192 409, all integration."
+    },
+    {
+      "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+      "passed": true,
+      "evidence": "24 numbered stories in the right form, though 23-24 are developer stories about implementation."
+    },
+    {
+      "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+      "passed": true,
+      "evidence": "'One seam: the HTTP API, in integration tests against Testcontainers Postgres, with the Clock provider overridden \u2026 no new pure domain/ function', with prior-art health.spec.ts/db.spec.ts."
+    },
+    {
+      "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+      "passed": true,
+      "evidence": "'## Out of Scope' has 6 items, including type change, delete, correcting after 15 minutes, configurable window and a diff view."
+    },
+    {
+      "text": "labels.txt includes `ready-for-agent`.",
+      "passed": true,
+      "evidence": "labels.txt contains 'ready-for-agent'."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 187.1,
+    "total_tokens": 82996
+  },
+  "claims": [
+    {
+      "claim": "schema.ts labels the append-only rule D19, but the architecture doc puts it under D4",
+      "type": "factual",
+      "verified": true,
+      "evidence": "schema.ts line 141: '// Append-only (D19): rows are never updated or deleted'."
+    },
+    {
+      "claim": "Known READ COMMITTED race on the supersession check is documented, not solved",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Further Notes states the limit and asks for a shortcut: comment, which matches the CLAUDE.md convention."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Title style unverified (no remote)"
+    ],
+    "needs_review": [
+      "Decisions 7-11 need confirming at the gate"
+    ],
+    "workarounds": [
+      "Seams check with the user replaced by the recommendation"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "Added decisions 7-11 and labelled them clearly. 7 (supersession) and 10 (precedence) are strengths, and 8 (root pointer) is reasonable. 11 is scope creep: it changes the existing POST /actions to write created_at from Clock, touching another feature. Story 3 ('add a note to an action logged without one') and the P3 'two corrections together \u2192 both 201' test also go beyond the typo-fix requirement."
+      },
+      {
+        "reason": "Like with_skill, it has no `## Acceptance criteria` section even though the tester and code reviewer agents read one. It also has a separate Implementation Decisions section next to `## Decisions`, which splits decisions across two places."
+      }
+    ],
+    "overall": "Solid and complete. It keeps the grill decisions verbatim and apart from added ones, which is cleaner than with_skill. Slightly more scope growth outside the feature."
+  }
+}

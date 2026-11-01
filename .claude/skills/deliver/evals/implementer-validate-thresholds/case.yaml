@@ -1,0 +1,6 @@
+schema_version: '1.1'
+name: implementer-validate-thresholds
+expected_outcome: |
+  validateThresholds is added as a pure function next to tierOf/bucketOf, written test-first with boundary tests for every criterion, unit tests and coverage pass at 100% on domain, only the domain file and its test change, and the PR body maps each criterion to its test and lists Doc impact.
+context:
+  scaffold_script: place-files.sh

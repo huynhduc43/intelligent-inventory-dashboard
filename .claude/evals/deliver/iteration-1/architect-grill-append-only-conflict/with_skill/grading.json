@@ -1,0 +1,84 @@
+{
+  "expectations": [
+    {
+      "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+      "passed": true,
+      "evidence": "Q1: 'The requirement contradicts D4 and the append-only invariant... CLAUDE.md says \"Never update or delete them\"... this is a conflict with the baseline'."
+    },
+    {
+      "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+      "passed": true,
+      "evidence": "It plans an in-place UPDATE (Q1 A, Q10), but Q1 states 'per the skill a decision for the user, recorded as an ADR that supersedes D4', and user_notes says it would flag it to the user even in auto mode. The flag sits inside Q1's body, not at the top of the file."
+    },
+    {
+      "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+      "passed": true,
+      "evidence": "Q6: '`now` is the injected `Clock`'s instant passed into SQL as a parameter, compared in the conditional `UPDATE`: `created_at >= $now - interval '15 minutes'`'. Q12 also sets created_at from Clock."
+    },
+    {
+      "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+      "passed": true,
+      "evidence": "Covers three: non-member 404 (Q9), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q10), author only (Q4). It explicitly decides that IN_STOCK is not required (Q7)."
+    },
+    {
+      "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+      "passed": true,
+      "evidence": "New docs/adr/0005-author-may-correct-action-note-for-15-minutes.md, confirmed in the sandbox. It has a context+decision paragraph, Considered options (why) and Consequences, and is listed in README with 'D4 (in part)'."
+    },
+    {
+      "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+      "passed": true,
+      "evidence": "A whitespace-insensitive word diff in the sandbox shows the only content change is D4's '_Superseded in part by [ADR-0005](...)_'. The other 26 changed lines are Prettier re-padding the table."
+    },
+    {
+      "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+      "passed": true,
+      "evidence": "New GLOSSARY.md (untracked in the sandbox) defines Action, Current action, Note, Author, Note correction and Correction window, each with _Avoid_ terms."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "D4 is marked superseded in part in backend-architecture.md, the only edit the frozen doc allows",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The sandbox word diff shows only the D4 superseded mark. Whole-table re-padding inflates the line diff to 42 lines."
+    },
+    {
+      "claim": "No schema change or migration is needed",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Q13 picks 'no edited marker', so no column is added. Consistent with the ADR's Consequences."
+    },
+    {
+      "claim": "Subtracting minute-only intervals from timestamptz is independent of the session time zone",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Matches documented Postgres behaviour (only day/month units depend on the TZ). user_notes admits it was not run against Postgres."
+    },
+    {
+      "claim": "The CLAUDE.md invariant now contradicts ADR-0005 until the implementing PR",
+      "type": "process",
+      "verified": true,
+      "evidence": "user_notes and Q17 both say this; CLAUDE.md is unchanged in the sandbox."
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "decisions.md either resolves the requirement without an UPDATE or DELETE ... or explicitly marks changing D4 as a decision for the user",
+        "reason": "All three runs chose an in-place UPDATE and passed through the 'marks it as a decision for the user' clause. The assertion doesn't tell them apart. Consider requiring the flag to be prominent (top of file, or a 'confirm at gate' marker), or checking that the strict append-only option was offered and its rejection reasoned."
+      },
+      {
+        "assertion": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded",
+        "reason": "A run that makes no repo changes at all (old_skill) passes this trivially, even though its plan (Q17) is to rewrite the frozen doc in the PR. Consider also checking that decisions.md doesn't plan edits to the frozen doc's body."
+      }
+    ],
+    "overall": "Strong run on substance. The assertions are mostly discriminating (ADR and glossary separate the configs), but assertions 2 and 6 can be passed by a vacuous or escape-hatch reading."
+  }
+}

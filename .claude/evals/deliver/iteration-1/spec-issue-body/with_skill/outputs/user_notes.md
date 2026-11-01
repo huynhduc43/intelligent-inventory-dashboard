@@ -1,0 +1,11 @@
+# User notes
+
+- **Seams check (to-spec step 2) not put to the user.** As instructed, I took my recommendation: one seam, HTTP via Supertest against Testcontainers Postgres with a pinned `Clock`. There are no unit rows, because every rule sits in the one conditional `INSERT` and its re-read.
+- **Spec-time decisions 7–13 go beyond the grill output.** Each one is marked _(spec)_ in `## Decisions` with its reason, so the gate can overrule it. The most consequential is **7, `ACTION_SUPERSEDED`**: without it, a correction (as the newest row) would replace a colleague's later action as the current one, which conflicts with P3. The alternative was to change the "current action" query to ignore correction rows, which touches the list and dashboard reads; I rejected it as the bigger change.
+- **Decision 8: a correction's id as `{a}` → 404.** The alternative is to resolve it to its original. Both are about the same size; I chose 404 so that the path reads as "corrections of an original".
+- **Decision 12 assumes build step 5 sets `vehicle_action.created_at` from `Clock`.** The column currently defaults to `now()`. If step 5 keeps the default, the window test cannot be pinned. Flagged in the spec.
+- **ADR-0005 is cited but not present** in the sandbox (`docs/adr/` has 0001–0004). It belongs to role 2 step 1 (the grill), which this run skipped, so I did not write it.
+- **`GLOSSARY.md` does not exist.** _Correction_ is listed under doc impact for the grill or PR to add; I did not create it.
+- **No `gh` reads were possible** (the sandbox has no remote), so the title style and label set could not be checked against existing issues. The label follows to-spec plus `docs/agents/triage-labels.md`: `ready-for-agent` only.
+- **Skipped per the task:** diagrams (role 2 step 2), publishing the issue, the `gh issue edit` for image lines, slices, and the gate. The Contract role (3) would run next, because this adds an endpoint and a column.
+- **Departed from to-spec on "no file paths":** Testing Decisions names the prior-art test files and helper (`health.spec.ts`, `db.spec.ts`, `startMigratedPostgres`), as the template's "prior art" item invites. Decisions name tables and columns but no source paths.

@@ -1,0 +1,104 @@
+{
+  "expectations": [
+    {
+      "text": "findings.md flags that a non-member gets 403 (ForbiddenException in the controller) where the spec and D16 require 404.",
+      "passed": true,
+      "evidence": "F2 (Spec \u00b7 blocker, actions.controller.ts:19) quotes the ForbiddenException check, says it 'returns 403 to non-members', and cites criterion 3 and D16 ('Non-members get 404, not 403')."
+    },
+    {
+      "text": "findings.md flags the 409 code `NOT_IN_STOCK` as differing from the contract's `VEHICLE_NOT_IN_STOCK`.",
+      "passed": true,
+      "evidence": "F4: 'The chosen contract's 409 code is `VEHICLE_NOT_IN_STOCK`. The service throws `ConflictException({ code: 'NOT_IN_STOCK' })`'."
+    },
+    {
+      "text": "findings.md flags that actions are allowed on RESERVED vehicles, contradicting D5 and the acceptance criteria, as a spec deviation not recorded in Decisions or an Amended comment.",
+      "passed": true,
+      "evidence": "F1 Gap: RESERVED gets 201 via `IN ('IN_STOCK', 'RESERVED')`, and 'neither `## Decisions` nor any `Amended:` comment records this change'. Source cites criterion 2 and D5."
+    },
+    {
+      "text": "For the RESERVED finding, findings.md says that recording the change instead of building the spec needs a new ADR superseding D5 in this PR (not an edit to backend-architecture.md).",
+      "passed": true,
+      "evidence": "F1 Fix: 'If RESERVED vehicles really should take actions, record it as a decision on #11 and add an ADR in this PR that supersedes D5'. It does not mention editing backend-architecture.md."
+    },
+    {
+      "text": "findings.md flags the new required ACTION_NOTE_MAX_LENGTH variable as missing from docs/environment-setup.md and the PR's Manual steps (and/or as contradicting Decision 3, no new configuration).",
+      "passed": true,
+      "evidence": "F3 says the var is required with no default, contradicts Decision 3 ('No new configuration'), and 'appears neither in `docs/environment-setup.md` nor under the PR's **Manual steps**'."
+    },
+    {
+      "text": "findings.md flags that the PR has no Doc impact section and/or that docs/system-design.md (which says RESERVED and SOLD get 409) no longer matches the change.",
+      "passed": true,
+      "evidence": "F9: 'The body has no **Doc impact** section'. It satisfies the first branch. It argues system-design \u00a72.1/\u00a73.4 need no change once F1/F4 are fixed, so it does not raise the system-design mismatch."
+    },
+    {
+      "text": "findings.md does not report the dealership-scoped list() query as a defect.",
+      "passed": true,
+      "evidence": "No finding claims list() lacks dealership scoping. F7 flags list() only for returning 200 [] instead of the contract's 404 on a missing vehicle, which is a separate, defensible contract point."
+    },
+    {
+      "text": "Every finding in findings.md has the agent's format: a `[business-review r1] <Spec | Standards> \u00b7 <severity>` header and Gap, Source and Fix lines.",
+      "passed": true,
+      "evidence": "All 9 findings (F1\u2013F9) open with e.g. '[business-review r1] Spec \u00b7 blocker' or 'Standards \u00b7 major' and have Gap, Source and Fix lines. Inline ones also have Sites."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "The agent invoked mattpocock-skills:code-review and ran the Standards and Spec axes itself, without sub-agents",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript step 5 describes this. It is self-reported, and no raw tool log is available."
+    },
+    {
+      "claim": "PR body has no Doc impact section, and Deviations and Manual steps say None",
+      "type": "factual",
+      "verified": true,
+      "evidence": "pr-body.md has only Summary, Evidence, Deviations: None, Manual steps: None."
+    },
+    {
+      "claim": "actions.spec.ts cited in Evidence exists neither in the PR nor on origin/dev",
+      "type": "factual",
+      "verified": true,
+      "evidence": "pr.diff adds no test file. The origin/dev part is from the transcript and I did not check it."
+    },
+    {
+      "claim": "Inline line numbers are accurate",
+      "type": "factual",
+      "verified": false,
+      "evidence": "user_notes concedes that the service hunk elides imports, so the line numbers may be offset."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Line numbers in actions.service.ts may be offset by elided imports",
+      "config.ts hunk context does not match origin/dev"
+    ],
+    "needs_review": [
+      "Missing auth module, ACTION_TYPES and ActionsModule wiring were not raised"
+    ],
+    "workarounds": [
+      "pr.diff used in place of git diff origin/dev...HEAD"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "findings.md flags that the PR has no Doc impact section and/or that docs/system-design.md ... no longer matches the change.",
+        "reason": "The and/or lets a run pass on the Doc impact half alone. This run actually argued that system-design.md needs no change, so the planted system-design mismatch is never tested. Split it into two assertions if both matter."
+      },
+      {
+        "assertion": "findings.md does not report the dealership-scoped list() query as a defect.",
+        "reason": "This is ambiguous. All runs flag list() for a missing 404 (a legitimate contract point), not for tenancy. Reword it to 'does not claim list() lacks dealership scoping / is a tenancy leak'."
+      },
+      {
+        "reason": "No assertion tells with_skill apart from no_subskills: both score 8/8 with nearly identical findings. If the code-review sub-skill is meant to add value, assert something only it produces (e.g. a Standards finding from its smell baseline, or a side-by-side axes structure)."
+      }
+    ],
+    "overall": "with_skill catches every planted gap. The assertions separate the old skill on ADR and Doc impact but do not test the code-review sub-skill."
+  }
+}

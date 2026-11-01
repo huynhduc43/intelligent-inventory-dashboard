@@ -1,0 +1,6 @@
+schema_version: '1.1'
+name: code-review-planted-defects
+expected_outcome: |
+  The reviewer finds every planted defect, each with its site and a concrete failure: list() without dealership_id, the re-read using db instead of tx inside the transaction, time-zone maths in Node via date-fns-tz instead of Postgres, the weakened 409 test, and the unjustified new dependency; it does not flag the correct conditional INSERT, and returns open.
+context:
+  scaffold_script: place-files.sh

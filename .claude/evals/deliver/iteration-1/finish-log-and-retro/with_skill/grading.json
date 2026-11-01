@@ -1,0 +1,113 @@
+{
+  "expectations": [
+    {
+      "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+      "passed": false,
+      "evidence": "The diff replaces the existing #17 row (`-| [#17]` / `+| [#17]`), changing it to '1 fix round (reviews r1, r2) ... 2 via test only'. It does not add a row. The fixture made adding one impossible without creating a duplicate."
+    },
+    {
+      "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+      "passed": false,
+      "evidence": "No new case. The diff edits only the AI proposal and Decided by lines of the existing C3. All six fields appear in C3, but only as unchanged context."
+    },
+    {
+      "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+      "passed": true,
+      "evidence": "Graded on the edited entries, since none were added. C3, C4 and C5 now read 'agent (approve=auto)' plus the reviewer finding, and the #17 row reads 'None: decisions (`grill=auto`), contract choices and fixes (`approve=auto`) were the agent's'. Nothing is attributed to the user."
+    },
+    {
+      "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+      "passed": true,
+      "evidence": "retro.md says 'Candidates, most severe first' and lists 1-2 major, 3 moderate, 4-5 minor, then a question for the user. Each candidate has a concrete diff against SKILL.md, eslint.config.mjs, deliver-tester.md, CONTRIBUTING.md or deliver-implementer.md."
+    },
+    {
+      "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+      "passed": true,
+      "evidence": "Candidate 2 proposes an ESLint `no-restricted-syntax` rule with selector `CallExpression[callee.property.name=/^\\$onUpdate(Fn)?$/]`, and explains that a fixed syntactic pattern belongs in a lint rule rather than reviewer prose."
+    },
+    {
+      "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+      "passed": true,
+      "evidence": "retro.md candidate 6: 'The late ADRs are already fixed: since #20 the Architect writes ADRs on the branch while grilling.' It names the late ADRs (0001-0004) as a gap and correctly notes it is already fixed, though it never cites #19 explicitly. This is a borderline pass."
+    },
+    {
+      "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+      "passed": true,
+      "evidence": "The diff touches only docs/ai-collaboration.md. retro.md says 'None of these candidates is applied. Each needs the user's go', and report.md says 'ch\u01b0a \u00e1p d\u1ee5ng c\u00e1i n\u00e0o, c\u1ea7n b\u1ea1n \u0111\u1ed3ng \u00fd'."
+    },
+    {
+      "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+      "passed": true,
+      "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng s\u1eeda' and Tester 'pass' (6 criteria, 2 via test). It reports the log status accurately ('Kh\u00f4ng th\u00eam case m\u1edbi', C3-C5 corrected) and lists the 5 retro candidates plus question 6."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 2,
+    "total": 8,
+    "pass_rate": 0.75
+  },
+  "timing": {
+    "executor_duration_seconds": 277.5,
+    "total_duration_seconds": 277.5
+  },
+  "claims": [
+    {
+      "claim": "The #17 row and C3-C5 already existed in the sandbox log, so adding entries would duplicate them.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The diff context shows the pre-existing #17 row and the C3/C4/C5 headings, which matches the fixture flaw the grader was told about."
+    },
+    {
+      "claim": "The $onUpdate defect entered at the Contract (role 3), not the implementer.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The record says 'The contract asked for an application-set `updated_at` via Drizzle `$onUpdate`' and was 'Chosen ... rest as drafted'. The C3 correction is accurate."
+    },
+    {
+      "claim": "Pushing to the PR branch cannot apply because #17 is merged; a separate docs/ PR is needed.",
+      "type": "quality",
+      "verified": true,
+      "evidence": "The record says PR #17 merged 2026-11-01. github-actions-not-run.md shows the alternative commands, and none were run."
+    },
+    {
+      "claim": "Followed the retro skill and confirmed each quoted 'before' line exists verbatim.",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript step 5 shows retro/SKILL.md 1.3.1 read, writing-for-agents invoked, and grep counts of 1 for each quoted line."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Departed on purpose from 'add an entry' to a correction pass because entries already existed",
+      "Navigation and tool economy not assessed (no tool-call log in the record)"
+    ],
+    "needs_review": [
+      "The log correction needs its own docs/ PR because #17 is merged"
+    ],
+    "workarounds": [
+      "report.md written via heredoc because a hook blocked Write",
+      "prettier not run; table padded by hand"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+        "reason": "The fixture already had the #17 row, so this assertion could not be met without creating a duplicate. The run's choice to correct the row instead was right. Remove the #17 row and C3-C5 from the sandbox before the run, or reword the assertion to 'the log ends with exactly one accurate #17 row'."
+      },
+      {
+        "assertion": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+        "reason": "The same fixture flaw makes this impossible. The run corrected C3's AI proposal (the contract, not the implementer, introduced $onUpdate), which is a substantive, record-backed fix. With a clean fixture, this assertion would discriminate."
+      },
+      {
+        "assertion": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+        "reason": "The sandbox already contains #20 (ADRs during grilling), so the correct answer is 'gap already fixed'. Say whether that answer passes. As written, a run that correctly declines to re-propose the fix is graded ambiguously."
+      },
+      {
+        "reason": "No assertion checks that the run avoided duplicating existing entries or that its corrections are faithful to the record. Both runs on the new skill did this well, and nothing rewards it."
+      }
+    ],
+    "overall": "The two 'adds' assertions fail only because of the fixture. Under the fixture, the behaviour was correct: no duplicates, accurate corrections, attribution fixed to agent (approve=auto). The retro is strong: severity-ranked, concrete diffs, a real lint rule, nothing applied."
+  }
+}

@@ -1,0 +1,17 @@
+$ turbo run lint
+
+   • turbo 2.11.10
+   • Packages in scope: @inventory/api
+   • Running lint in 1 package
+   • Remote caching disabled
+
+@inventory/api:lint: cache miss, executing a5e171ace06ee682
+@inventory/api:lint: 
+@inventory/api:lint: > @inventory/api@0.0.1 lint /private/tmp/claude-501/-Users-duc-personal-projects-intelligent-inventory-dashboard/a9a417b3-0a14-482f-ba8f-1a07b3fc026b/scratchpad/sb/implementer-validate-thresholds/old_skill/apps/api
+@inventory/api:lint: > eslint . --max-warnings=0
+@inventory/api:lint: 
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    2.726s 
+

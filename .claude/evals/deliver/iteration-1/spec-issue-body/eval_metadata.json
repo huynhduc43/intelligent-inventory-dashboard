@@ -1,0 +1,14 @@
+{
+  "eval_name": "spec-issue-body",
+  "prompt": "Run only role 2 step 3 (Spec) of /deliver for this requirement, using the decisions in the input file `decisions.md` as the settled grill output. Skip the diagram and publishing parts (no diagrams exist yet; keep the `## Diagrams` placeholder).\n\nRequirement: \"Managers sometimes log an action with a typo in its note. Let the manager who logged an action fix its note within 15 minutes of logging it.\"\n\nWrite the issue title to `title.txt`, the issue body exactly as you would post it to `spec.md`, and the labels you would apply (one per line) to `labels.txt`, all in the outputs folder.\n\nDry run: this is an evaluation. Work only inside the sandbox repo you are given. Never run a `gh` or `git` command that writes to GitHub or a remote (issue/PR create, edit or comment, review, label, push), and never commit outside the sandbox. Write anything you would have posted to GitHub as a file in the outputs folder instead, named as the prompt says.\n\nInput files: decisions.md",
+  "assertions": [
+    "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+    "spec.md has a `## Diagrams` section (placeholder is fine).",
+    "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+    "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+    "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+    "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+    "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+    "labels.txt includes `ready-for-agent`."
+  ]
+}

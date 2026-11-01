@@ -1,0 +1,1183 @@
+{
+  "metadata": {
+    "skill_name": "deliver",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-11-01T15:50:27Z",
+    "evals_run": [
+      "architect-grill-append-only-conflict",
+      "business-review-planted-gaps",
+      "code-review-planted-defects",
+      "finish-log-and-retro",
+      "implementer-validate-thresholds",
+      "spec-issue-body"
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": "architect-grill-append-only-conflict",
+      "eval_name": "architect-grill-append-only-conflict",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 243.4,
+        "tokens": 99332,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+          "passed": true,
+          "evidence": "Q1: 'The requirement contradicts D4 and the append-only invariant... CLAUDE.md says \"Never update or delete them\"... this is a conflict with the baseline'."
+        },
+        {
+          "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+          "passed": true,
+          "evidence": "It plans an in-place UPDATE (Q1 A, Q10), but Q1 states 'per the skill a decision for the user, recorded as an ADR that supersedes D4', and user_notes says it would flag it to the user even in auto mode. The flag sits inside Q1's body, not at the top of the file."
+        },
+        {
+          "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+          "passed": true,
+          "evidence": "Q6: '`now` is the injected `Clock`'s instant passed into SQL as a parameter, compared in the conditional `UPDATE`: `created_at >= $now - interval '15 minutes'`'. Q12 also sets created_at from Clock."
+        },
+        {
+          "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+          "passed": true,
+          "evidence": "Covers three: non-member 404 (Q9), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q10), author only (Q4). It explicitly decides that IN_STOCK is not required (Q7)."
+        },
+        {
+          "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+          "passed": true,
+          "evidence": "New docs/adr/0005-author-may-correct-action-note-for-15-minutes.md, confirmed in the sandbox. It has a context+decision paragraph, Considered options (why) and Consequences, and is listed in README with 'D4 (in part)'."
+        },
+        {
+          "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+          "passed": true,
+          "evidence": "A whitespace-insensitive word diff in the sandbox shows the only content change is D4's '_Superseded in part by [ADR-0005](...)_'. The other 26 changed lines are Prettier re-padding the table."
+        },
+        {
+          "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+          "passed": true,
+          "evidence": "New GLOSSARY.md (untracked in the sandbox) defines Action, Current action, Note, Author, Note correction and Correction window, each with _Avoid_ terms."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "business-review-planted-gaps",
+      "eval_name": "business-review-planted-gaps",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 197.4,
+        "tokens": 92678,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that a non-member gets 403 (ForbiddenException in the controller) where the spec and D16 require 404.",
+          "passed": true,
+          "evidence": "F2 (Spec \u00b7 blocker, actions.controller.ts:19) quotes the ForbiddenException check, says it 'returns 403 to non-members', and cites criterion 3 and D16 ('Non-members get 404, not 403')."
+        },
+        {
+          "text": "findings.md flags the 409 code `NOT_IN_STOCK` as differing from the contract's `VEHICLE_NOT_IN_STOCK`.",
+          "passed": true,
+          "evidence": "F4: 'The chosen contract's 409 code is `VEHICLE_NOT_IN_STOCK`. The service throws `ConflictException({ code: 'NOT_IN_STOCK' })`'."
+        },
+        {
+          "text": "findings.md flags that actions are allowed on RESERVED vehicles, contradicting D5 and the acceptance criteria, as a spec deviation not recorded in Decisions or an Amended comment.",
+          "passed": true,
+          "evidence": "F1 Gap: RESERVED gets 201 via `IN ('IN_STOCK', 'RESERVED')`, and 'neither `## Decisions` nor any `Amended:` comment records this change'. Source cites criterion 2 and D5."
+        },
+        {
+          "text": "For the RESERVED finding, findings.md says that recording the change instead of building the spec needs a new ADR superseding D5 in this PR (not an edit to backend-architecture.md).",
+          "passed": true,
+          "evidence": "F1 Fix: 'If RESERVED vehicles really should take actions, record it as a decision on #11 and add an ADR in this PR that supersedes D5'. It does not mention editing backend-architecture.md."
+        },
+        {
+          "text": "findings.md flags the new required ACTION_NOTE_MAX_LENGTH variable as missing from docs/environment-setup.md and the PR's Manual steps (and/or as contradicting Decision 3, no new configuration).",
+          "passed": true,
+          "evidence": "F3 says the var is required with no default, contradicts Decision 3 ('No new configuration'), and 'appears neither in `docs/environment-setup.md` nor under the PR's **Manual steps**'."
+        },
+        {
+          "text": "findings.md flags that the PR has no Doc impact section and/or that docs/system-design.md (which says RESERVED and SOLD get 409) no longer matches the change.",
+          "passed": true,
+          "evidence": "F9: 'The body has no **Doc impact** section'. It satisfies the first branch. It argues system-design \u00a72.1/\u00a73.4 need no change once F1/F4 are fixed, so it does not raise the system-design mismatch."
+        },
+        {
+          "text": "findings.md does not report the dealership-scoped list() query as a defect.",
+          "passed": true,
+          "evidence": "No finding claims list() lacks dealership scoping. F7 flags list() only for returning 200 [] instead of the contract's 404 on a missing vehicle, which is a separate, defensible contract point."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[business-review r1] <Spec | Standards> \u00b7 <severity>` header and Gap, Source and Fix lines.",
+          "passed": true,
+          "evidence": "All 9 findings (F1\u2013F9) open with e.g. '[business-review r1] Spec \u00b7 blocker' or 'Standards \u00b7 major' and have Gap, Source and Fix lines. Inline ones also have Sites."
+        }
+      ],
+      "notes": [
+        "Line numbers in actions.service.ts may be offset by elided imports",
+        "config.ts hunk context does not match origin/dev",
+        "Missing auth module, ACTION_TYPES and ActionsModule wiring were not raised",
+        "pr.diff used in place of git diff origin/dev...HEAD"
+      ]
+    },
+    {
+      "eval_id": "code-review-planted-defects",
+      "eval_name": "code-review-planted-defects",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 203.8,
+        "tokens": 79272,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that list() queries vehicle_action without filtering on dealership_id (tenancy leak), citing actions.service.ts.",
+          "passed": true,
+          "evidence": "Comment 1: list filters only on vehicleAction.vehicleId; ctx.dealershipId never used (actions.service.ts:21)."
+        },
+        {
+          "text": "findings.md flags the re-read inside db.transaction that uses this.db instead of tx.",
+          "passed": true,
+          "evidence": "Comment 3: the re-read inside db.transaction uses this.db instead of tx."
+        },
+        {
+          "text": "findings.md flags computing today/daysInStock in Node with date-fns-tz instead of in Postgres (time zones only in Postgres).",
+          "passed": true,
+          "evidence": "Comment 2: formatInTimeZone/differenceInCalendarDays in Node against 'time zones only in Postgres' and decision 2."
+        },
+        {
+          "text": "findings.md flags that the existing 'rejects a sold vehicle' test was weakened (409 and VEHICLE_NOT_IN_STOCK assertions replaced by >= 400).",
+          "passed": true,
+          "evidence": "Comment 5: the PR replaced toBe(409), the problem+json check and the code check with toBeGreaterThanOrEqual(400)."
+        },
+        {
+          "text": "findings.md flags the new date-fns-tz dependency (and the undeclared date-fns import) as unjustified by the PR body.",
+          "passed": true,
+          "evidence": "Comment 2: 'The PR body says Deviations: None and gives no reason for the new date-fns-tz dependency'; date-fns undeclared."
+        },
+        {
+          "text": "findings.md does not report the conditional INSERT ... SELECT ... WHERE status = 'IN_STOCK' as a defect.",
+          "passed": true,
+          "evidence": "No comment calls the conditional INSERT ... WHERE status='IN_STOCK' wrong; Comment 3 says it 'is already atomic'. Comment 4 only targets the RETURNING * response shape."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[code-review r1] <severity>` header and Sites, Failure, Why and Fix lines.",
+          "passed": true,
+          "evidence": "All 7 comments carry [code-review r1] <severity>, Sites, Failure, Why, Fix."
+        },
+        {
+          "text": "report.md returns `open` (not `clean`).",
+          "passed": true,
+          "evidence": "report.md starts with 'open'."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "finish-log-and-retro",
+      "eval_name": "finish-log-and-retro",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 6,
+        "failed": 2,
+        "total": 8,
+        "time_seconds": 277.5,
+        "tokens": 99977,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+          "passed": false,
+          "evidence": "The diff replaces the existing #17 row (`-| [#17]` / `+| [#17]`), changing it to '1 fix round (reviews r1, r2) ... 2 via test only'. It does not add a row. The fixture made adding one impossible without creating a duplicate."
+        },
+        {
+          "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+          "passed": false,
+          "evidence": "No new case. The diff edits only the AI proposal and Decided by lines of the existing C3. All six fields appear in C3, but only as unchanged context."
+        },
+        {
+          "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+          "passed": true,
+          "evidence": "Graded on the edited entries, since none were added. C3, C4 and C5 now read 'agent (approve=auto)' plus the reviewer finding, and the #17 row reads 'None: decisions (`grill=auto`), contract choices and fixes (`approve=auto`) were the agent's'. Nothing is attributed to the user."
+        },
+        {
+          "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+          "passed": true,
+          "evidence": "retro.md says 'Candidates, most severe first' and lists 1-2 major, 3 moderate, 4-5 minor, then a question for the user. Each candidate has a concrete diff against SKILL.md, eslint.config.mjs, deliver-tester.md, CONTRIBUTING.md or deliver-implementer.md."
+        },
+        {
+          "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+          "passed": true,
+          "evidence": "Candidate 2 proposes an ESLint `no-restricted-syntax` rule with selector `CallExpression[callee.property.name=/^\\$onUpdate(Fn)?$/]`, and explains that a fixed syntactic pattern belongs in a lint rule rather than reviewer prose."
+        },
+        {
+          "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+          "passed": true,
+          "evidence": "retro.md candidate 6: 'The late ADRs are already fixed: since #20 the Architect writes ADRs on the branch while grilling.' It names the late ADRs (0001-0004) as a gap and correctly notes it is already fixed, though it never cites #19 explicitly. This is a borderline pass."
+        },
+        {
+          "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+          "passed": true,
+          "evidence": "The diff touches only docs/ai-collaboration.md. retro.md says 'None of these candidates is applied. Each needs the user's go', and report.md says 'ch\u01b0a \u00e1p d\u1ee5ng c\u00e1i n\u00e0o, c\u1ea7n b\u1ea1n \u0111\u1ed3ng \u00fd'."
+        },
+        {
+          "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+          "passed": true,
+          "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng s\u1eeda' and Tester 'pass' (6 criteria, 2 via test). It reports the log status accurately ('Kh\u00f4ng th\u00eam case m\u1edbi', C3-C5 corrected) and lists the 5 retro candidates plus question 6."
+        }
+      ],
+      "notes": [
+        "Departed on purpose from 'add an entry' to a correction pass because entries already existed",
+        "Navigation and tool economy not assessed (no tool-call log in the record)",
+        "The log correction needs its own docs/ PR because #17 is merged",
+        "report.md written via heredoc because a hook blocked Write",
+        "prettier not run; table padded by hand"
+      ]
+    },
+    {
+      "eval_id": "implementer-validate-thresholds",
+      "eval_name": "implementer-validate-thresholds",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 194.2,
+        "tokens": 77920,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "changes.diff adds an exported `validateThresholds` in src/modules/inventory/domain/aging-policy.ts that returns `{ ok: true }` or `{ ok: false, code: 'INVALID_THRESHOLDS', reason }` and does no I/O.",
+          "passed": true,
+          "evidence": "The diff adds `export const validateThresholds = (t: Thresholds): ThresholdsCheck` with the union type `{ ok: true } | { ok: false; code: 'INVALID_THRESHOLDS'; reason: string }`. It is a pure ternary chain with no imports or I/O."
+        },
+        {
+          "text": "changes.diff adds unit tests covering (1,2), (60,90), (3649,3650) as valid and watch=0, watch=aging, aging=3651 and a non-integer as invalid.",
+          "passed": true,
+          "evidence": "The accepts it.each covers [1,2], [60,90] and [3649,3650]. The rejects it.each covers [0,90], [90,90], [60,3651], [60.5,90], [60,90.5] and NaN, plus -5 and 91."
+        },
+        {
+          "text": "The transcript or commands.md shows the new tests run and failing (red) before validateThresholds was implemented.",
+          "passed": true,
+          "evidence": "commands.md \u00a71 shows `TypeError: validateThresholds is not a function`, 3 failed of 15. \u00a73 shows the cycle-2 red, 8 failed of 23, against the always-ok stub. Both come before the green runs."
+        },
+        {
+          "text": "commands.md shows lint, typecheck and the unit coverage run passing, with aging-policy.ts at 100% lines and branches.",
+          "passed": true,
+          "evidence": "Lint and typecheck exit 0 and all 38 unit tests pass. The domain-only coverage run shows Lines 100% (7/7) and Branches 100% (22/22); I re-ran it myself with the same result. The global 80% gate fails (63.15% lines), but the base fails it too (60%), as known."
+        },
+        {
+          "text": "changes.diff touches only aging-policy.ts and its unit test (plus, at most, a doc line the change justifies).",
+          "passed": false,
+          "evidence": "`git diff --stat eval-base...HEAD` lists 4 files: the two code files plus one line each in CLAUDE.md and docs/system-design.md. That is two doc lines, more than the 'at most, a doc line' allowance, though both edits are justified."
+        },
+        {
+          "text": "pr-body.md has an Evidence section mapping each acceptance criterion to the test that proves it.",
+          "passed": true,
+          "evidence": "The `## Evidence` table maps each criterion (valid pairs, watch<1, watch>=aging, aging>3650, non-integer, 100% domain coverage) to named test cases, with before/after notes."
+        },
+        {
+          "text": "pr-body.md has a Doc impact section that lists each doc updated or states none with a reason.",
+          "passed": true,
+          "evidence": "`## Doc impact` lists the CLAUDE.md and docs/system-design.md edits, each with a reason, and explains why no ADR, diagram or GLOSSARY change was needed."
+        }
+      ],
+      "notes": [
+        "Reason strings are the agent's own wording",
+        "400 vs 422 status mapping deferred to build step 6",
+        "Two doc-line edits could be read as scope creep",
+        "No user available for TDD seam confirmation; issue Decision 1 treated as the agreed seam"
+      ]
+    },
+    {
+      "eval_id": "spec-issue-body",
+      "eval_name": "spec-issue-body",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 257.4,
+        "tokens": 108071,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+          "passed": true,
+          "evidence": "Decisions 1-6 are reworded with bold headers and small additions (D16 ref, 'new migration, 0000_init not edited'), but each keeps its meaning. Decision 2 is marked 'refined by decision 11', which only fixes the 403/409 order that grill decisions 3-4 already implied."
+        },
+        {
+          "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+          "passed": true,
+          "evidence": "'## Diagrams' with a placeholder that says images go to issue-<N>."
+        },
+        {
+          "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+          "passed": true,
+          "evidence": "Design refs lists D4, D5, \u00a74.3/\u00a74.6/\u00a74.7/\u00a74.8/\u00a74.9/\u00a74.15/\u00a74.16 and ADR-0005."
+        },
+        {
+          "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+          "passed": true,
+          "evidence": "Rule|Test|Level table: 'Clock pinned at original + 15:00 \u2192 201; at + 15:00.001 \u2192 409', another manager \u2192 403 NOT_ACTION_AUTHOR, non-member \u2192 404, RESERVED/SOLD \u2192 409 VEHICLE_NOT_IN_STOCK."
+        },
+        {
+          "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+          "passed": true,
+          "evidence": "20 numbered stories, all in 'As a \u2026, I want \u2026, so that \u2026' form."
+        },
+        {
+          "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+          "passed": true,
+          "evidence": "'The seam is the existing one: the Nest app over Supertest against a Testcontainers Postgres \u2026 No new seam and no unit-level domain function are needed', plus prior-art files."
+        },
+        {
+          "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+          "passed": true,
+          "evidence": "'## Out of Scope' has 6 items, including changing the type, deleting, a configurable window and If-Match/audit."
+        },
+        {
+          "text": "labels.txt includes `ready-for-agent`.",
+          "passed": true,
+          "evidence": "labels.txt contains 'ready-for-agent'."
+        }
+      ],
+      "notes": [
+        "Seams check not put to the user; took the recommendation",
+        "Decision 12 assumes build step 5 writes created_at from Clock",
+        "Spec-time decisions 7-13, especially 7 ACTION_SUPERSEDED and 8 ({a}=correction \u2192 404)",
+        "Named test file paths despite to-spec's 'no file paths'"
+      ]
+    },
+    {
+      "eval_id": "architect-grill-append-only-conflict",
+      "eval_name": "architect-grill-append-only-conflict",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.71,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 215.6,
+        "tokens": 88292,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+          "passed": true,
+          "evidence": "A top callout says the requirement contradicts 'CLAUDE.md \"Actions are append-only; \u2026 Never update or delete them\", D4 (\"Append-only\"), \u00a71.2 row 4 ... and P3'."
+        },
+        {
+          "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+          "passed": true,
+          "evidence": "It plans an in-place UPDATE (Q1 A), but the top callout says the deliver skill 'makes that a decision for the user... the one answer the user must confirm at the role-2 gate', and Q1 ends '_User decision: confirm at the gate._'"
+        },
+        {
+          "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+          "passed": true,
+          "evidence": "Q5: '`$now` comes from `Clock` and is passed as a parameter, so tests pin it', with `created_at > $now - interval '15 minutes'`. It also requires created_at to be set from Clock on insert."
+        },
+        {
+          "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+          "passed": true,
+          "evidence": "Covers: non-member 404 (Q7), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q6), author only (Q2)."
+        },
+        {
+          "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+          "passed": false,
+          "evidence": "repo-changes.md says 'None', and the sandbox git status is empty. Q17 explicitly says 'No ADR file' and records the decision as D20 in the architecture doc instead."
+        },
+        {
+          "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+          "passed": true,
+          "evidence": "Literally true: the sandbox has no changes. But Q17 plans a broad rewrite of the frozen doc in the PR (new D20 row, D4 wording, \u00a71.2, P3, \u00a74.3, \u00a74.7, \u00a74.8, \u00a74.15, \u00a77, \u00a78), which is against the intent; it passes only because nothing was written."
+        },
+        {
+          "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+          "passed": false,
+          "evidence": "No GLOSSARY.md was created; repo-changes.md lists no new files."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "business-review-planted-gaps",
+      "eval_name": "business-review-planted-gaps",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.62,
+        "passed": 5,
+        "failed": 3,
+        "total": 8,
+        "time_seconds": 225.9,
+        "tokens": 97158,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that a non-member gets 403 (ForbiddenException in the controller) where the spec and D16 require 404.",
+          "passed": true,
+          "evidence": "F2: 'the controller returns 403 FORBIDDEN when `d` is not in `req.user.dealershipIds`', citing criterion 3 and D16."
+        },
+        {
+          "text": "findings.md flags the 409 code `NOT_IN_STOCK` as differing from the contract's `VEHICLE_NOT_IN_STOCK`.",
+          "passed": true,
+          "evidence": "F4: 'The 409 carries code VEHICLE_NOT_IN_STOCK \u2192 the service throws `NOT_IN_STOCK`', citing the Contract comment."
+        },
+        {
+          "text": "findings.md flags that actions are allowed on RESERVED vehicles, contradicting D5 and the acceptance criteria, as a spec deviation not recorded in Decisions or an Amended comment.",
+          "passed": false,
+          "evidence": "F1 flags RESERVED \u2192 201 against criterion 2 and D5, but nowhere says the change is unrecorded in Decisions or an Amended comment. This may be lost to condensation, but the grade follows what is written."
+        },
+        {
+          "text": "For the RESERVED finding, findings.md says that recording the change instead of building the spec needs a new ADR superseding D5 in this PR (not an edit to backend-architecture.md).",
+          "passed": false,
+          "evidence": "F1 Fix says only 'Change the predicate to `v.status = 'IN_STOCK'` and add a RESERVED \u2192 409 integration test'. There is no recording path and no ADR."
+        },
+        {
+          "text": "findings.md flags the new required ACTION_NOTE_MAX_LENGTH variable as missing from docs/environment-setup.md and the PR's Manual steps (and/or as contradicting Decision 3, no new configuration).",
+          "passed": true,
+          "evidence": "F3: 'the step is not in docs/environment-setup.md or \u00a74.13, and the PR says \"Manual steps: None\"', citing Decisions 2 and 3."
+        },
+        {
+          "text": "findings.md flags that the PR has no Doc impact section and/or that docs/system-design.md (which says RESERVED and SOLD get 409) no longer matches the change.",
+          "passed": false,
+          "evidence": "None of F1\u2013F10 mentions Doc impact or docs/system-design.md."
+        },
+        {
+          "text": "findings.md does not report the dealership-scoped list() query as a defect.",
+          "passed": true,
+          "evidence": "No tenancy-scoping claim about list(). F7 flags only the missing 404 for a missing vehicle."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[business-review r1] <Spec | Standards> \u00b7 <severity>` header and Gap, Source and Fix lines.",
+          "passed": true,
+          "evidence": "All 10 condensed findings have the '[business-review r1] Spec \u00b7 <severity>' header and Gap, Source and Fix lines. F6 is labelled Spec where the others label naming as Standards, but the format holds."
+        }
+      ],
+      "notes": [
+        "Treated the abbreviated diff as the whole PR (F8, F9 rest on it)",
+        "findings.md is the orchestrator's condensed copy, because a hook blocked the agent's file writes"
+      ]
+    },
+    {
+      "eval_id": "code-review-planted-defects",
+      "eval_name": "code-review-planted-defects",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.88,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 181.0,
+        "tokens": 77304,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that list() queries vehicle_action without filtering on dealership_id (tenancy leak), citing actions.service.ts.",
+          "passed": true,
+          "evidence": "Comment 1: list() filters vehicle_action only by vehicle_id."
+        },
+        {
+          "text": "findings.md flags the re-read inside db.transaction that uses this.db instead of tx.",
+          "passed": true,
+          "evidence": "Comment 3: the re-read inside db.transaction uses this.db instead of tx."
+        },
+        {
+          "text": "findings.md flags computing today/daysInStock in Node with date-fns-tz instead of in Postgres (time zones only in Postgres).",
+          "passed": true,
+          "evidence": "Comment 2(b): daysInStock from Node ICU tzdata, against decision 2, D2/P1 and the invariant."
+        },
+        {
+          "text": "findings.md flags that the existing 'rejects a sold vehicle' test was weakened (409 and VEHICLE_NOT_IN_STOCK assertions replaced by >= 400).",
+          "passed": true,
+          "evidence": "Comment 6: the 409/problem+json/code assertions replaced by toBeGreaterThanOrEqual(400)."
+        },
+        {
+          "text": "findings.md flags the new date-fns-tz dependency (and the undeclared date-fns import) as unjustified by the PR body.",
+          "passed": false,
+          "evidence": "Comment 2(a) flags that date-fns is imported but undeclared, and the Fix removes the date-fns-tz line as a side effect of the time-zone fix, but no comment says the new dependency is unjustified by the PR body; the old agent file has no dependency check."
+        },
+        {
+          "text": "findings.md does not report the conditional INSERT ... SELECT ... WHERE status = 'IN_STOCK' as a defect.",
+          "passed": true,
+          "evidence": "No comment flags the conditional INSERT itself; Comment 3 calls it 'the race guard'."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[code-review r1] <severity>` header and Sites, Failure, Why and Fix lines.",
+          "passed": true,
+          "evidence": "All 7 comments have the header and Sites/Failure/Why/Fix."
+        },
+        {
+          "text": "report.md returns `open` (not `clean`).",
+          "passed": true,
+          "evidence": "report.md starts with 'open'."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "finish-log-and-retro",
+      "eval_name": "finish-log-and-retro",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 8,
+        "total": 8,
+        "time_seconds": 83.4,
+        "tokens": 57882,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+          "passed": false,
+          "evidence": "repo-changes.diff is empty. The old Finish only reports."
+        },
+        {
+          "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+          "passed": false,
+          "evidence": "The diff is empty, so no case was added."
+        },
+        {
+          "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+          "passed": false,
+          "evidence": "There are no log entries, added or edited."
+        },
+        {
+          "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+          "passed": false,
+          "evidence": "There is no retro.md. user_notes.md: 'The old skill's Finish has no retrospective'."
+        },
+        {
+          "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+          "passed": false,
+          "evidence": "There is no retro.md, and report.md proposes no check."
+        },
+        {
+          "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+          "passed": false,
+          "evidence": "report.md mentions only that the Amended comment 'sau \u0111\u00f3 th\u00e0nh ADR 0002'. It does not call the late ADRs a gap."
+        },
+        {
+          "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+          "passed": false,
+          "evidence": "The diff is empty, so the first half holds. But there are no candidates, and nothing says any await the user's go, so the second half is not met."
+        },
+        {
+          "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+          "passed": false,
+          "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng' and Tester 'pass' 6/6, but it has no log cases and no retro candidates."
+        }
+      ],
+      "notes": [
+        "Manual steps checked only against environment-setup.md",
+        "Post-merge worktree cleanup not done",
+        "Outputs written via Bash because Write was blocked"
+      ]
+    },
+    {
+      "eval_id": "implementer-validate-thresholds",
+      "eval_name": "implementer-validate-thresholds",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.86,
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "time_seconds": 178.0,
+        "tokens": 69394,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "changes.diff adds an exported `validateThresholds` in src/modules/inventory/domain/aging-policy.ts that returns `{ ok: true }` or `{ ok: false, code: 'INVALID_THRESHOLDS', reason }` and does no I/O.",
+          "passed": true,
+          "evidence": "The diff exports `validateThresholds` returning `ThresholdsCheck`, built through a pure local `invalid(reason)` helper. No I/O."
+        },
+        {
+          "text": "changes.diff adds unit tests covering (1,2), (60,90), (3649,3650) as valid and watch=0, watch=aging, aging=3651 and a non-integer as invalid.",
+          "passed": true,
+          "evidence": "The tests accept [1,2], [60,90] and [3649,3650]. They reject [0,90], [90,90], [91,90], [60,3651], [60.5,90] and [60,90.5]."
+        },
+        {
+          "text": "The transcript or commands.md shows the new tests run and failing (red) before validateThresholds was implemented.",
+          "passed": true,
+          "evidence": "Transcript step 9 records '3 failed | 12 passed (15)' because the function was missing. Step 11 records '6 failed | 15 passed (21)' against the stub, before step 12 implements the rule. commands.md itself has no red run."
+        },
+        {
+          "text": "commands.md shows lint, typecheck and the unit coverage run passing, with aging-policy.ts at 100% lines and branches.",
+          "passed": true,
+          "evidence": "Lint and typecheck exit 0, and all 36 unit tests pass. The domain-only coverage shows Lines 100% (7/7) and Branches 100% (20/20), confirmed by my re-run. The global 80% gate fails (63.15%), the same as the base (60%)."
+        },
+        {
+          "text": "changes.diff touches only aging-policy.ts and its unit test (plus, at most, a doc line the change justifies).",
+          "passed": true,
+          "evidence": "diff --stat shows 2 files: aging-policy.ts and aging-policy.spec.ts."
+        },
+        {
+          "text": "pr-body.md has an Evidence section mapping each acceptance criterion to the test that proves it.",
+          "passed": true,
+          "evidence": "The `## Evidence` table maps each criterion to named tests in aging-policy.spec.ts, with Before/After counts."
+        },
+        {
+          "text": "pr-body.md has a Doc impact section that lists each doc updated or states none with a reason.",
+          "passed": false,
+          "evidence": "pr-body.md has Summary, Evidence, Deviations, Manual steps and Merge Danger, but no Doc impact section. The stale CLAUDE.md 'later validateThresholds' line goes unmentioned."
+        }
+      ],
+      "notes": [
+        "400 vs 422 for invalid thresholds left to build step 6",
+        "Reason strings are the agent's own wording",
+        "/code-review skipped per agent file",
+        "TDD seam taken as pre-agreed"
+      ]
+    },
+    {
+      "eval_id": "spec-issue-body",
+      "eval_name": "spec-issue-body",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 187.1,
+        "tokens": 82996,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+          "passed": true,
+          "evidence": "The six grill decisions are copied verbatim under 'Settled by the grill:', and the added 7-11 sit apart under 'Added while writing the PRD'."
+        },
+        {
+          "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+          "passed": true,
+          "evidence": "'## Diagrams' with a placeholder."
+        },
+        {
+          "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+          "passed": true,
+          "evidence": "Cites 'D4 \u2026 extended by ADR 0005', D5, and \u00a74.2/\u00a74.3/\u00a74.6/\u00a74.7/\u00a74.8/\u00a74.15/\u00a74.16."
+        },
+        {
+          "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+          "passed": true,
+          "evidence": "'Clock pinned at +14:59 and +15:00 \u2192 201; at +15:01 \u2192 409', another manager/admin \u2192 403 NOT_ACTION_AUTHOR, non-member \u2192 404, RESERVED/SOLD \u2192 409, all integration."
+        },
+        {
+          "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+          "passed": true,
+          "evidence": "24 numbered stories in the right form, though 23-24 are developer stories about implementation."
+        },
+        {
+          "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+          "passed": true,
+          "evidence": "'One seam: the HTTP API, in integration tests against Testcontainers Postgres, with the Clock provider overridden \u2026 no new pure domain/ function', with prior-art health.spec.ts/db.spec.ts."
+        },
+        {
+          "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+          "passed": true,
+          "evidence": "'## Out of Scope' has 6 items, including type change, delete, correcting after 15 minutes, configurable window and a diff view."
+        },
+        {
+          "text": "labels.txt includes `ready-for-agent`.",
+          "passed": true,
+          "evidence": "labels.txt contains 'ready-for-agent'."
+        }
+      ],
+      "notes": [
+        "Title style unverified (no remote)",
+        "Decisions 7-11 need confirming at the gate",
+        "Seams check with the user replaced by the recommendation"
+      ]
+    },
+    {
+      "eval_id": "architect-grill-append-only-conflict",
+      "eval_name": "architect-grill-append-only-conflict",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 237.7,
+        "tokens": 96032,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "decisions.md identifies that editing a logged action's note conflicts with append-only actions (D4 / the CLAUDE.md invariant 'never update or delete them').",
+          "passed": true,
+          "evidence": "Q1 cites D4, \u00a71.2 row 4, P3 and 'the CLAUDE.md invariant (\"Actions are append-only \u2026 Never update or delete them\")' as forbidding the change."
+        },
+        {
+          "text": "decisions.md either resolves the requirement without an UPDATE or DELETE on vehicle_action (e.g. a correction appended as a new row), or explicitly marks changing D4 as a decision for the user; it does not silently plan an in-place update.",
+          "passed": true,
+          "evidence": "It plans an in-place UPDATE, but Q1 says 'Per the skill, this is a **decision for the user**' and '_Confirm at the role 2 gate: this is the user's call, taken here only because `grill=auto`._'"
+        },
+        {
+          "text": "decisions.md states that the 15-minute window is measured with `now` from the injected Clock passed into SQL as a parameter (not DB now() and not Date.now() in a service).",
+          "passed": true,
+          "evidence": "Q5: '`created_at >= $now - interval '15 minutes'` in SQL, with `$now` from the injected `Clock` passed as a parameter', plus setting created_at from Clock on insert."
+        },
+        {
+          "text": "decisions.md covers at least two of: non-member gets 404 (not 403), the write is one conditional SQL statement with 0 rows re-read into 404/409, the vehicle must still be IN_STOCK (D5), only the original author may correct.",
+          "passed": true,
+          "evidence": "Covers: non-member 404 (Q4), one conditional UPDATE with a 0-rows re-read giving 404/403/409 (Q6), author only (Q3 and the SQL)."
+        },
+        {
+          "text": "repo-changes.md shows a new ADR file under docs/adr/ numbered 0005 that records the correction/edit decision (one or a few paragraphs: context, decision, why).",
+          "passed": true,
+          "evidence": "New docs/adr/0005-author-may-fix-action-note-within-15-minutes.md, confirmed in the sandbox. Three paragraphs: the decision with context, why rejected options lost, and the cost. Indexed in README as superseding 'D4 (in part)'."
+        },
+        {
+          "text": "repo-changes.md shows no edit to docs/research/backend-architecture.md other than, at most, marking a decision superseded with a link to its ADR.",
+          "passed": true,
+          "evidence": "The sandbox diff is a single changed line: D4 gains 'Partly superseded by [ADR-0005](../adr/0005-...)'."
+        },
+        {
+          "text": "repo-changes.md shows GLOSSARY.md created or updated with at least one term resolved during the grill (for example 'correction' or 'current action').",
+          "passed": true,
+          "evidence": "New GLOSSARY.md defines Action, Current action, Note, Author and Note edit window, each with _Avoid_ terms."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "business-review-planted-gaps",
+      "eval_name": "business-review-planted-gaps",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 255.2,
+        "tokens": 101335,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that a non-member gets 403 (ForbiddenException in the controller) where the spec and D16 require 404.",
+          "passed": true,
+          "evidence": "F2: the POST handler 'throws `ForbiddenException` (403 `FORBIDDEN`)', against criterion 3, D16 and 'Non-members get 404, not 403'."
+        },
+        {
+          "text": "findings.md flags the 409 code `NOT_IN_STOCK` as differing from the contract's `VEHICLE_NOT_IN_STOCK`.",
+          "passed": true,
+          "evidence": "F3: 'The chosen contract's conflict code is `409 VEHICLE_NOT_IN_STOCK` \u2192 the service throws `ConflictException({ code: 'NOT_IN_STOCK' })`'."
+        },
+        {
+          "text": "findings.md flags that actions are allowed on RESERVED vehicles, contradicting D5 and the acceptance criteria, as a spec deviation not recorded in Decisions or an Amended comment.",
+          "passed": true,
+          "evidence": "F1 Gap: RESERVED gets 201; 'The PR's **Deviations** says \"None\", and the issue's `## Decisions` records no change'. It cites criterion 2 and D5. The Fix mentions the Amended path."
+        },
+        {
+          "text": "For the RESERVED finding, findings.md says that recording the change instead of building the spec needs a new ADR superseding D5 in this PR (not an edit to backend-architecture.md).",
+          "passed": true,
+          "evidence": "F1 Fix: 'If allowing `RESERVED` is intended, record it in `## Decisions` with an `Amended:` comment, and add an ADR in this PR that supersedes D5.'"
+        },
+        {
+          "text": "findings.md flags the new required ACTION_NOTE_MAX_LENGTH variable as missing from docs/environment-setup.md and the PR's Manual steps (and/or as contradicting Decision 3, no new configuration).",
+          "passed": true,
+          "evidence": "F7: the var contradicts Decision 3 ('No new configuration') and 'is also missing from `docs/environment-setup.md`... The PR's **Manual steps** and **Deviations** both say \"None\"'."
+        },
+        {
+          "text": "findings.md flags that the PR has no Doc impact section and/or that docs/system-design.md (which says RESERVED and SOLD get 409) no longer matches the change.",
+          "passed": true,
+          "evidence": "F9: 'the PR body has no **Doc impact** section'. It flags stale Status lines including system-design.md, but not the RESERVED/409 mismatch."
+        },
+        {
+          "text": "findings.md does not report the dealership-scoped list() query as a defect.",
+          "passed": true,
+          "evidence": "F4 flags only the missing 404, and notes that another dealership's vehicle also returns 200 [], which implicitly accepts that the query is scoped. There is no tenancy-leak claim."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[business-review r1] <Spec | Standards> \u00b7 <severity>` header and Gap, Source and Fix lines.",
+          "passed": true,
+          "evidence": "All 9 findings have the header (Spec/Standards \u00b7 severity) and Gap, Source and Fix lines."
+        }
+      ],
+      "notes": [
+        "actions.service.ts line numbers offset by elided imports",
+        "Synthetic config.ts context and missing auth module treated as fixture artifacts",
+        "If auth really is missing it would be a blocker (\u00a74.16 order)",
+        "Wrote .md outputs with shell heredocs because Write was hook-blocked"
+      ]
+    },
+    {
+      "eval_id": "code-review-planted-defects",
+      "eval_name": "code-review-planted-defects",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 192.7,
+        "tokens": 81016,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "findings.md flags that list() queries vehicle_action without filtering on dealership_id (tenancy leak), citing actions.service.ts.",
+          "passed": true,
+          "evidence": "Finding 1: list filters vehicle_action by vehicle_id only; ctx never used."
+        },
+        {
+          "text": "findings.md flags the re-read inside db.transaction that uses this.db instead of tx.",
+          "passed": true,
+          "evidence": "Finding 3: the 0-row re-read inside the transaction uses this.db, not tx."
+        },
+        {
+          "text": "findings.md flags computing today/daysInStock in Node with date-fns-tz instead of in Postgres (time zones only in Postgres).",
+          "passed": true,
+          "evidence": "Finding 2: daysInStock computed in Node with formatInTimeZone, against CLAUDE.md, P1/D2 and decision 2."
+        },
+        {
+          "text": "findings.md flags that the existing 'rejects a sold vehicle' test was weakened (409 and VEHICLE_NOT_IN_STOCK assertions replaced by >= 400).",
+          "passed": true,
+          "evidence": "Finding 6: three assertions replaced by toBeGreaterThanOrEqual(400)."
+        },
+        {
+          "text": "findings.md flags the new date-fns-tz dependency (and the undeclared date-fns import) as unjustified by the PR body.",
+          "passed": true,
+          "evidence": "Finding 5: 'the new dependency isn't justified in the PR body (Deviations: None)'; date-fns undeclared; lockfile untouched."
+        },
+        {
+          "text": "findings.md does not report the conditional INSERT ... SELECT ... WHERE status = 'IN_STOCK' as a defect.",
+          "passed": true,
+          "evidence": "No finding targets the conditional INSERT; Finding 3 calls it 'the race guard'."
+        },
+        {
+          "text": "Every finding in findings.md has the agent's format: a `[code-review r1] <severity>` header and Sites, Failure, Why and Fix lines.",
+          "passed": true,
+          "evidence": "All 7 findings have the header and Sites/Failure/Why/Fix."
+        },
+        {
+          "text": "report.md returns `open` (not `clean`).",
+          "passed": true,
+          "evidence": "report.md starts with 'open'."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "finish-log-and-retro",
+      "eval_name": "finish-log-and-retro",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 4,
+        "failed": 4,
+        "total": 8,
+        "time_seconds": 209.0,
+        "tokens": 88282,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+          "passed": false,
+          "evidence": "The diff does not touch the By PR table. user_notes.md says the existing #17 row ('2 review rounds') was left alone. The fixture made adding a row impossible."
+        },
+        {
+          "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+          "passed": false,
+          "evidence": "No new case. The diff edits only the AI proposal and Decided by lines of the existing C3 (the fixture flaw)."
+        },
+        {
+          "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+          "passed": true,
+          "evidence": "Graded on the edited entries, since none were added. C3, C4 and C5 now read 'agent (approve=auto): the ... reviewer's finding ... with no user gate'. Nothing is attributed to the user."
+        },
+        {
+          "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+          "passed": true,
+          "evidence": "retro.md says 'Candidates, most severe first': R1 major, R2-R5 minor, R6 low. They target SKILL.md, deliver-implementer.md, api-runbook.md and CONTRIBUTING.md, and each has concrete wording."
+        },
+        {
+          "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+          "passed": false,
+          "evidence": "All of R1-R6 are prose instruction changes. The coverage-exclusion check was explicitly listed as 'Considered and dropped', and no $onUpdate lint rule was proposed."
+        },
+        {
+          "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+          "passed": false,
+          "evidence": "retro.md only lists 'ADRs written as decisions are made ... (#20, case C6)' under 'Already fixed since #17'. It never says that #17's ADRs were written late or after the merge."
+        },
+        {
+          "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+          "passed": true,
+          "evidence": "The diff touches only docs/ai-collaboration.md. retro.md says 'None applied: each needs the user's go', and report.md asks question 1 about which candidates to apply."
+        },
+        {
+          "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+          "passed": true,
+          "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng s\u1eeda', Tester 'pass' (6 criteria, 2 via test), the AI log status ('Kh\u00f4ng c\u00f3 case m\u1edbi', C3-C5 corrected) and retro R1-R6."
+        }
+      ],
+      "notes": [
+        "Decided by changed to agent (approve=auto) as its reading of the skill",
+        "#17 row still says '2 review rounds'; the log correction needs a separate docs/ PR",
+        "report.md written via heredoc because Write was refused"
+      ]
+    },
+    {
+      "eval_id": "implementer-validate-thresholds",
+      "eval_name": "implementer-validate-thresholds",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 182.5,
+        "tokens": 73103,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "changes.diff adds an exported `validateThresholds` in src/modules/inventory/domain/aging-policy.ts that returns `{ ok: true }` or `{ ok: false, code: 'INVALID_THRESHOLDS', reason }` and does no I/O.",
+          "passed": true,
+          "evidence": "The diff exports `validateThresholds({ watch, aging }): ThresholdsCheck` with the required union, implemented as a pure ternary chain."
+        },
+        {
+          "text": "changes.diff adds unit tests covering (1,2), (60,90), (3649,3650) as valid and watch=0, watch=aging, aging=3651 and a non-integer as invalid.",
+          "passed": true,
+          "evidence": "The tests accept the three pairs. They reject [0,90], [90,90], [91,90], [60,3651], [60.5,90], [60,90.5] and NaN."
+        },
+        {
+          "text": "The transcript or commands.md shows the new tests run and failing (red) before validateThresholds was implemented.",
+          "passed": true,
+          "evidence": "commands.md step 1 is labelled 'Red ... before the implementation' and shows 'Tests 10 failed | 12 passed (22)'. Step 2 is the green run after it. This was one red-green pass, not incremental cycles."
+        },
+        {
+          "text": "commands.md shows lint, typecheck and the unit coverage run passing, with aging-policy.ts at 100% lines and branches.",
+          "passed": true,
+          "evidence": "After the commit, lint and typecheck exit 0, and all 37 unit tests pass. A json-summary shows aging-policy.ts at 100% on lines and branches, confirmed by my domain-only re-run. The global gate fails (63.15%), the same as the base (60%)."
+        },
+        {
+          "text": "changes.diff touches only aging-policy.ts and its unit test (plus, at most, a doc line the change justifies).",
+          "passed": true,
+          "evidence": "diff --stat shows 2 files: aging-policy.ts and aging-policy.spec.ts."
+        },
+        {
+          "text": "pr-body.md has an Evidence section mapping each acceptance criterion to the test that proves it.",
+          "passed": true,
+          "evidence": "The `## Evidence` table maps each criterion to concrete test names, including the 100% coverage criterion."
+        },
+        {
+          "text": "pr-body.md has a Doc impact section that lists each doc updated or states none with a reason.",
+          "passed": true,
+          "evidence": "`## Doc impact` says 'None' because system-design, the ER diagram and \u00a74.4 already state the rule and there is no ADR-worthy decision. It also flags the stale CLAUDE.md line as a possible update."
+        }
+      ],
+      "notes": [
+        "400 vs 422 mapping deferred",
+        "Spec read from the input file only",
+        "Stale CLAUDE.md invariant wording left unedited",
+        "Confirmed 100% domain coverage through json-summary because skipFull hides the file in the text table"
+      ]
+    },
+    {
+      "eval_id": "spec-issue-body",
+      "eval_name": "spec-issue-body",
+      "configuration": "no_subskills",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.62,
+        "passed": 5,
+        "failed": 3,
+        "total": 8,
+        "time_seconds": 171.6,
+        "tokens": 91643,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+          "passed": true,
+          "evidence": "All six copied word for word."
+        },
+        {
+          "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+          "passed": true,
+          "evidence": "'## Diagrams' with a placeholder."
+        },
+        {
+          "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+          "passed": true,
+          "evidence": "Cites D4, D5, \u00a74.2/\u00a74.3/\u00a74.5-\u00a74.8/\u00a74.15 and ADR-0005."
+        },
+        {
+          "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+          "passed": true,
+          "evidence": "The '## Tests' Rule|Test|Level table has 'Clock pinned at +14:59 and +15:00 \u2192 201; at +15:01 \u2192 409', second manager \u2192 403, non-member \u2192 404 in the RBAC row, RESERVED/SOLD \u2192 409."
+        },
+        {
+          "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+          "passed": false,
+          "evidence": "spec.md has no user stories at all. Its sections are Requirement, Decisions, Diagrams, Design refs, Acceptance criteria and Tests."
+        },
+        {
+          "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+          "passed": false,
+          "evidence": "spec.md never names a seam: 'Testcontainers', 'Supertest' and 'HTTP' do not appear, and the rows only say 'integration'. The reasoning ('rules live in SQL') is only in the transcript."
+        },
+        {
+          "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+          "passed": false,
+          "evidence": "No out-of-scope section in spec.md."
+        },
+        {
+          "text": "labels.txt includes `ready-for-agent`.",
+          "passed": true,
+          "evidence": "labels.txt contains 'ready-for-agent'."
+        }
+      ],
+      "notes": [
+        "needs-triage vs ready-for-agent",
+        "Whether an empty note is allowed",
+        "Open questions on correcting a non-current action and correcting a correction, given as A/B/C with recommendations",
+        "Added Requirement and Acceptance criteria sections not named in the skill"
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.935,
+        "stddev": 0.1065,
+        "min": 0.75,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 228.95,
+        "stddev": 35.2443,
+        "min": 194.2,
+        "max": 277.5
+      },
+      "tokens": {
+        "mean": 92875.0,
+        "stddev": 12097.7858,
+        "min": 77920,
+        "max": 108071
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.6783,
+        "stddev": 0.3582,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 178.5,
+        "stddev": 50.4929,
+        "min": 83.4,
+        "max": 225.9
+      },
+      "tokens": {
+        "mean": 78837.6667,
+        "stddev": 13949.8079,
+        "min": 57882,
+        "max": 97158
+      }
+    },
+    "no_subskills": {
+      "pass_rate": {
+        "mean": 0.8533,
+        "stddev": 0.2304,
+        "min": 0.5,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 208.1167,
+        "stddev": 32.6195,
+        "min": 171.6,
+        "max": 255.2
+      },
+      "tokens": {
+        "mean": 88568.5,
+        "stddev": 10241.5227,
+        "min": 73103,
+        "max": 101335
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.26",
+      "time_seconds": "+50.4",
+      "tokens": "+14037"
+    }
+  },
+  "notes": [
+    "Per case (new / old / no_subskills): grill 7/7, 5/7, 7/7; spec 8/8, 8/8, 5/8; implementer 6/7, 6/7, 7/7; code review 8/8, 7/8, 8/8; business review 8/8, 5/8, 8/8; finish 6/8, 0/8, 4/8.",
+    "Sub-skills with a measured effect: to-spec (without it the spec lost user stories, seams and out-of-scope: 8/8 -> 5/8) and retro (without it no deterministic check and the late-ADR gap was missed: 6/8 -> 4/8).",
+    "Sub-skills with no measured effect in these cases: grilling + domain-modeling (no_subskills also wrote ADR 0005 and GLOSSARY.md, because the deliver step and CLAUDE.md already ask for them), tdd (all three ran red then green), ponytail-review and code-review (planted defects were caught equally without them). The assertions were not built to isolate these skills, so this is 'not shown', not 'shown useless'.",
+    "What separated new from old was the text of /deliver and the repo rules, not the sub-skills: ADR instead of editing the frozen doc (grill), the dependency check (code review), the superseding-ADR and Doc impact checks (business review), and the AI log + retro (finish).",
+    "Eval defects: finish fixture already held the #17 row and cases C3-C5, so two 'adds' assertions were impossible for new and no_subskills (both correctly corrected the entries instead); the implementer scope assertion ('at most a doc line') penalises the Doc impact behaviour the new skill asks for; grill assertions 2 and 6 and most code-review assertions pass in every configuration; business-review old_skill findings were condensed by the orchestrator after a hook blocked the subagent's file write. One run per configuration, so no variance estimate.",
+    "Cost: the new version takes about 50 s and 14k tokens more per step than the old one (+28% time, +18% tokens); no_subskills sits in between."
+  ]
+}

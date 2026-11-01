@@ -1,0 +1,6 @@
+schema_version: '1.1'
+name: finish-log-and-retro
+expected_outcome: |
+  Under the new skill: docs/ai-collaboration.md gains a row for PR #17 and cases for the review findings in the file's format, honestly attributing decisions to the agent under auto modes; a retro lists environment improvements by severity, preferring a deterministic check for the $onUpdate class of mistake, and applies none without the user's go; the report (in Vietnamese) lists rounds, tester result, log cases and retro candidates.
+context:
+  scaffold_script: place-files.sh

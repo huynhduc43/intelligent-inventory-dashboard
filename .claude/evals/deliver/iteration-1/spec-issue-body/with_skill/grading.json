@@ -1,0 +1,101 @@
+{
+  "expectations": [
+    {
+      "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+      "passed": true,
+      "evidence": "Decisions 1-6 are reworded with bold headers and small additions (D16 ref, 'new migration, 0000_init not edited'), but each keeps its meaning. Decision 2 is marked 'refined by decision 11', which only fixes the 403/409 order that grill decisions 3-4 already implied."
+    },
+    {
+      "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+      "passed": true,
+      "evidence": "'## Diagrams' with a placeholder that says images go to issue-<N>."
+    },
+    {
+      "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+      "passed": true,
+      "evidence": "Design refs lists D4, D5, \u00a74.3/\u00a74.6/\u00a74.7/\u00a74.8/\u00a74.9/\u00a74.15/\u00a74.16 and ADR-0005."
+    },
+    {
+      "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+      "passed": true,
+      "evidence": "Rule|Test|Level table: 'Clock pinned at original + 15:00 \u2192 201; at + 15:00.001 \u2192 409', another manager \u2192 403 NOT_ACTION_AUTHOR, non-member \u2192 404, RESERVED/SOLD \u2192 409 VEHICLE_NOT_IN_STOCK."
+    },
+    {
+      "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+      "passed": true,
+      "evidence": "20 numbered stories, all in 'As a \u2026, I want \u2026, so that \u2026' form."
+    },
+    {
+      "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+      "passed": true,
+      "evidence": "'The seam is the existing one: the Nest app over Supertest against a Testcontainers Postgres \u2026 No new seam and no unit-level domain function are needed', plus prior-art files."
+    },
+    {
+      "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+      "passed": true,
+      "evidence": "'## Out of Scope' has 6 items, including changing the type, deleting, a configurable window and If-Match/audit."
+    },
+    {
+      "text": "labels.txt includes `ready-for-agent`.",
+      "passed": true,
+      "evidence": "labels.txt contains 'ready-for-agent'."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 257.4,
+    "total_tokens": 108071
+  },
+  "claims": [
+    {
+      "claim": "vehicle_action.created_at defaults to now(), so a pinned-Clock window test needs created_at set from $now",
+      "type": "factual",
+      "verified": true,
+      "evidence": "All three runs found the defaultNow() in schema.ts on their own."
+    },
+    {
+      "claim": "ADR-0005 is cited but does not exist in the sandbox",
+      "type": "factual",
+      "verified": true,
+      "evidence": "The other runs also report that docs/adr has only 0001-0004."
+    },
+    {
+      "claim": "Followed to-spec v1.3.1 from the plugin cache",
+      "type": "process",
+      "verified": true,
+      "evidence": "Transcript step 3, and the spec uses the to-spec template sections (Problem/Solution/User Stories/Testing/Out of Scope/Further Notes)."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Seams check not put to the user; took the recommendation",
+      "Decision 12 assumes build step 5 writes created_at from Clock"
+    ],
+    "needs_review": [
+      "Spec-time decisions 7-13, especially 7 ACTION_SUPERSEDED and 8 ({a}=correction \u2192 404)"
+    ],
+    "workarounds": [
+      "Named test file paths despite to-spec's 'no file paths'"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "Added 7 spec-time decisions (7-13). Most are strengths: 7 (ACTION_SUPERSEDED) closes a real P3 lost-update hole, 11 (failure order) resolves the clash between grill decision 2's 'otherwise 409 WINDOW_CLOSED' and decisions 3-4, and 12 (created_at from Clock) is needed for pinned tests. All are marked _(spec)_ with reasons, so the gate can overrule them. Some is borderline creep: 8 picks 404 for {a}=correction where old_skill picked resolve-to-root, a real user choice that should have been raised as an A/B/C question rather than settled. 10 and 13 are clarifications, not new scope."
+      },
+      {
+        "reason": "There is no `## Acceptance criteria` section, yet deliver-tester.md and deliver-code-reviewer.md read acceptance criteria from the issue. No assertion checks this; only no_subskills noticed it."
+      },
+      {
+        "assertion": "spec.md has a `## Decisions` section that carries all six decisions\u2026",
+        "reason": "It does not separate verbatim copies from rewordings that quietly edit a grill decision (here, 'refined by decision 11'). Consider asserting that grill decisions are kept apart from any added ones."
+      }
+    ],
+    "overall": "Strongest spec: complete template, an exact boundary test (15:00 vs 15:00.001), and well-reasoned gap fills labelled as such. Main risks are scope growth (13 decisions for a typo fix) and the missing acceptance-criteria section."
+  }
+}

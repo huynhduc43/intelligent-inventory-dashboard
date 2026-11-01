@@ -1,0 +1,4 @@
+schema_version: '1.1'
+name: architect-grill-append-only-conflict
+expected_outcome: |
+  The grill surfaces that editing a logged note conflicts with append-only actions (D4 and the CLAUDE.md invariant), resolves it with a design that keeps actions append-only or records the change as a decision, uses the injected Clock for the 15-minute window, and records hard-to-reverse decisions as a new ADR (and terms in GLOSSARY.md) rather than editing backend-architecture.md.

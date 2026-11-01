@@ -1,0 +1,17 @@
+$ turbo run typecheck
+
+   • turbo 2.11.10
+   • Packages in scope: @inventory/api
+   • Running typecheck in 1 package
+   • Remote caching disabled
+
+@inventory/api:typecheck: cache miss, executing f4285b62dc6cb8e2
+@inventory/api:typecheck: 
+@inventory/api:typecheck: > @inventory/api@0.0.1 typecheck /private/tmp/claude-501/-Users-duc-personal-projects-intelligent-inventory-dashboard/a9a417b3-0a14-482f-ba8f-1a07b3fc026b/scratchpad/sb/implementer-validate-thresholds/old_skill/apps/api
+@inventory/api:typecheck: > tsc --noEmit
+@inventory/api:typecheck: 
+
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    1.554s 
+

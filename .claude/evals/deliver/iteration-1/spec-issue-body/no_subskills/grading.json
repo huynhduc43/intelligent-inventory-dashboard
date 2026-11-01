@@ -1,0 +1,91 @@
+{
+  "expectations": [
+    {
+      "text": "spec.md has a `## Decisions` section that carries all six decisions from decisions.md without changing their meaning.",
+      "passed": true,
+      "evidence": "All six copied word for word."
+    },
+    {
+      "text": "spec.md has a `## Diagrams` section (placeholder is fine).",
+      "passed": true,
+      "evidence": "'## Diagrams' with a placeholder."
+    },
+    {
+      "text": "spec.md has a `## Design refs` section citing D4 and D5 and at least one architecture section (\u00a74.x) and ADR 0005.",
+      "passed": true,
+      "evidence": "Cites D4, D5, \u00a74.2/\u00a74.3/\u00a74.5-\u00a74.8/\u00a74.15 and ADR-0005."
+    },
+    {
+      "text": "spec.md has a table of test rows in the form rule | test | unit or integration, covering at least: the 15-minute boundary (just inside vs just outside, with a pinned Clock), the non-author 403, the non-member 404, and the not-IN_STOCK 409.",
+      "passed": true,
+      "evidence": "The '## Tests' Rule|Test|Level table has 'Clock pinned at +14:59 and +15:00 \u2192 201; at +15:01 \u2192 409', second manager \u2192 403, non-member \u2192 404 in the RBAC row, RESERVED/SOLD \u2192 409."
+    },
+    {
+      "text": "spec.md has a numbered list of user stories in the form 'As a <actor>, I want <feature>, so that <benefit>', with at least five stories.",
+      "passed": false,
+      "evidence": "spec.md has no user stories at all. Its sections are Requirement, Decisions, Diagrams, Design refs, Acceptance criteria and Tests."
+    },
+    {
+      "text": "spec.md names the seams at which the feature is tested (e.g. the HTTP endpoint against Testcontainers Postgres and any pure rule in domain/), preferring existing seams.",
+      "passed": false,
+      "evidence": "spec.md never names a seam: 'Testcontainers', 'Supertest' and 'HTTP' do not appear, and the rows only say 'integration'. The reasoning ('rules live in SQL') is only in the transcript."
+    },
+    {
+      "text": "spec.md has an out-of-scope section listing at least two things deliberately not built (e.g. editing action type, deleting actions, corrections after the window).",
+      "passed": false,
+      "evidence": "No out-of-scope section in spec.md."
+    },
+    {
+      "text": "labels.txt includes `ready-for-agent`.",
+      "passed": true,
+      "evidence": "labels.txt contains 'ready-for-agent'."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 3,
+    "total": 8,
+    "pass_rate": 0.62
+  },
+  "timing": {
+    "executor_duration_seconds": 171.6,
+    "total_tokens": 91643
+  },
+  "claims": [
+    {
+      "claim": "The tester and code reviewer read 'acceptance criteria' from the issue, so the spec needs that section",
+      "type": "factual",
+      "verified": true,
+      "evidence": "grep finds 'acceptance criteria' in .claude/agents/deliver-tester.md and deliver-code-reviewer.md (it did not match the implementer file)."
+    },
+    {
+      "claim": "Tests can pin the window by seeding the original with an explicit created_at",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Correct, and a smaller fix than changing how POST /actions writes created_at."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "needs-triage vs ready-for-agent",
+      "Whether an empty note is allowed"
+    ],
+    "needs_review": [
+      "Open questions on correcting a non-current action and correcting a correction, given as A/B/C with recommendations"
+    ],
+    "workarounds": [
+      "Added Requirement and Acceptance criteria sections not named in the skill"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "reason": "It did not add decisions to the spec. It raised the supersession and correcting-a-correction gaps as numbered A/B/C open questions with recommendations in user_notes, which matches CLAUDE.md's 'decisions that are the user's' rule, and it is the least scope creep of the three. But the gaps stay out of the spec, so precedence and supersession are untested in the table (no ACTION_SUPERSEDED row)."
+      },
+      {
+        "reason": "Without to-spec it dropped User Stories, seams and Out of Scope. That clearly shows the to-spec reference is doing work. Its Acceptance criteria section is a strength the other two runs lack."
+      }
+    ],
+    "overall": "Leanest and most faithful to the six decisions, and it has the downstream-useful acceptance criteria, but it misses three template sections."
+  }
+}

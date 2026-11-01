@@ -1,0 +1,102 @@
+{
+  "expectations": [
+    {
+      "text": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+      "passed": false,
+      "evidence": "The diff does not touch the By PR table. user_notes.md says the existing #17 row ('2 review rounds') was left alone. The fixture made adding a row impossible."
+    },
+    {
+      "text": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+      "passed": false,
+      "evidence": "No new case. The diff edits only the AI proposal and Decided by lines of the existing C3 (the fixture flaw)."
+    },
+    {
+      "text": "The added log entries attribute decisions to the agent (grill=auto / approve=auto) or to a reviewer finding, never to the user.",
+      "passed": true,
+      "evidence": "Graded on the edited entries, since none were added. C3, C4 and C5 now read 'agent (approve=auto): the ... reviewer's finding ... with no user gate'. Nothing is attributed to the user."
+    },
+    {
+      "text": "retro.md lists improvement candidates for the agent's environment (instructions, checks, tooling, navigation), ordered most severe first.",
+      "passed": true,
+      "evidence": "retro.md says 'Candidates, most severe first': R1 major, R2-R5 minor, R6 low. They target SKILL.md, deliver-implementer.md, api-runbook.md and CONTRIBUTING.md, and each has concrete wording."
+    },
+    {
+      "text": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+      "passed": false,
+      "evidence": "All of R1-R6 are prose instruction changes. The coverage-exclusion check was explicitly listed as 'Considered and dropped', and no $onUpdate lint rule was proposed."
+    },
+    {
+      "text": "retro.md or report.md identifies that ADRs 0001-0004 were written after the merge (#19) as an environment gap.",
+      "passed": false,
+      "evidence": "retro.md only lists 'ADRs written as decisions are made ... (#20, case C6)' under 'Already fixed since #17'. It never says that #17's ADRs were written late or after the merge."
+    },
+    {
+      "text": "No retro candidate is applied: repo-changes.diff touches no CLAUDE.md, agent, skill or lint config file, and report.md or retro.md says candidates await the user's go.",
+      "passed": true,
+      "evidence": "The diff touches only docs/ai-collaboration.md. retro.md says 'None applied: each needs the user's go', and report.md asks question 1 about which candidates to apply."
+    },
+    {
+      "text": "report.md is in Vietnamese and states the rounds (1 fix round), the Tester result, the log cases added and the retro candidates.",
+      "passed": true,
+      "evidence": "report.md is in Vietnamese and states '1 v\u00f2ng s\u1eeda', Tester 'pass' (6 criteria, 2 via test), the AI log status ('Kh\u00f4ng c\u00f3 case m\u1edbi', C3-C5 corrected) and retro R1-R6."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 4,
+    "total": 8,
+    "pass_rate": 0.5
+  },
+  "timing": {
+    "executor_duration_seconds": 209.0,
+    "total_duration_seconds": 209.0
+  },
+  "claims": [
+    {
+      "claim": "Several record mistakes were already fixed in the sandbox (Deviations rule, now-in-SQL check, coverage doc, PK test in db.spec.ts:72).",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Transcript step 6 shows the agent files read and apps/api grepped for pkey|onUpdate|updatedAt. This is a sound de-duplication step."
+    },
+    {
+      "claim": "A coverage-exclusion check script would be more machinery than the problem.",
+      "type": "quality",
+      "verified": false,
+      "evidence": "It is a defensible judgement, but it leaves no deterministic guard for any record mistake. The $onUpdate lint rule, the obvious candidate, is never considered."
+    },
+    {
+      "claim": "The existing #17 row ('2 review rounds') conflicts with the skill's round definition, but was left unchanged.",
+      "type": "factual",
+      "verified": true,
+      "evidence": "user_notes.md admits this, and the diff has no By PR table hunk. The inconsistency stays in the log and is only explained in report.md."
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "Decided by changed to agent (approve=auto) as its reading of the skill"
+    ],
+    "needs_review": [
+      "#17 row still says '2 review rounds'; the log correction needs a separate docs/ PR"
+    ],
+    "workarounds": [
+      "report.md written via heredoc because Write was refused"
+    ]
+  },
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "repo-changes.diff adds a row for PR #17 to the By PR table of docs/ai-collaboration.md.",
+        "reason": "Fixture flaw: the row already existed. This run left the stale '2 review rounds' row untouched, whereas with_skill corrected it, so a 'row is accurate' assertion would have separated the two runs."
+      },
+      {
+        "assertion": "repo-changes.diff adds a case for the $onUpdate/Clock finding with the fields Problem, AI proposal, Decided by, Decision and reasoning, Verification and Outcome.",
+        "reason": "Impossible under the fixture. The run correctly avoided a duplicate and corrected C3's AI proposal to name the contract as the source, which is right per the record."
+      },
+      {
+        "assertion": "retro.md proposes at least one deterministic check (a lint rule, test or hook) for a mistake in the record, e.g. banning `$onUpdate`/`sql`now()` in the schema, or checking the coverage exclusions against CONTRIBUTING.md.",
+        "reason": "This assertion is the most discriminating: without the retro skill, the run fell back to prose-only candidates and dropped the check idea. Keep it."
+      }
+    ],
+    "overall": "The fixture blocked the two 'adds' assertions, and the run's correction approach was right, though less complete than with_skill (the #17 row was left stale). The real differences from with_skill are the missing deterministic check and the missing late-ADR gap, which suggests the retro skill reference adds value."
+  }
+}

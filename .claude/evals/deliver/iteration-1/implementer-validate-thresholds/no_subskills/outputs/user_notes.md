@@ -1,0 +1,9 @@
+# Notes and uncertainties
+
+- **The unit-only coverage run exits 1.** The task's substitute for `pnpm verify` (`vitest run --project unit --coverage`) can't pass in this repo: the global 80% threshold counts `health/*` and `shared/db.ts`, and only the integration project covers those. The base commit fails the same way (60% lines), and with this change it rises to 63%. The domain 100% gate passed. So I treated the step as "passes except for a failure that predates this change" and did not try to make the run exit 0. A real `pnpm verify` with Docker was not run.
+- **The spec came from the input file, not GitHub.** Under the dry-run rules I didn't run `gh issue view 90 --comments`, so I could not check for `Contract`, `Chosen:` or `Amended:` comments. The issue adds no endpoint or schema, so the skill's role 3 (Contract) would have been skipped anyway.
+- **CLAUDE.md wording is now stale.** The invariant line says "later `validateThresholds`, `toStockedOnBounds`". I didn't edit CLAUDE.md, because this task didn't ask for it and that file is agent instructions. I noted it under Doc impact in the PR body instead. A one-word fix in the same PR is reasonable if the user wants it.
+- **The issue says "a clear 400" for bad thresholds.** §4.8 lists `400 VALIDATION_FAILED` for bad shapes and `422` for valid shape with invalid meaning. Which status the settings endpoint maps `INVALID_THRESHOLDS` to is a decision for build step 6, when the endpoint is wired. It is out of scope here, so I did not raise a `decision-needed`.
+- **Format slip.** I wrote the first version without prettier, and `format:check` caught it. The pre-commit hook would also have fixed it.
+- `skipFull` hides the domain file from the coverage text table, so I confirmed its 100% through a json-summary report.
+- The output folder also contains three raw logs: `raw-checks.log`, `cov-after.log` and `cov-base.log`.

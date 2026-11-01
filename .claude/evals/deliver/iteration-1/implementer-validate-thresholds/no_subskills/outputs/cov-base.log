@@ -1,0 +1,38 @@
+
+ RUN  v4.1.12 /private/tmp/claude-501/-Users-duc-personal-projects-intelligent-inventory-dashboard/a9a417b3-0a14-482f-ba8f-1a07b3fc026b/scratchpad/sb/implementer-validate-thresholds/no_subskills/apps/api
+      Coverage enabled with v8
+
+
+ Test Files  3 passed (3)
+      Tests  27 passed (27)
+   Start at  22:43:52
+   Duration  572ms (transform 54ms, setup 0ms, import 463ms, tests 62ms, environment 0ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   58.97 |     87.5 |   56.25 |      60 |                   
+ modules/health    |       0 |        0 |       0 |       0 |                   
+  ...ase.health.ts |       0 |      100 |       0 |       0 | 7-20              
+  ...controller.ts |       0 |        0 |       0 |       0 | 5-22              
+ shared            |      95 |      100 |    87.5 |     100 |                   
+  db.ts            |      80 |      100 |      50 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 58.97% ( 23/39 )
+Branches     : 87.5% ( 14/16 )
+Functions    : 56.25% ( 9/16 )
+Lines        : 60% ( 21/35 )
+================================================================================
+ERROR: Coverage for lines (60%) does not meet global threshold (80%)
+ERROR: Coverage for functions (56.25%) does not meet global threshold (80%)
+ERROR: Coverage for statements (58.97%) does not meet global threshold (80%)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /private/tmp/claude-501/-Users-duc-
+  │ personal-projects-intelligent-inventory-dashboard/a9a417b3-0a14-482f-ba8f-
+  │ 1a07b3fc026b/scratchpad/sb/implementer-validate-thresholds/no_subskills/
+  │ apps/api
+

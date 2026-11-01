@@ -30,19 +30,19 @@ A **modular monolith**: one stateless NestJS process (`apps/api`), one PostgreSQ
 
 _Figure 1. Containers and modules. The auth guards gate every dealership route; each module writes only its own table, and `dashboard` reads across tables._
 
-### 2.1 Components
+### 2.1 Component roles
 
-| Component     | Owns (writes)                 | Role                                                                                                                                                                                                                                                                                                      |
-| ------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Client stub   | —                             | Swagger UI, `curl-examples.sh` and Supertest stand in for the dashboard front end (brief: backend only).                                                                                                                                                                                                  |
-| `auth`        | `app_user`, `user_dealership` | `POST /auth/login` (argon2id, per-IP throttle, D13), `GET /me`. `JwtAuthGuard` (401) and `DealershipGuard`, which runs one context query per request: membership (404 if none), role → permission check (403), thresholds and `today_local` (§4.6). The role → permission map is a frozen constant (D15). |
-| `dealerships` | `dealership`                  | Read and update settings: time zone (checked against `pg_timezone_names`) and the watch/aging thresholds (D3).                                                                                                                                                                                            |
-| `inventory`   | `vehicle`                     | Create a vehicle, change its status (D6), list with filters, detail. Holds the pure `AgingPolicy` and `VehicleStatus` rules in `domain/`.                                                                                                                                                                 |
-| `actions`     | `vehicle_action`              | Log an action and read the history. Append-only; the newest by `id` is the current one (D4, P3).                                                                                                                                                                                                          |
-| `dashboard`   | — (read-only)                 | The KPI aggregate (D10–D12). The only module that reads across tables.                                                                                                                                                                                                                                    |
-| `health`      | —                             | `/health/live` and `/health/ready` (Terminus). Public, outside the guards.                                                                                                                                                                                                                                |
-| `shared`      | —                             | Config validated at startup, the Drizzle provider, the injected `Clock`, the RFC 9457 exception filter and the pino logger setup.                                                                                                                                                                         |
-| PostgreSQL    | the five tables               | The system of record. Also the only place that does time-zone maths (P1) and the place where state rules are enforced (constraints, conditional writes; P2).                                                                                                                                              |
+Each box in Figure 1, in one or two sentences:
+
+- **Client stub:** stands in for the dashboard front end, which is out of scope (backend only). Swagger UI at `/docs`, `curl-examples.sh` and the Supertest suites call the API the way the UI would.
+- **`auth`:** decides who may do what. It logs users in (`POST /auth/login`, argon2id, per-IP throttle, D13) and provides the two guards: `JwtAuthGuard` (401) and `DealershipGuard`, which checks membership (404) and permission (403) and loads the dealership's time zone and thresholds (D15, D16). Writes `app_user` and `user_dealership`.
+- **`dealerships`:** holds each dealership's settings, its time zone and its watch/aging thresholds (D3). Writes `dealership`.
+- **`inventory`:** the vehicles themselves. It adds vehicles, lists and filters them by make, model, age, tier and status (D7), and moves them through `IN_STOCK ⇄ RESERVED → SOLD` (D6). The pure aging rules (`AgingPolicy`) live in its `domain/`. Writes `vehicle`.
+- **`actions`:** records what a manager plans to do about a vehicle (e.g. `PRICE_REDUCTION_PLANNED`). Append-only: the newest action is the current one (D4, P3). Writes `vehicle_action`.
+- **`dashboard`:** the read side for the manager's overview. It computes the KPIs, age buckets and "aging with no action" count in one query (D10–D12). The only module that reads across tables, and it writes nothing.
+- **`health`:** tells the platform whether to restart the process (`/health/live`) or route traffic to it (`/health/ready`, pings Postgres). Public, outside the guards.
+- **`shared`:** the plumbing every module uses: validated config, the Drizzle connection, the injected `Clock`, the problem+json exception filter and the pino logger.
+- **PostgreSQL:** the single source of truth. It also does all time-zone maths (P1) and enforces the state rules through constraints and conditional writes (P2).
 
 Module rules (§4.2): only the owning module writes a table, `dashboard` is the only cross-table reader, no dependency cycles: `dealerships` depends on `auth`, `inventory` on `dealerships`, `actions` on `inventory`, `dashboard` on `dealerships`.
 

@@ -1,0 +1,540 @@
+{
+  "id": "1182fa8e-4d54-4d2e-a877-6e001249370e",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.app_user": {
+      "name": "app_user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ACTIVE'"
+        }
+      },
+      "indexes": {
+        "app_user_email_lower_uq": {
+          "name": "app_user_email_lower_uq",
+          "columns": [
+            {
+              "expression": "lower(\"email\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "app_user_status_chk": {
+          "name": "app_user_status_chk",
+          "value": "\"app_user\".\"status\" IN ('ACTIVE','DISABLED')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.dealership": {
+      "name": "dealership",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "watch_days": {
+          "name": "watch_days",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        },
+        "aging_days": {
+          "name": "aging_days",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 90
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "dealership_thresholds_chk": {
+          "name": "dealership_thresholds_chk",
+          "value": "\"dealership\".\"watch_days\" >= 1 AND \"dealership\".\"watch_days\" < \"dealership\".\"aging_days\" AND \"dealership\".\"aging_days\" <= 3650"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_dealership": {
+      "name": "user_dealership",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dealership_id": {
+          "name": "dealership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_dealership_user_id_app_user_id_fk": {
+          "name": "user_dealership_user_id_app_user_id_fk",
+          "tableFrom": "user_dealership",
+          "tableTo": "app_user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_dealership_dealership_id_dealership_id_fk": {
+          "name": "user_dealership_dealership_id_dealership_id_fk",
+          "tableFrom": "user_dealership",
+          "tableTo": "dealership",
+          "columnsFrom": ["dealership_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_dealership_user_id_dealership_id_pk": {
+          "name": "user_dealership_user_id_dealership_id_pk",
+          "columns": ["user_id", "dealership_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "user_dealership_role_chk": {
+          "name": "user_dealership_role_chk",
+          "value": "\"user_dealership\".\"role\" IN ('ADMIN','MANAGER','VIEWER')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.vehicle": {
+      "name": "vehicle",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dealership_id": {
+          "name": "dealership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vin": {
+          "name": "vin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "make": {
+          "name": "make",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_year": {
+          "name": "model_year",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mileage": {
+          "name": "mileage",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "list_price": {
+          "name": "list_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'IN_STOCK'"
+        },
+        "stocked_on": {
+          "name": "stocked_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sold_at": {
+          "name": "sold_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "vehicle_dealership_vin_open_uq": {
+          "name": "vehicle_dealership_vin_open_uq",
+          "columns": [
+            {
+              "expression": "dealership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "vin",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"vehicle\".\"status\" <> 'SOLD'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vehicle_dealership_status_stocked_idx": {
+          "name": "vehicle_dealership_status_stocked_idx",
+          "columns": [
+            {
+              "expression": "dealership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "stocked_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vehicle_dealership_make_model_idx": {
+          "name": "vehicle_dealership_make_model_idx",
+          "columns": [
+            {
+              "expression": "dealership_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"make\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"model\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vehicle_dealership_id_dealership_id_fk": {
+          "name": "vehicle_dealership_id_dealership_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "dealership",
+          "columnsFrom": ["dealership_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vehicle_updated_by_app_user_id_fk": {
+          "name": "vehicle_updated_by_app_user_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "app_user",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "vehicle_vin_chk": {
+          "name": "vehicle_vin_chk",
+          "value": "\"vehicle\".\"vin\" ~ '^[A-HJ-NPR-Z0-9]{17}$'"
+        },
+        "vehicle_mileage_chk": {
+          "name": "vehicle_mileage_chk",
+          "value": "\"vehicle\".\"mileage\" >= 0"
+        },
+        "vehicle_price_chk": {
+          "name": "vehicle_price_chk",
+          "value": "\"vehicle\".\"list_price\" IS NULL OR \"vehicle\".\"list_price\" >= 0"
+        },
+        "vehicle_status_chk": {
+          "name": "vehicle_status_chk",
+          "value": "\"vehicle\".\"status\" IN ('IN_STOCK','RESERVED','SOLD')"
+        },
+        "vehicle_sold_at_chk": {
+          "name": "vehicle_sold_at_chk",
+          "value": "(\"vehicle\".\"status\" = 'SOLD') = (\"vehicle\".\"sold_at\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.vehicle_action": {
+      "name": "vehicle_action",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "vehicle_action_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dealership_id": {
+          "name": "dealership_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "vehicle_action_vehicle_id_idx": {
+          "name": "vehicle_action_vehicle_id_idx",
+          "columns": [
+            {
+              "expression": "vehicle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vehicle_action_vehicle_id_vehicle_id_fk": {
+          "name": "vehicle_action_vehicle_id_vehicle_id_fk",
+          "tableFrom": "vehicle_action",
+          "tableTo": "vehicle",
+          "columnsFrom": ["vehicle_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vehicle_action_dealership_id_dealership_id_fk": {
+          "name": "vehicle_action_dealership_id_dealership_id_fk",
+          "tableFrom": "vehicle_action",
+          "tableTo": "dealership",
+          "columnsFrom": ["dealership_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vehicle_action_created_by_app_user_id_fk": {
+          "name": "vehicle_action_created_by_app_user_id_fk",
+          "tableFrom": "vehicle_action",
+          "tableTo": "app_user",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "vehicle_action_type_chk": {
+          "name": "vehicle_action_type_chk",
+          "value": "\"vehicle_action\".\"action_type\" IN ('PRICE_REDUCTION_PLANNED','TRANSFER','AUCTION','PROMOTION','MONITOR','OTHER')"
+        },
+        "vehicle_action_note_chk": {
+          "name": "vehicle_action_note_chk",
+          "value": "\"vehicle_action\".\"note\" IS NULL OR char_length(\"vehicle_action\".\"note\") <= 1000"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -36,9 +36,12 @@ Two places hold this project's accepted decisions:
 
 ## ADRs
 
-| ADR                                                         | Decision                                                      | Supersedes |
-| ----------------------------------------------------------- | ------------------------------------------------------------- | ---------- |
-| [0001](0001-migrations-run-outside-the-app.md)              | Migrations run outside the app, not at boot                   | —          |
-| [0002](0002-updated-at-set-from-clock.md)                   | `updated_at` is set by the service from `Clock`               | —          |
-| [0003](0003-health-bodies-are-not-problem-json.md)          | Health endpoints keep Terminus's body, not problem+json       | —          |
-| [0004](0004-text-check-and-app-side-timezone-validation.md) | Enums are `text` + `CHECK`; time-zone validity checked in app | —          |
+| ADR                                                         | Decision                                                      | Supersedes              |
+| ----------------------------------------------------------- | ------------------------------------------------------------- | ----------------------- |
+| [0001](0001-migrations-run-outside-the-app.md)              | Migrations run outside the app, not at boot                   | —                       |
+| [0002](0002-updated-at-set-from-clock.md)                   | `updated_at` is set by the service from `Clock`               | —                       |
+| [0003](0003-health-bodies-are-not-problem-json.md)          | Health endpoints keep Terminus's body, not problem+json       | —                       |
+| [0004](0004-text-check-and-app-side-timezone-validation.md) | Enums are `text` + `CHECK`; time-zone validity checked in app | —                       |
+| [0005](0005-request-validation-with-zod.md)                 | Request validation uses zod via Nest's Standard Schema pipe   | §4.1 (`ValidationPipe`) |
+| [0006](0006-request-logger-ahead-of-body-parser.md)         | `pino-http` mounted ahead of the body parser                  | —                       |
+| [0007](0007-problem-type-and-code-for-every-status.md)      | Minted problem `type` and a `code` for every status           | —                       |

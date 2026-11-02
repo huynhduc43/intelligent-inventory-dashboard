@@ -11,6 +11,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   type SchemaObject,
@@ -103,6 +104,23 @@ export class VehiclesController {
   @RequirePermission('vehicle:read')
   @Header('Cache-Control', 'no-store')
   @dealershipParam
+  @ApiQuery({
+    name: 'status',
+    style: 'form',
+    explode: false,
+    required: false,
+    schema: { type: 'string', default: 'IN_STOCK' },
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    schema: { type: 'integer', minimum: 0, default: 0 },
+  })
   @ApiOkResponse({
     description: 'A page of vehicles and the total matching the filters',
     schema: {

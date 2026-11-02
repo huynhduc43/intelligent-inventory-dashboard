@@ -212,9 +212,11 @@
             "in": "query",
             "description": "Comma-separated list of IN_STOCK, RESERVED, SOLD. Default IN_STOCK.",
             "schema": {
-              "description": "Comma-separated list of IN_STOCK, RESERVED, SOLD. Default IN_STOCK.",
-              "type": "string"
-            }
+              "type": "string",
+              "default": "IN_STOCK"
+            },
+            "style": "form",
+            "explode": false
           },
           {
             "name": "make",
@@ -308,11 +310,10 @@
             "in": "query",
             "description": "Default 50.",
             "schema": {
-              "description": "Default 50.",
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "pattern": "^\\d+$"
+              "default": 50
             }
           },
           {
@@ -321,11 +322,9 @@
             "in": "query",
             "description": "Default 0.",
             "schema": {
-              "description": "Default 0.",
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991,
-              "pattern": "^\\d+$"
+              "default": 0
             }
           },
           {

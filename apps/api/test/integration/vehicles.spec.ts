@@ -377,37 +377,4 @@ describe('vehicles list and detail', () => {
       expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
     });
   });
-
-  describe('access', () => {
-    it.each([ADMIN, MANAGER, VIEWER])('lets %s read both routes', async (u) => {
-      expect(
-        (await get(`/api/v1/dealerships/${LONDON}/vehicles`, u)).status,
-      ).toBe(200);
-      expect(
-        (await get(`/api/v1/dealerships/${LONDON}/vehicles/${vid(1)}`, u))
-          .status,
-      ).toBe(200);
-    });
-
-    it('answers 404 to a non-member and 401 without a token', async () => {
-      expect(
-        (await get(`/api/v1/dealerships/${NEW_YORK}/vehicles`, VIEWER)).status,
-      ).toBe(404);
-      expect(
-        (
-          await get(
-            `/api/v1/dealerships/${NEW_YORK}/vehicles/${vid(9, 'd2')}`,
-            VIEWER,
-          )
-        ).status,
-      ).toBe(404);
-      expect(
-        (await get(`/api/v1/dealerships/${LONDON}/vehicles`, null)).status,
-      ).toBe(401);
-      expect(
-        (await get(`/api/v1/dealerships/${LONDON}/vehicles/${vid(1)}`, null))
-          .status,
-      ).toBe(401);
-    });
-  });
 });

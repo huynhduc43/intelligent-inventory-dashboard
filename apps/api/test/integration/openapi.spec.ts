@@ -86,7 +86,14 @@ describe('openapi vehicle routes', () => {
     const params = (op?.parameters ?? []) as {
       name: string;
       in: string;
-      schema?: { type?: string; minimum?: number; enum?: string[] };
+      style?: string;
+      explode?: boolean;
+      schema?: {
+        type?: string;
+        minimum?: number;
+        enum?: string[];
+        default?: unknown;
+      };
     }[];
     const query = Object.fromEntries(
       params.filter((p) => p.in === 'query').map((p) => [p.name, p.schema]),
@@ -106,6 +113,14 @@ describe('openapi vehicle routes', () => {
         'tier',
       ].sort(),
     );
+    const byName = Object.fromEntries(params.map((p) => [p.name, p]));
+    expect(byName.status).toMatchObject({
+      style: 'form',
+      explode: false,
+      schema: { default: 'IN_STOCK' },
+    });
+    expect(byName.limit?.schema).toMatchObject({ default: 50 });
+    expect(byName.offset?.schema).toMatchObject({ default: 0 });
     expect(query.limit).toMatchObject({
       type: 'integer',
       minimum: 1,

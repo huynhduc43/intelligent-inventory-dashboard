@@ -46,7 +46,7 @@ interface Row extends Record<string, unknown> {
 // Read-only LATERAL on vehicle_action for the latest action by id (ADR 0011).
 const latestAction = sql`LEFT JOIN LATERAL (
   SELECT a.action_type, a.note, a.created_by, a.created_at
-  FROM vehicle_action a WHERE a.vehicle_id = v.id ORDER BY a.id DESC LIMIT 1
+  FROM vehicle_action a WHERE a.vehicle_id = v.id AND a.dealership_id = v.dealership_id ORDER BY a.id DESC LIMIT 1
 ) la ON true`;
 
 @Injectable()

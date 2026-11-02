@@ -58,7 +58,8 @@ const MEMBERSHIPS = [
 
 // One statement per dealership. Ages are measured from the dealership-local date in SQL (never in Node), ids and VINs
 // are derived from the row number, so a re-run conflicts on the primary key and adds nothing.
-// Rows n = 1..4 sit at exactly watch-1, watch, aging and aging+1 days; about 10% are RESERVED and 10% SOLD.
+// Rows n = 1..4 sit at exactly watch-1, watch, aging and aging+1 days; 10% are RESERVED and 10% SOLD. The SOLD row
+// n = 20 is bought back: same VIN, new row, in stock again (D18).
 const SEED_VEHICLES = `
 WITH d AS (
   SELECT id, timezone, watch_days, aging_days,
@@ -69,35 +70,29 @@ WITH d AS (
          CASE n WHEN 1 THEN watch_days - 1 WHEN 2 THEN watch_days
                 WHEN 3 THEN aging_days WHEN 4 THEN aging_days + 1
                 ELSE (n * 37) % 201 END AS age,
-         CASE WHEN n % 20 = 0 THEN 'SOLD' WHEN n % 10 = 5 THEN 'RESERVED' ELSE 'IN_STOCK' END AS st
+         CASE WHEN n % 10 = 0 THEN 'SOLD' WHEN n % 10 = 5 THEN 'RESERVED' ELSE 'IN_STOCK' END AS st
   FROM d, generate_series(1, $2::int) AS n
+), r AS (
+  SELECT format('0000000%s-0000-4000-8000-%s', dch, lpad(to_hex(n), 12, '0'))::uuid AS id, id AS dealership_id,
+         'SEED' || dch || lpad(n::text, 12, '0') AS vin,
+         (ARRAY['Toyota','Ford','BMW','Kia','Tesla'])[1 + n % 5] AS make,
+         (ARRAY['Corolla','Focus','X3','Ceed','Model 3'])[1 + n % 5] AS model,
+         2015 + n % 10 AS model_year, (n * 1237) % 150000 AS mileage,
+         CASE WHEN n % 13 = 0 THEN NULL ELSE 8000 + (n * 311) % 40000 END AS list_price,
+         CASE WHEN age < 2 AND st = 'SOLD' THEN 'IN_STOCK' ELSE st END AS status,
+         today - age AS stocked_on,
+         CASE WHEN st = 'SOLD' AND age >= 2
+              THEN ((today - age / 2)::timestamp + time '12:00') AT TIME ZONE timezone END AS sold_at,
+         n, dch, today
+  FROM g
 )
 INSERT INTO vehicle (id, dealership_id, vin, make, model, model_year, mileage, list_price,
                      status, stocked_on, sold_at, updated_by)
-SELECT format('0000000%s-0000-4000-8000-%s', dch, lpad(to_hex(n), 12, '0'))::uuid, id,
-       'SEED' || dch || lpad(n::text, 12, '0'),
-       (ARRAY['Toyota','Ford','BMW','Kia','Tesla'])[1 + n % 5],
-       (ARRAY['Corolla','Focus','X3','Ceed','Model 3'])[1 + n % 5],
-       2015 + n % 10, (n * 1237) % 150000,
-       CASE WHEN n % 13 = 0 THEN NULL ELSE 8000 + (n * 311) % 40000 END,
-       CASE WHEN age < 2 AND st = 'SOLD' THEN 'IN_STOCK' ELSE st END,
-       today - age,
-       CASE WHEN st = 'SOLD' AND age >= 2
-            THEN ((today - age / 2)::timestamp + time '12:00') AT TIME ZONE timezone END,
-       $3
-FROM g
-ON CONFLICT DO NOTHING`;
-
-// A SOLD vehicle (n = 20) bought back: same VIN, new row, in stock again (D18).
-const SEED_REACQUIRED = `
-INSERT INTO vehicle (id, dealership_id, vin, make, model, model_year, mileage, list_price,
-                     status, stocked_on, updated_by)
-SELECT format('0000000%s-0000-4000-8000-%s', right(s.dealership_id::text, 1), 'f00000000020')::uuid,
-       s.dealership_id, s.vin, s.make, s.model, s.model_year, s.mileage, s.list_price, 'IN_STOCK',
-       (now() AT TIME ZONE d.timezone)::date - 10, s.updated_by
-FROM vehicle s JOIN dealership d ON d.id = s.dealership_id
-WHERE s.id = format('0000000%s-0000-4000-8000-%s', right(d.id::text, 1), lpad(to_hex(20), 12, '0'))::uuid
-  AND s.dealership_id = $1 AND s.status = 'SOLD'
+SELECT id, dealership_id, vin, make, model, model_year, mileage, list_price, status, stocked_on, sold_at, $3::uuid FROM r
+UNION ALL
+SELECT format('0000000%s-0000-4000-8000-%s', dch, 'f00000000020')::uuid, dealership_id, vin, make, model,
+       model_year, mileage, list_price, 'IN_STOCK', today - 10, NULL, $3::uuid
+FROM r WHERE n = 20 AND status = 'SOLD'
 ON CONFLICT DO NOTHING`;
 
 /** Returns the password of each user this run inserted (none on a re-run). */
@@ -139,7 +134,6 @@ export async function seed(
       vehiclesPerDealership,
       USERS[0][0],
     ]);
-    await client.query(SEED_REACQUIRED, [dealershipId]);
   }
   return created;
 }
@@ -154,7 +148,8 @@ if (import.meta.main) {
   await client.connect();
   try {
     const fixed = process.env.SEED_PASSWORD;
-    const count = Number(process.env.SEED_VEHICLES_PER_DEALERSHIP ?? 250);
+    const raw = process.env.SEED_VEHICLES_PER_DEALERSHIP;
+    const count = raw === undefined || raw === '' ? 250 : Number(raw);
     if (!Number.isInteger(count) || count < 0 || count > 1_000_000) {
       throw new Error(
         'SEED_VEHICLES_PER_DEALERSHIP must be an integer from 0 to 1000000',

@@ -10,29 +10,23 @@ import {
 import { z } from 'zod';
 import { AppModule } from '../app.module.js';
 import { loadConfig } from './config.js';
-import { problemSchema } from './problem.js';
+import { problemRef, problemSchema } from './problem.js';
 
 // src/shared and dist/shared are both two levels below the package root.
 const { version } = JSON.parse(
   readFileSync(`${import.meta.dirname}/../../package.json`, 'utf8'),
 ) as { version: string };
 
-const problemRef = {
-  'application/problem+json': {
-    schema: { $ref: '#/components/schemas/Problem' },
-  },
-};
-
 export function buildDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('Intelligent Inventory Dashboard API')
     .setVersion(version)
     .addBearerAuth()
-    .addGlobalResponse(
-      { status: 400, description: 'Validation failed', content: problemRef },
-      { status: 401, description: 'Unauthenticated', content: problemRef },
-      { status: 500, description: 'Unexpected error', content: problemRef },
-    )
+    .addGlobalResponse({
+      status: 500,
+      description: 'Unexpected error',
+      content: problemRef,
+    })
     .build();
   const document = SwaggerModule.createDocument(app, config);
   // swagger cannot convert a zod response type, so the shared error shape is registered by hand.

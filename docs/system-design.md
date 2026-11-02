@@ -34,7 +34,7 @@ _Figure 1. Containers and modules. The auth guards gate every dealership route; 
 
 Each box in Figure 1, in one or two sentences:
 
-- **Client stub:** stands in for the dashboard front end, which is out of scope (backend only). Swagger UI at `/docs`, `curl-examples.sh` and the Supertest suites call the API the way the UI would.
+- **Client stub:** stands in for the dashboard front end, which is out of scope (backend only). Swagger UI at `/docs`, `curl-examples.sh` and the Supertest suites call the API the way the UI would. The committed `docs/api/openapi.json` is generated from the code (`pnpm --filter @inventory/api openapi:export`) and drift-tested ([ADR 0010](adr/0010-openapi-from-code-and-committed-export.md)).
 - **`auth`:** decides who may do what. It logs users in (`POST /auth/login`, argon2id, per-IP throttle, D13) and provides the two guards: `JwtAuthGuard` (401) and `DealershipGuard`, which checks membership (404) and permission (403) and loads the dealership's time zone and thresholds (D15, D16). Writes `app_user` and `user_dealership`.
 - **`dealerships`:** holds each dealership's settings, its time zone and its watch/aging thresholds (D3). Writes `dealership`.
 - **`inventory`:** the vehicles themselves. It adds vehicles, lists and filters them by make, model, age, tier and status (D7), and moves them through `IN_STOCK ⇄ RESERVED → SOLD` (D6). The pure aging rules (`AgingPolicy`) live in its `domain/`. Writes `vehicle`.

@@ -142,3 +142,10 @@ export function describeException(
     detail: 'An unexpected error occurred.',
   };
 }
+
+/** OpenAPI `content` for a problem+json response. */
+export const problemRef = {
+  'application/problem+json': {
+    schema: { $ref: '#/components/schemas/Problem' },
+  },
+};

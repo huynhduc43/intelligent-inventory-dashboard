@@ -59,6 +59,24 @@ describe('openapi document', () => {
   });
 });
 
+describe('openapi per-route statuses', () => {
+  it('documents only the statuses each route can return', async () => {
+    const doc = JSON.parse(JSON.stringify(await generateOpenApi())) as Doc;
+    const statuses = (path: string, method: 'get' | 'post') =>
+      Object.keys(doc.paths[path]?.[method]?.responses ?? {}).sort();
+    expect(statuses('/api/v1/auth/login', 'post')).toEqual([
+      '200',
+      '400',
+      '401',
+      '429',
+      '500',
+    ]);
+    expect(statuses('/api/v1/me', 'get')).toEqual(['200', '401', '500']);
+    expect(statuses('/health/live', 'get')).not.toContain('401');
+    expect(statuses('/health/ready', 'get')).not.toContain('400');
+  });
+});
+
 describe('setupDocs', () => {
   let app: INestApplication<App>;
 

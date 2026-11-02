@@ -7,3 +7,4 @@ coverage/
 .claude/evals/deliver/skill-snapshot/
 .claude/evals/deliver/iteration-*/
 .claude/skills/deliver/evals/*/files/
+docs/api/openapi.json

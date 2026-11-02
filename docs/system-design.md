@@ -2,7 +2,7 @@
 
 System Design Document for the Keyloop technical assessment, Scenario B, backend layer. It condenses the design in [`research/backend-architecture.md`](research/backend-architecture.md) (the "architecture doc") for a reviewer. Decision numbers (D1–D19, P1–P3) and section references (§) point back to it; it holds the reasoning and sources this page leaves out. Decisions made since are ADRs in [`adr/`](adr/README.md). Each PR updates this page when it changes what the page describes.
 
-Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, and the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`); everything else on this page is the design being built.
+Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`), and the dashboard read (`GET …/dashboard`); everything else on this page is the design being built.
 
 ---
 

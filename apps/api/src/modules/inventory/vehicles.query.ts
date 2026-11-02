@@ -67,5 +67,3 @@ export const vehicleListQuery = z
   });
 
 export type VehicleListQuery = z.infer<typeof vehicleListQuery>;
-
-export const noQuery = z.strictObject({});

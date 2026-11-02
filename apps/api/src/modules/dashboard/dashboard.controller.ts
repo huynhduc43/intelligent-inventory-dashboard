@@ -9,10 +9,10 @@ import {
 } from '@nestjs/swagger';
 import type { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
+import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
-import { noQuery } from '../inventory/vehicles.query.js';
-import { DashboardService } from './dashboard.service.js';
+import { DashboardService } from './dashboard.query.js';
 
 const count = { type: 'integer' } as const;
 const dashboardOpenApi: SchemaObject = {

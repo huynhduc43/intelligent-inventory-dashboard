@@ -18,10 +18,11 @@ import {
 } from '@nestjs/swagger';
 import type { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
+import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
 import type { AuthedRequest } from '../auth/request-context.js';
-import { noQuery, vehicleListQuery } from './vehicles.query.js';
+import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
 
 const vehicleOpenApi: SchemaObject = {

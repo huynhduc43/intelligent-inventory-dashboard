@@ -3,7 +3,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
-import type { Dashboard } from '../../src/modules/dashboard/dashboard.service.js';
+import type { Dashboard } from '../../src/modules/dashboard/dashboard.query.js';
 import {
   bucketOf,
   tierOf,
@@ -13,6 +13,7 @@ import {
   ADMIN,
   buildApp,
   LONDON,
+  MANAGER,
   NEW_YORK,
   SYDNEY,
   seedDatabase,
@@ -73,8 +74,14 @@ describe('dashboard', () => {
       [vehicle, LONDON, type, ADMIN],
     );
 
-  // ages: 0, 30, 31, 59, 60, 90, 91, 91, 200 => tiers F4 W2 A3 ... see assertions
-  const AGES = [0, 30, 31, 59, 60, 90, 91, 91, 200];
+  // v1..v10; 60/61 and 90/91 are the tier and bucket edges
+  const AGES = [0, 30, 31, 59, 60, 61, 90, 91, 91, 200];
+  const makeOf = (age: number) =>
+    age > 90
+      ? { make: 'Toyota', model: 'Corolla' }
+      : age <= 31
+        ? { make: 'Audi', model: 'A4' }
+        : { make: 'BMW', model: 'X3' };
 
   beforeAll(async () => {
     container = await startMigratedPostgres();
@@ -82,18 +89,15 @@ describe('dashboard', () => {
     db = new pg.Client({ connectionString: container.getConnectionUri() });
     await db.connect();
     for (const [i, age] of AGES.entries()) {
-      await insert(i + 1, age, {
-        make: age > 90 ? 'Toyota' : 'BMW',
-        model: age > 90 ? 'Corolla' : 'X3',
-      });
+      await insert(i + 1, age, makeOf(age));
     }
     await insert(20, 100, { status: 'RESERVED' });
     await insert(21, 100, { status: 'SOLD' });
     await insert(22, 100, { d: NEW_YORK });
-    // v7 (91): MONITOR only; v8 (91): none; v9 (200): two actions, newest is TRANSFER; v1 (0): AUCTION
-    await action(vid(7), 'MONITOR');
-    await action(vid(9), 'AUCTION');
-    await action(vid(9), 'TRANSFER');
+    // v8 (91): MONITOR only; v9 (91): none; v10 (200): two actions, newest is TRANSFER; v1 (0): AUCTION
+    await action(vid(8), 'MONITOR');
+    await action(vid(10), 'AUCTION');
+    await action(vid(10), 'TRANSFER');
     await action(vid(1), 'AUCTION');
     // actions on excluded vehicles count nowhere
     await action(vid(20), 'OTHER');
@@ -166,7 +170,9 @@ describe('dashboard', () => {
   it('groups by make and model, ordered by count then name', async () => {
     const { body } = await dash();
     expect(body.byMakeModel).toEqual([
-      { make: 'BMW', model: 'X3', count: 6, aging: 0 },
+      { make: 'BMW', model: 'X3', count: 4, aging: 0 },
+      // equal counts: make ascending
+      { make: 'Audi', model: 'A4', count: 3, aging: 0 },
       { make: 'Toyota', model: 'Corolla', count: 3, aging: 3 },
     ]);
   });
@@ -174,7 +180,7 @@ describe('dashboard', () => {
   it('counts each vehicle by its latest action, NONE first, seven entries', async () => {
     const { body } = await dash();
     expect(body.actionStats).toEqual([
-      { actionType: 'NONE', count: 6 },
+      { actionType: 'NONE', count: 7 },
       { actionType: 'PRICE_REDUCTION_PLANNED', count: 0 },
       { actionType: 'TRANSFER', count: 1 },
       { actionType: 'AUCTION', count: 1 },
@@ -182,6 +188,32 @@ describe('dashboard', () => {
       { actionType: 'MONITOR', count: 1 },
       { actionType: 'OTHER', count: 0 },
     ]);
+  });
+
+  it('moves byTier with the dealership thresholds but never ageBuckets (D10)', async () => {
+    const before = (await dash()).body;
+    await db.query(
+      'UPDATE dealership SET watch_days = 30, aging_days = 60 WHERE id = $1',
+      [LONDON],
+    );
+    try {
+      const after = (await dash()).body;
+      expect(after.thresholds).toEqual({ watchDays: 30, agingDays: 60 });
+      expect(after.summary.byTier).not.toEqual(before.summary.byTier);
+      expect(after.summary.byTier).toEqual({ FRESH: 1, WATCH: 4, AGING: 5 });
+      expect(after.ageBuckets).toEqual(before.ageBuckets);
+    } finally {
+      await db.query(
+        'UPDATE dealership SET watch_days = 60, aging_days = 90 WHERE id = $1',
+        [LONDON],
+      );
+    }
+  });
+
+  it('allows ADMIN, MANAGER and VIEWER', async () => {
+    for (const u of [ADMIN, MANAGER, VIEWER]) {
+      expect((await raw(LONDON, u)).status).toBe(200);
+    }
   });
 
   it('returns zeros and a null average for a dealership with no stock', async () => {
@@ -196,7 +228,16 @@ describe('dashboard', () => {
     });
     expect(b.byMakeModel).toEqual([]);
     expect(b.ageBuckets.map((x) => x.count)).toEqual([0, 0, 0, 0]);
-    expect(b.actionStats).toHaveLength(7);
+    expect(b.actionStats.map((x) => x.actionType)).toEqual([
+      'NONE',
+      'PRICE_REDUCTION_PLANNED',
+      'TRANSFER',
+      'AUCTION',
+      'PROMOTION',
+      'MONITOR',
+      'OTHER',
+    ]);
+    expect(b.actionStats.every((x) => x.count === 0)).toBe(true);
   });
 
   it('rejects missing token (401), non-member and unknown dealership (404), and any query (400)', async () => {
@@ -214,5 +255,52 @@ describe('dashboard', () => {
     const q = await get(`/api/v1/dealerships/${LONDON}/dashboard?x=1`);
     expect(q.status).toBe(400);
     expect((q.body as { code: string }).code).toBe('VALIDATION_FAILED');
+  });
+});
+
+describe('dashboard over the seed', () => {
+  let container: StartedPostgreSqlContainer;
+  let app: INestApplication<App>;
+  const clock = new TestClock(new Date());
+
+  beforeAll(async () => {
+    container = await startMigratedPostgres();
+    await seedDatabase(container.getConnectionUri(), 60);
+    app = await buildApp(container.getConnectionUri(), clock);
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await container.stop();
+  });
+
+  it('matches tierOf and bucketOf over the seeded IN_STOCK vehicles', async () => {
+    const auth = `Bearer ${tokenFor(ADMIN, clock)}`;
+    const base = `/api/v1/dealerships/${LONDON}`;
+    const list = await request(app.getHttpServer())
+      .get(`${base}/vehicles?status=IN_STOCK&limit=100`)
+      .set('Authorization', auth);
+    const items = (list.body as { items: { daysInStock: number }[] }).items;
+    expect(items.length).toBeGreaterThan(0);
+    const dash = await request(app.getHttpServer())
+      .get(`${base}/dashboard`)
+      .set('Authorization', auth);
+    const body = dash.body as Dashboard;
+    const byTier = { FRESH: 0, WATCH: 0, AGING: 0 };
+    const buckets = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+    for (const v of items) {
+      byTier[
+        tierOf(v.daysInStock, {
+          watch: body.thresholds.watchDays,
+          aging: body.thresholds.agingDays,
+        })
+      ]++;
+      buckets[bucketOf(v.daysInStock)]++;
+    }
+    expect(body.summary.totalInStock).toBe(items.length);
+    expect(body.summary.byTier).toEqual(byTier);
+    expect(body.ageBuckets).toEqual(
+      Object.entries(buckets).map(([bucket, count]) => ({ bucket, count })),
+    );
   });
 });

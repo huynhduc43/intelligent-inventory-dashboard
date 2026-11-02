@@ -75,7 +75,9 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
   });
 
   it('creates a vehicle: 201, Location, normalised fields, equals GET of Location', async () => {
+    clock.tickMs = 1;
     const res = await post(body());
+    clock.tickMs = 0;
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual({
@@ -100,8 +102,7 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
     expect(got.body).toEqual(res.body);
     const [row] = await rows();
     expect(row?.updated_by).toBe(MANAGER);
-    expect(row?.created_at.toISOString()).toBe(NOW);
-    expect(row?.updated_at.toISOString()).toBe(NOW);
+    expect(row?.created_at.toISOString()).toBe(row?.updated_at.toISOString());
   });
 
   it('409s on the same VIN while unsold, in any case or padding, and writes nothing', async () => {

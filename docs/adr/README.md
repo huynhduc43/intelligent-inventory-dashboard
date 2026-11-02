@@ -45,3 +45,5 @@ Two places hold this project's accepted decisions:
 | [0005](0005-request-validation-with-zod.md)                 | Request validation uses zod via Nest's Standard Schema pipe   | §4.1 (`ValidationPipe`) |
 | [0006](0006-request-logger-ahead-of-body-parser.md)         | `pino-http` mounted ahead of the body parser                  | —                       |
 | [0007](0007-problem-type-and-code-for-every-status.md)      | Minted problem `type` and a `code` for every status           | —                       |
+| [0008](0008-authentication-is-global-and-fail-closed.md)  | Global fail-closed `JwtAuthGuard`; `@RequirePermission` applies `DealershipGuard` | —                       |
+| [0009](0009-seed-script-is-self-contained.md)             | Seed script is self-contained and repeats the password hash   | —                       |

@@ -1,0 +1,3 @@
+# Authentication is a global, fail-closed guard; `@RequirePermission` also applies the dealership guard
+
+`JwtAuthGuard` is registered as a global guard and every route needs a valid access token unless it is marked `@Public()` (login and the health probes). `@RequirePermission(p)` applies `DealershipGuard` together with the permission metadata, so a dealership route cannot carry a permission without the membership check, nor the check without a permission. The alternative, `@UseGuards(...)` on each controller, fails open: a route that forgets the decorator is public. Here forgetting `@Public()` gives a 401, and the D15/D16 route × role test catches a route that forgets `@RequirePermission`.

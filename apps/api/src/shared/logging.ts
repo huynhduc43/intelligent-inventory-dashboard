@@ -4,9 +4,11 @@ import type { Options } from 'pino-http';
 import type { AppConfig } from './config.js';
 import { resolveRequestId } from './request-id.js';
 
+// Decided from the matched route, so unknown paths under /health/ still get a log line.
 const isHealthProbe = (req: Request) =>
   (req.method === 'GET' || req.method === 'HEAD') &&
-  req.originalUrl.startsWith('/health/');
+  ((req.route as { path?: string } | undefined)?.path?.startsWith('/health/') ??
+    false);
 
 // nestjs-pino's catch-all middleware route; it is the "matched route" of requests no controller matched.
 const CATCH_ALL = '{/*splat}';
@@ -47,6 +49,14 @@ export function pinoHttpOptions(config: AppConfig): Options {
       const id = resolveRequestId(req.headers['x-request-id']);
       res.setHeader('X-Request-ID', id);
       return id;
+    },
+    // Hook for step 2: auth sets these request fields; absent (and so omitted from the line) until then.
+    customProps: (req) => {
+      const { userId, dealershipId } = req as Request & {
+        userId?: string;
+        dealershipId?: string;
+      };
+      return { user_id: userId, dealership_id: dealershipId };
     },
     customLogLevel: (req, res) => {
       if (res.statusCode >= 500) return 'error';

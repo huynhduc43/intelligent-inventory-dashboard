@@ -51,7 +51,11 @@ class TestController {
 describe('problem+json and request logging', () => {
   let app: INestApplication<App>;
   const lines: LogLine[] = [];
-  const logLine = (id: string) => lines.find((l) => l.req_id === id);
+  const logLine = (id: string) => {
+    const own = lines.filter((l) => l.req_id === id);
+    expect(own).toHaveLength(1);
+    return own[0];
+  };
 
   beforeAll(async () => {
     const dest = new Writable({
@@ -235,7 +239,15 @@ describe('problem+json and request logging', () => {
       details: {},
     });
     expect(res.headers['content-type']).not.toMatch(PROBLEM);
-    expect(logLine(String(res.headers['x-request-id']))).toBeUndefined();
+    const id = String(res.headers['x-request-id']);
+    expect(lines.filter((l) => l.req_id === id)).toHaveLength(0);
+  });
+
+  it('logs a 404 for an unknown path under /health/', async () => {
+    const res = await request(app.getHttpServer()).get('/health/no-such');
+
+    const id = expectProblem(res, 404, 'NOT_FOUND');
+    expect(logLine(id)).toMatchObject({ level: 'info', status: 404 });
   });
 
   it('does not log credentials', async () => {

@@ -18,7 +18,9 @@ export class AppModule {
         // The request middleware is mounted by configureApp (ADR 0006); this only binds req.log to the request context.
         LoggerModule.forRoot({
           useExisting: true,
-          pinoHttp: [pinoHttpOptions(config), logDestination ?? process.stdout],
+          pinoHttp: logDestination
+            ? [pinoHttpOptions(config), logDestination]
+            : pinoHttpOptions(config),
         }),
         HealthModule,
       ],

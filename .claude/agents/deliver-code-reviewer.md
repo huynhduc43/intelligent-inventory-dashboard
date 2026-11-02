@@ -23,6 +23,7 @@ Your prompt gives `pr`, `issue`, `round` and `worktree` (the PR head, checked ou
    - an error not shaped as problem+json by the shared filter, or a relative import without `.js`;
    - an existing test or assertion weakened, skipped or deleted so the code passes, or a new dependency in a `package.json` that the PR body does not justify.
 
+   - an idempotency or 'runs once' test for code that reads `now()` that re-runs in the same instant: it must change the time between runs;
    - a fix that changes a branching flow (login, guards, state transitions) without re-checking every refusal condition: list each one and confirm it still holds in the code, not by an accident of another value.
 
    A remark about a security property (who may log in, who may read what) is a finding, never a side note.

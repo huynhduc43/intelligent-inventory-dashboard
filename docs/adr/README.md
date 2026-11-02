@@ -36,17 +36,18 @@ Two places hold this project's accepted decisions:
 
 ## ADRs
 
-| ADR                                                         | Decision                                                                                     | Supersedes               |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------ |
-| [0001](0001-migrations-run-outside-the-app.md)              | Migrations run outside the app, not at boot                                                  | —                        |
-| [0002](0002-updated-at-set-from-clock.md)                   | `updated_at` is set by the service from `Clock`                                              | —                        |
-| [0003](0003-health-bodies-are-not-problem-json.md)          | Health endpoints keep Terminus's body, not problem+json                                      | —                        |
-| [0004](0004-text-check-and-app-side-timezone-validation.md) | Enums are `text` + `CHECK`; time-zone validity checked in app                                | —                        |
-| [0005](0005-request-validation-with-zod.md)                 | Request validation uses zod via Nest's Standard Schema pipe                                  | §4.1 (`ValidationPipe`)  |
-| [0006](0006-request-logger-ahead-of-body-parser.md)         | `pino-http` mounted ahead of the body parser                                                 | —                        |
-| [0007](0007-problem-type-and-code-for-every-status.md)      | Minted problem `type` and a `code` for every status                                          | —                        |
-| [0008](0008-authentication-is-global-and-fail-closed.md)    | Global fail-closed `JwtAuthGuard`; `@RequirePermission` applies `DealershipGuard`            | —                        |
-| [0009](0009-seed-script-is-self-contained.md)               | Seed script is self-contained and repeats the password hash                                  | —                        |
-| [0010](0010-openapi-from-code-and-committed-export.md)      | OpenAPI from code at `/docs`, committed `openapi.json` exported by a script                  | —                        |
-| [0011](0011-inventory-reads-latest-action.md)               | `inventory` list and detail read the latest action with read-only SQL                        | §4.2 (cross-table reads) |
-| [0012](0012-composite-fk-on-vehicle-action.md)              | `vehicle_action` references its vehicle through a composite FK `(vehicle_id, dealership_id)` | —                        |
+| ADR                                                         | Decision                                                                                     | Supersedes                                                        |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [0001](0001-migrations-run-outside-the-app.md)              | Migrations run outside the app, not at boot                                                  | —                                                                 |
+| [0002](0002-updated-at-set-from-clock.md)                   | `updated_at` is set by the service from `Clock`                                              | —                                                                 |
+| [0003](0003-health-bodies-are-not-problem-json.md)          | Health endpoints keep Terminus's body, not problem+json                                      | —                                                                 |
+| [0004](0004-text-check-and-app-side-timezone-validation.md) | Enums are `text` + `CHECK`; time-zone validity checked in app                                | —                                                                 |
+| [0005](0005-request-validation-with-zod.md)                 | Request validation uses zod via Nest's Standard Schema pipe                                  | §4.1 (`ValidationPipe`)                                           |
+| [0006](0006-request-logger-ahead-of-body-parser.md)         | `pino-http` mounted ahead of the body parser                                                 | —                                                                 |
+| [0007](0007-problem-type-and-code-for-every-status.md)      | Minted problem `type` and a `code` for every status                                          | —                                                                 |
+| [0008](0008-authentication-is-global-and-fail-closed.md)    | Global fail-closed `JwtAuthGuard`; `@RequirePermission` applies `DealershipGuard`            | —                                                                 |
+| [0009](0009-seed-script-is-self-contained.md)               | Seed script is self-contained and repeats the password hash                                  | —                                                                 |
+| [0010](0010-openapi-from-code-and-committed-export.md)      | OpenAPI from code at `/docs`, committed `openapi.json` exported by a script                  | —                                                                 |
+| [0011](0011-inventory-reads-latest-action.md)               | `inventory` list and detail read the latest action with read-only SQL                        | §4.2 (cross-table reads)                                          |
+| [0012](0012-composite-fk-on-vehicle-action.md)              | `vehicle_action` references its vehicle through a composite FK `(vehicle_id, dealership_id)` | —                                                                 |
+| [0013](0013-actions-read-vehicle-status-in-the-insert.md)   | Logging an action reads `vehicle.status` in the same SQL statement                           | ADR 0011 (list of reads); §4.2/§4.10 (`actions → inventory` edge) |

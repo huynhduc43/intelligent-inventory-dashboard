@@ -42,6 +42,14 @@ _Avoid_: Age in hours, vehicle age
 Fresh, Watch or Aging, derived from days in stock and the dealership's thresholds.
 _Avoid_: Flag, aging status
 
+**Action**:
+A step a manager records for an in-stock vehicle: a planned price reduction, a transfer, an auction, a promotion, monitoring or something else, with an optional note. Once logged it is never changed or removed.
+_Avoid_: Task, event, status
+
+**Action history**:
+Every action logged on one vehicle, newest first. Anyone who can see the vehicle can read it, notes included.
+_Avoid_: Audit log, timeline
+
 **Current action**:
 The most recently logged action on a vehicle, or none if no action was ever logged.
 _Avoid_: Latest status, active action

@@ -109,7 +109,27 @@ describe('seed', () => {
     }
   });
 
+  it('adds no rows when re-run a day later', async () => {
+    const all = async () =>
+      (
+        await client.query<{ t: string; n: string }>(
+          `SELECT 'dealership' AS t, count(*) AS n FROM dealership
+           UNION ALL SELECT 'app_user', count(*) FROM app_user
+           UNION ALL SELECT 'user_dealership', count(*) FROM user_dealership
+           UNION ALL SELECT 'vehicle', count(*) FROM vehicle
+           UNION ALL SELECT 'vehicle_action', count(*) FROM vehicle_action
+           ORDER BY t`,
+        )
+      ).rows;
+    const before = await all();
+    await client.query('UPDATE vehicle SET stocked_on = stocked_on - 1');
+    await seed(client);
+
+    expect(await all()).toEqual(before);
+  });
+
   it('seeds the requested count and adds only the missing rows on a larger re-run', async () => {
+    await client.query('DELETE FROM vehicle_action');
     await client.query('DELETE FROM vehicle');
     await seed(client, undefined, 2000);
     const n = async () =>
@@ -121,6 +141,69 @@ describe('seed', () => {
     expect(await n()).toBe(3 * 2001);
     await seed(client, undefined, 2000);
     expect(await n()).toBe(3 * 2001);
+  });
+
+  it('gives about 40% of in-stock Aging vehicles an action history, in order, once', async () => {
+    await client.query('DELETE FROM vehicle_action');
+    await client.query('DELETE FROM vehicle');
+    await seed(client, undefined, 250);
+    const stats = async () =>
+      (
+        await client.query<{
+          name: string;
+          aging: string;
+          withHistory: string;
+          multi: string;
+          badAuthor: string;
+          misordered: string;
+          total: string;
+        }>(
+          `SELECT d.name,
+             count(*) FILTER (WHERE v.status = 'IN_STOCK' AND (now() AT TIME ZONE d.timezone)::date - v.stocked_on > d.aging_days) AS aging,
+             count(*) FILTER (WHERE v.status = 'IN_STOCK' AND (now() AT TIME ZONE d.timezone)::date - v.stocked_on > d.aging_days
+                              AND EXISTS (SELECT 1 FROM vehicle_action a WHERE a.vehicle_id = v.id)) AS "withHistory",
+             count(*) FILTER (WHERE (SELECT count(*) FROM vehicle_action a WHERE a.vehicle_id = v.id) > 1) AS multi,
+             (SELECT count(*) FROM vehicle_action a JOIN user_dealership m ON m.dealership_id = a.dealership_id AND m.user_id = a.created_by
+               WHERE a.dealership_id = d.id AND m.role = 'VIEWER') AS "badAuthor",
+             (SELECT count(*) FROM vehicle_action a JOIN vehicle_action b ON b.vehicle_id = a.vehicle_id AND b.id > a.id AND b.created_at < a.created_at
+               WHERE a.dealership_id = d.id) AS misordered,
+             (SELECT count(*) FROM vehicle_action a WHERE a.dealership_id = d.id) AS total
+           FROM dealership d JOIN vehicle v ON v.dealership_id = d.id GROUP BY d.id, d.name ORDER BY d.name`,
+        )
+      ).rows;
+    const first = await stats();
+    await seed(client, undefined, 250);
+
+    expect(await stats()).toEqual(first);
+    // A day passes: more vehicles cross aging_days, yet a re-run adds no action.
+    const total = async () =>
+      (
+        await client.query<{ n: string }>(
+          'SELECT count(*) AS n FROM vehicle_action',
+        )
+      ).rows[0]?.n;
+    const before = await total();
+    await client.query('UPDATE vehicle SET stocked_on = stocked_on - 1');
+    await seed(client, undefined, 250);
+    expect(await total()).toBe(before);
+    expect(first).toHaveLength(3);
+    for (const s of first) {
+      const share = Number(s.withHistory) / Number(s.aging);
+      expect(share).toBeGreaterThanOrEqual(0.35);
+      expect(share).toBeLessThanOrEqual(0.45);
+      expect(Number(s.multi)).toBeGreaterThan(0);
+      expect(Number(s.badAuthor)).toBe(0);
+      expect(Number(s.misordered)).toBe(0);
+    }
+    const authors = await client.query<{ name: string; email: string }>(
+      `SELECT DISTINCT d.name, u.email FROM vehicle_action a JOIN dealership d ON d.id = a.dealership_id
+       JOIN app_user u ON u.id = a.created_by ORDER BY d.name`,
+    );
+    expect(authors.rows).toEqual([
+      { name: 'London', email: 'manager@example.dev' },
+      { name: 'New York', email: 'manager@example.dev' },
+      { name: 'Sydney', email: 'admin@example.dev' },
+    ]);
   });
 
   it('rejects a short SEED_PASSWORD', async () => {

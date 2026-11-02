@@ -2,7 +2,7 @@
 
 System Design Document for the Keyloop technical assessment, Scenario B, backend layer. It condenses the design in [`research/backend-architecture.md`](research/backend-architecture.md) (the "architecture doc") for a reviewer. Decision numbers (D1–D19, P1–P3) and section references (§) point back to it; it holds the reasoning and sources this page leaves out. Decisions made since are ADRs in [`adr/`](adr/README.md). Each PR updates this page when it changes what the page describes.
 
-Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`), and the dashboard read (`GET …/dashboard`); everything else on this page is the design being built.
+Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`), the dashboard read (`GET …/dashboard`), and the vehicle actions endpoints (`POST` and `GET …/vehicles/{vehicleId}/actions`); everything else on this page is the design being built.
 
 ---
 
@@ -26,9 +26,9 @@ The backend is a REST API on PostgreSQL. The client is stubbed with Swagger UI (
 
 A **modular monolith**: one stateless NestJS process (`apps/api`), one PostgreSQL database, five tables.
 
-![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table; dashboard, and inventory for the latest action, read across them.](diagrams/architecture.svg)
+![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table; dashboard, inventory (latest action) and actions (vehicle status) read across them.](diagrams/architecture.svg)
 
-_Figure 1. Containers and modules. The auth guards gate every dealership route; each module writes only its own table; the only cross-table reads are `dashboard` and `inventory`'s latest-action lookup ([ADR 0011](adr/0011-inventory-reads-latest-action.md))._
+_Figure 1. Containers and modules. The auth guards gate every dealership route; each module writes only its own table; the only cross-table reads are `dashboard`, `inventory`'s latest-action lookup ([ADR 0011](adr/0011-inventory-reads-latest-action.md)) and `actions`' vehicle-status check ([ADR 0013](adr/0013-actions-read-vehicle-status-in-the-insert.md))._
 
 ### 2.1 Component roles
 
@@ -44,7 +44,7 @@ Each box in Figure 1, in one or two sentences:
 - **`shared`:** the plumbing every module uses: validated config, the Drizzle connection, the injected `Clock`, the problem+json exception filter and the pino logger.
 - **PostgreSQL:** the single source of truth. It also does all time-zone maths (P1) and enforces the state rules through constraints and conditional writes (P2).
 
-Module rules (§4.2): only the owning module writes a table, cross-table reads are read-only SQL and only where named: `dashboard`, and `inventory` list/detail reading the latest `vehicle_action` ([ADR 0011](adr/0011-inventory-reads-latest-action.md)), no dependency cycles: `dealerships` depends on `auth`, `inventory` on `dealerships`, `actions` on `inventory`, `dashboard` on `dealerships`.
+Module rules (§4.2): only the owning module writes a table, cross-table reads are read-only SQL and only where named: `dashboard`, `inventory` list/detail reading the latest `vehicle_action` ([ADR 0011](adr/0011-inventory-reads-latest-action.md)), and `actions` reading `vehicle.status` inside its insert ([ADR 0013](adr/0013-actions-read-vehicle-status-in-the-insert.md)), no dependency cycles: `dealerships` depends on `auth`, `inventory` on `dealerships`, `actions` on `auth` (it imports nothing from `inventory`), `dashboard` on `dealerships`.
 
 ### 2.2 Data model
 
@@ -105,7 +105,7 @@ The handler runs three statements (KPIs and buckets, make/model breakdown, curre
 _Figure 3. Vehicle status change. The database checks the transition atomically; zero rows means "missing" (404) or "wrong state" (409)._
 
 - **Status change:** `UPDATE vehicle SET status = $new … WHERE id = $v AND dealership_id = $d AND status = ANY($allowedFrom) RETURNING *`. `$allowedFrom` comes from the `VehicleStatus` rules: `IN_STOCK ⇄ RESERVED`, either → `SOLD` (terminal, sets `sold_at`). On 0 rows the service re-reads the vehicle: missing → 404, otherwise `409 INVALID_TRANSITION` (same-state transitions included). Two concurrent requests can't both win.
-- **Logging an action:** `INSERT INTO vehicle_action … SELECT … FROM vehicle WHERE id = $v AND dealership_id = $d AND status = 'IN_STOCK'`. A car sold a millisecond earlier can't receive an action; 0 rows → 404 or `409 VEHICLE_NOT_IN_STOCK`.
+- **Logging an action:** `INSERT INTO vehicle_action … SELECT … FROM vehicle WHERE id = $v AND dealership_id = $d AND status = 'IN_STOCK'`. A car sold a millisecond earlier can't receive an action; 0 rows → 404 or `409 VEHICLE_NOT_IN_STOCK`. `POST …/vehicles/{v}/actions` answers `201` with the action and a `Location`; `GET` on the same path returns the whole history newest first (any vehicle status, no paging yet).
 - **Concurrent actions** on the same car both persist; the newest by `id` is current, and nothing is overwritten, so nothing is silently lost (P3).
 
 ### 3.5 Error path

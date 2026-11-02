@@ -9,7 +9,11 @@ export const createVehicleSchema = z.strictObject({
     .regex(
       /^[A-HJ-NPR-Z0-9]{17}$/,
       'Invalid VIN: 17 characters, letters and digits except I, O and Q',
-    ),
+    )
+    .meta({
+      description:
+        'Trimmed and upper-cased before the check; 17 characters, letters and digits except I, O and Q',
+    }),
   make: text().trim().min(1).max(100),
   model: text().trim().min(1).max(100),
   modelYear: z.int().min(1900).max(2100),

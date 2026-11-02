@@ -533,7 +533,8 @@
                 "properties": {
                   "vin": {
                     "type": "string",
-                    "pattern": "^[A-HJ-NPR-Z0-9]{17}$"
+                    "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
+                    "description": "Trimmed and upper-cased before the check; 17 characters, letters and digits except I, O and Q"
                   },
                   "make": {
                     "type": "string",

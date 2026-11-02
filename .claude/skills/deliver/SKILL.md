@@ -73,6 +73,8 @@ Spawn `deliver-implementer` with the prompt `issue=<N> worktree=<path> branch=<b
 
 Run the independent roles `deliver-code-reviewer` and `deliver-business-reviewer` **in parallel**, on the same head and with the same round number. When both return `clean`, review is done. Otherwise send the open comment URLs from both back to the Implementer in one round, then run both reviewers again with the next round number and `since`. The next round's reviewers decide whether each of the Implementer's replies holds. They review only the diff since `since`, post each pattern once with all its sites, and never post a finding that an earlier comment already made, so each review is smaller than the last and stops when the fixes raise nothing new.
 
+A finding that changes no code (the PR body's **Doc impact**, a stale summary) is fixed by the orchestrator with `gh pr edit <P> --body-file`; the Implementer cannot edit PR bodies. When the head is unchanged after such a fix, rerun only the reviewer that commented, with the next round number and the same `since`.
+
 **Done:** both reviewers return `clean` in the same round.
 
 ## 7. Tester (agent)

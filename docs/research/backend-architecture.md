@@ -452,7 +452,7 @@ flowchart LR
     H[curl-examples.sh / Swagger UI / Supertest]
   end
   subgraph API["inventory-api (NestJS, stateless)"]
-    MW[pino + request-id + ValidationPipe + problem+json + login throttle]
+    MW[pino + request-id + ValidationPipe (superseded: ADR 0005) + problem+json + login throttle]
     G[JwtAuthGuard → DealershipGuard]
     AUTH[auth]
     DLR[dealerships]

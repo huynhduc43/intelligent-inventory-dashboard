@@ -1,168 +1,1788 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 1440 1164" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="schema-er-title schema-er-desc">
-<title id="schema-er-title">Inventory schema</title>
-<desc id="schema-er-desc">Five tables (dealership, app_user, user_dealership, vehicle, vehicle_action) with columns, primary and foreign keys, CHECK constraints and indexes.</desc>
-<defs><marker id="fk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9 Z" fill="#4f5d75"/></marker></defs>
-<rect width="1440" height="1164" fill="#f5f5f5"/>
-<path d="M920 126.0 L1040 126.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M580 158.0 L568 158.0 Q560 158.0 560 150.0 L560 134.0 Q560 126.0 552 126.0 L460 126.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M580 428.0 L544 428.0 Q536 428.0 536 420.0 L536 150.0 Q536 142.0 528 142.0 L460 142.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M920 380.0 L976 380.0 Q984 380.0 984 372.0 L984 150.0 Q984 142.0 992 142.0 L1040 142.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M920 404.0 L936 404.0 Q944 404.0 944 412.0 L944 694.0 Q944 702.0 936 702.0 L920 702.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M580 726.0 L108 726.0 Q100 726.0 100 718.0 L100 142.0 Q100 134.0 108 134.0 L140 134.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<path d="M920 750.0 L1392 750.0 Q1400 750.0 1400 742.0 L1400 142.0 Q1400 134.0 1392 134.0 L1360 134.0" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/>
-<rect x="140" y="90" width="320" height="220" rx="6" fill="#ffffff" stroke="#2d3142" stroke-opacity=".6" stroke-width="1"/>
-<path d="M140 122 V96 Q140 90 146 90 H454 Q460 90 460 96 V122 Z" fill="#2d3142" fill-opacity=".05"/>
-<line x1="140" y1="122" x2="460" y2="122" stroke="#2d3142" stroke-opacity=".3"/>
-<text x="152" y="110" font-family="Geist,sans-serif" font-size="12" font-weight="600" fill="#2d3142">public.dealership</text>
-<rect x="408" y="99" width="40" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="428" y="109" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">TABLE</text>
-<text x="152" y="138" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">id</text>
-<rect x="268" y="126" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="279.0" y="136" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<text x="448" y="137" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="141" y="146" width="318" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="152" y="162" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">name</text>
-<text x="448" y="161" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<text x="152" y="186" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">timezone</text>
-<text x="448" y="185" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<rect x="141" y="194" width="318" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="152" y="210" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">watch_days</text>
-<text x="448" y="209" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">smallint</text>
-<text x="152" y="234" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">aging_days</text>
-<text x="448" y="233" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">smallint</text>
-<line x1="140" y1="242" x2="460" y2="242" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="152" y="256" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">CHECKS</text>
-<text x="152" y="268" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK 1 &lt;= watch_days &lt; aging_days &lt;= 3650</text>
-<text x="152" y="282" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">timezone: IANA, validated vs pg_timezone_names</text>
-<text x="152" y="296" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">defaults: watch_days 60, aging_days 90</text>
-<rect x="580" y="90" width="340" height="178" rx="6" fill="#ffffff" stroke="#2d3142" stroke-opacity=".6" stroke-width="1"/>
-<path d="M580 122 V96 Q580 90 586 90 H914 Q920 90 920 96 V122 Z" fill="#2d3142" fill-opacity=".05"/>
-<line x1="580" y1="122" x2="920" y2="122" stroke="#2d3142" stroke-opacity=".3"/>
-<text x="592" y="110" font-family="Geist,sans-serif" font-size="12" font-weight="600" fill="#2d3142">public.user_dealership</text>
-<rect x="868" y="99" width="40" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="888" y="109" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">TABLE</text>
-<text x="592" y="138" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">user_id</text>
-<rect x="708" y="126" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="136" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<rect x="734" y="126" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="745.0" y="136" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="137" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="581" y="146" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="162" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">dealership_id</text>
-<rect x="708" y="150" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="160" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<rect x="734" y="150" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="745.0" y="160" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="161" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<text x="592" y="186" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">role</text>
-<text x="908" y="185" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<line x1="580" y1="194" x2="920" y2="194" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="208" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">CHECKS</text>
-<text x="592" y="220" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK role IN ('ADMIN','MANAGER','VIEWER')</text>
-<line x1="580" y1="228" x2="920" y2="228" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="242" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">INDEXES</text>
-<text x="592" y="254" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">PK (user_id, dealership_id)  per-request membership lookup</text>
-<rect x="1040" y="90" width="320" height="240" rx="6" fill="#ffffff" stroke="#2d3142" stroke-opacity=".6" stroke-width="1"/>
-<path d="M1040 122 V96 Q1040 90 1046 90 H1354 Q1360 90 1360 96 V122 Z" fill="#2d3142" fill-opacity=".05"/>
-<line x1="1040" y1="122" x2="1360" y2="122" stroke="#2d3142" stroke-opacity=".3"/>
-<text x="1052" y="110" font-family="Geist,sans-serif" font-size="12" font-weight="600" fill="#2d3142">public.app_user</text>
-<rect x="1308" y="99" width="40" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="1328" y="109" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">TABLE</text>
-<text x="1052" y="138" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">id</text>
-<rect x="1168" y="126" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="1179.0" y="136" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<text x="1348" y="137" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="1041" y="146" width="318" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="1052" y="162" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">email</text>
-<text x="1348" y="161" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<text x="1052" y="186" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">display_name</text>
-<text x="1348" y="185" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<rect x="1041" y="194" width="318" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="1052" y="210" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">password_hash</text>
-<text x="1348" y="209" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<text x="1052" y="234" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">status</text>
-<text x="1348" y="233" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<line x1="1040" y1="242" x2="1360" y2="242" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="1052" y="256" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">CHECKS</text>
-<text x="1052" y="268" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK status IN ('ACTIVE','DISABLED')</text>
-<text x="1052" y="282" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">password_hash: argon2id PHC string</text>
-<line x1="1040" y1="290" x2="1360" y2="290" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="1052" y="304" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">INDEXES</text>
-<text x="1052" y="316" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">UNIQUE (lower(email))</text>
-<rect x="580" y="312" width="340" height="302" rx="6" fill="#ffffff" stroke="#2d3142" stroke-opacity=".6" stroke-width="1"/>
-<path d="M580 344 V318 Q580 312 586 312 H914 Q920 312 920 318 V344 Z" fill="#2d3142" fill-opacity=".05"/>
-<line x1="580" y1="344" x2="920" y2="344" stroke="#2d3142" stroke-opacity=".3"/>
-<text x="592" y="332" font-family="Geist,sans-serif" font-size="12" font-weight="600" fill="#2d3142">public.vehicle_action</text>
-<rect x="868" y="321" width="40" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="888" y="331" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">TABLE</text>
-<text x="592" y="360" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">id</text>
-<rect x="708" y="348" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="358" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<text x="908" y="359" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">bigint</text>
-<rect x="581" y="368" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="384" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">created_by</text>
-<rect x="708" y="372" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="382" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="383" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<text x="592" y="408" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">vehicle_id</text>
-<rect x="708" y="396" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="406" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="407" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="581" y="416" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="432" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">dealership_id</text>
-<rect x="708" y="420" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="430" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="431" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<text x="592" y="456" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">action_type</text>
-<text x="908" y="455" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<rect x="581" y="464" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="480" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">note</text>
-<text x="908" y="479" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text NULL</text>
-<text x="592" y="504" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">created_at</text>
-<text x="908" y="503" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">timestamptz</text>
-<line x1="580" y1="512" x2="920" y2="512" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="526" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">CHECKS</text>
-<text x="592" y="538" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK action_type IN (enum, D4)</text>
-<text x="592" y="552" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK char_length(note) &lt;= 1000</text>
-<text x="592" y="566" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">append-only; newest id = current action</text>
-<line x1="580" y1="574" x2="920" y2="574" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="588" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">INDEXES</text>
-<text x="592" y="600" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">(vehicle_id, id DESC)  latest action, LIMIT 1</text>
-<rect x="580" y="658" width="340" height="416" rx="6" fill="#ffffff" stroke="#2d3142" stroke-opacity=".6" stroke-width="1"/>
-<path d="M580 690 V664 Q580 658 586 658 H914 Q920 658 920 664 V690 Z" fill="#2d3142" fill-opacity=".05"/>
-<line x1="580" y1="690" x2="920" y2="690" stroke="#2d3142" stroke-opacity=".3"/>
-<text x="592" y="678" font-family="Geist,sans-serif" font-size="12" font-weight="600" fill="#2d3142">public.vehicle</text>
-<rect x="868" y="667" width="40" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="888" y="677" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">TABLE</text>
-<text x="592" y="706" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">id</text>
-<rect x="708" y="694" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="704" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<text x="908" y="705" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="581" y="714" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="730" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">dealership_id</text>
-<rect x="708" y="718" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="728" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="729" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<text x="592" y="754" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">updated_by</text>
-<rect x="708" y="742" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="719.0" y="752" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="908" y="753" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">uuid</text>
-<rect x="581" y="762" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="778" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">vin</text>
-<text x="908" y="777" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<text x="592" y="802" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">make</text>
-<text x="908" y="801" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<rect x="581" y="810" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="826" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">model</text>
-<text x="908" y="825" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<text x="592" y="850" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">status</text>
-<text x="908" y="849" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">text</text>
-<rect x="581" y="858" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="874" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">stocked_on</text>
-<text x="908" y="873" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">date</text>
-<text x="592" y="898" font-family="Geist,sans-serif" font-size="12" fill="#2d3142">sold_at</text>
-<text x="908" y="897" text-anchor="end" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">timestamptz NULL</text>
-<rect x="581" y="906" width="338" height="24" fill="#2d3142" fill-opacity=".02"/>
-<text x="592" y="922" font-family="Geist Mono,monospace" font-size="8" fill="#4f5d75">+ 5 more: model_year, mileage, list_price, created_at, updated_at</text>
-<line x1="580" y1="930" x2="920" y2="930" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="944" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">CHECKS</text>
-<text x="592" y="956" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK status IN ('IN_STOCK','RESERVED','SOLD')</text>
-<text x="592" y="970" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK vin ~ '^[A-HJ-NPR-Z0-9]{17}$'</text>
-<text x="592" y="984" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK mileage &gt;= 0</text>
-<text x="592" y="998" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">CHECK ((status = 'SOLD') = (sold_at IS NOT NULL))</text>
-<line x1="580" y1="1006" x2="920" y2="1006" stroke="#2d3142" stroke-opacity=".2"/>
-<text x="592" y="1020" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".18em" fill="#4f5d75">INDEXES</text>
-<text x="592" y="1032" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">UNIQUE (dealership_id, vin) WHERE status &lt;&gt; 'SOLD'</text>
-<text x="592" y="1046" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">(dealership_id, status, stocked_on)</text>
-<text x="592" y="1060" font-family="Geist Mono,monospace" font-size="9" fill="#2d3142">(dealership_id, lower(make), lower(model))</text>
-<line x1="40" y1="1100" x2="1400" y2="1100" stroke="#2d3142" stroke-opacity=".2"/>
-<rect x="40" y="1112" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="51.0" y="1122" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">PK</text>
-<text x="66" y="1122" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">primary key</text>
-<rect x="160" y="1112" width="22" height="14" rx="2" fill="none" stroke="#4f5d75" stroke-opacity=".6" stroke-width=".8"/><text x="171.0" y="1122" text-anchor="middle" font-family="Geist Mono,monospace" font-size="8" font-weight="500" letter-spacing=".06em" fill="#4f5d75">FK</text>
-<text x="186" y="1122" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">foreign key</text>
-<line x1="290" y1="1117" x2="330" y2="1117" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#fk)"/><text x="340" y="1120" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">column FK to referenced PK</text>
-<text x="560" y="1120" font-family="Geist Mono,monospace" font-size="9" fill="#4f5d75">CHECKS / INDEXES: constraints and indexes from section 4.3. ON DELETE actions are not specified there, so edges are unlabelled.</text>
-</svg>
+<svg
+          viewBox="0 0 1440 1164"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="schema-er-title schema-er-desc" id="schema-er-root"
+        >
+          <title id="schema-er-title">Inventory schema</title>
+          <desc id="schema-er-desc">
+            Five tables (dealership, app_user, user_dealership, vehicle,
+            vehicle_action) with columns, primary and foreign keys, CHECK
+            constraints and indexes.
+          </desc>
+          <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;family=Noto+Serif:ital@0;1&amp;family=Noto+Sans+KR:wght@400;500;600&amp;family=Noto+Serif+KR:wght@400&amp;family=Noto+Sans+TC:wght@400;500;600&amp;family=Noto+Serif+TC:wght@400&amp;display=swap');
+      #schema-er-root { font-family: 'Geist', system-ui, sans-serif; color: #2d3142; }
+      #schema-er-root .scroll { overflow-x: auto; }</style>
+            <marker
+              id="schema-er-fk"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M1 1 L9 5 L1 9 Z" fill="#4f5d75" />
+            </marker>
+          </defs>
+          <rect width="1440" height="1164" fill="#f5f5f5" />
+          <path
+            d="M920 126.0 L1040 126.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M580 158.0 L568 158.0 Q560 158.0 560 150.0 L560 134.0 Q560 126.0 552 126.0 L460 126.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M580 428.0 L544 428.0 Q536 428.0 536 420.0 L536 150.0 Q536 142.0 528 142.0 L460 142.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M920 380.0 L976 380.0 Q984 380.0 984 372.0 L984 150.0 Q984 142.0 992 142.0 L1040 142.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M920 404.0 L936 404.0 Q944 404.0 944 412.0 L944 694.0 Q944 702.0 936 702.0 L920 702.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M580 726.0 L108 726.0 Q100 726.0 100 718.0 L100 142.0 Q100 134.0 108 134.0 L140 134.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <path
+            d="M920 750.0 L1392 750.0 Q1400 750.0 1400 742.0 L1400 142.0 Q1400 134.0 1392 134.0 L1360 134.0"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <rect
+            x="140"
+            y="90"
+            width="320"
+            height="220"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-opacity=".6"
+            stroke-width="1"
+          />
+          <path
+            d="M140 122 V96 Q140 90 146 90 H454 Q460 90 460 96 V122 Z"
+            fill="#2d3142"
+            fill-opacity=".05"
+          />
+          <line
+            x1="140"
+            y1="122"
+            x2="460"
+            y2="122"
+            stroke="#2d3142"
+            stroke-opacity=".3"
+          />
+          <text
+            x="152"
+            y="110"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            public.dealership
+          </text>
+          <rect
+            x="408"
+            y="99"
+            width="40"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="428"
+            y="109"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            TABLE
+          </text>
+          <text
+            x="152"
+            y="138"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            id
+          </text>
+          <rect
+            x="268"
+            y="126"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="279.0"
+            y="136"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <text
+            x="448"
+            y="137"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="141"
+            y="146"
+            width="318"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="152"
+            y="162"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            name
+          </text>
+          <text
+            x="448"
+            y="161"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <text
+            x="152"
+            y="186"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            timezone
+          </text>
+          <text
+            x="448"
+            y="185"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <rect
+            x="141"
+            y="194"
+            width="318"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="152"
+            y="210"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            watch_days
+          </text>
+          <text
+            x="448"
+            y="209"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            smallint
+          </text>
+          <text
+            x="152"
+            y="234"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            aging_days
+          </text>
+          <text
+            x="448"
+            y="233"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            smallint
+          </text>
+          <line
+            x1="140"
+            y1="242"
+            x2="460"
+            y2="242"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="152"
+            y="256"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            CHECKS
+          </text>
+          <text
+            x="152"
+            y="268"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK 1 &lt;= watch_days &lt; aging_days &lt;= 3650
+          </text>
+          <text
+            x="152"
+            y="282"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            timezone: IANA, validated vs pg_timezone_names
+          </text>
+          <text
+            x="152"
+            y="296"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            defaults: watch_days 60, aging_days 90
+          </text>
+          <rect
+            x="580"
+            y="90"
+            width="340"
+            height="178"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-opacity=".6"
+            stroke-width="1"
+          />
+          <path
+            d="M580 122 V96 Q580 90 586 90 H914 Q920 90 920 96 V122 Z"
+            fill="#2d3142"
+            fill-opacity=".05"
+          />
+          <line
+            x1="580"
+            y1="122"
+            x2="920"
+            y2="122"
+            stroke="#2d3142"
+            stroke-opacity=".3"
+          />
+          <text
+            x="592"
+            y="110"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            public.user_dealership
+          </text>
+          <rect
+            x="868"
+            y="99"
+            width="40"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="888"
+            y="109"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            TABLE
+          </text>
+          <text
+            x="592"
+            y="138"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            user_id
+          </text>
+          <rect
+            x="708"
+            y="126"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="136"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <rect
+            x="734"
+            y="126"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="745.0"
+            y="136"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="137"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="581"
+            y="146"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="162"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            dealership_id
+          </text>
+          <rect
+            x="708"
+            y="150"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="160"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <rect
+            x="734"
+            y="150"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="745.0"
+            y="160"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="161"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <text
+            x="592"
+            y="186"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            role
+          </text>
+          <text
+            x="908"
+            y="185"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <line
+            x1="580"
+            y1="194"
+            x2="920"
+            y2="194"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="208"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            CHECKS
+          </text>
+          <text
+            x="592"
+            y="220"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK role IN ('ADMIN','MANAGER','VIEWER')
+          </text>
+          <line
+            x1="580"
+            y1="228"
+            x2="920"
+            y2="228"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="242"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            INDEXES
+          </text>
+          <text
+            x="592"
+            y="254"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            PK (user_id, dealership_id) per-request membership lookup
+          </text>
+          <rect
+            x="1040"
+            y="90"
+            width="320"
+            height="240"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-opacity=".6"
+            stroke-width="1"
+          />
+          <path
+            d="M1040 122 V96 Q1040 90 1046 90 H1354 Q1360 90 1360 96 V122 Z"
+            fill="#2d3142"
+            fill-opacity=".05"
+          />
+          <line
+            x1="1040"
+            y1="122"
+            x2="1360"
+            y2="122"
+            stroke="#2d3142"
+            stroke-opacity=".3"
+          />
+          <text
+            x="1052"
+            y="110"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            public.app_user
+          </text>
+          <rect
+            x="1308"
+            y="99"
+            width="40"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="1328"
+            y="109"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            TABLE
+          </text>
+          <text
+            x="1052"
+            y="138"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            id
+          </text>
+          <rect
+            x="1168"
+            y="126"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="1179.0"
+            y="136"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <text
+            x="1348"
+            y="137"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="1041"
+            y="146"
+            width="318"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="1052"
+            y="162"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            email
+          </text>
+          <text
+            x="1348"
+            y="161"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <text
+            x="1052"
+            y="186"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            display_name
+          </text>
+          <text
+            x="1348"
+            y="185"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <rect
+            x="1041"
+            y="194"
+            width="318"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="1052"
+            y="210"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            password_hash
+          </text>
+          <text
+            x="1348"
+            y="209"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <text
+            x="1052"
+            y="234"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            status
+          </text>
+          <text
+            x="1348"
+            y="233"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <line
+            x1="1040"
+            y1="242"
+            x2="1360"
+            y2="242"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="1052"
+            y="256"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            CHECKS
+          </text>
+          <text
+            x="1052"
+            y="268"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK status IN ('ACTIVE','DISABLED')
+          </text>
+          <text
+            x="1052"
+            y="282"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            password_hash: argon2id PHC string
+          </text>
+          <line
+            x1="1040"
+            y1="290"
+            x2="1360"
+            y2="290"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="1052"
+            y="304"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            INDEXES
+          </text>
+          <text
+            x="1052"
+            y="316"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            UNIQUE (lower(email))
+          </text>
+          <rect
+            x="580"
+            y="312"
+            width="340"
+            height="316"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-opacity=".6"
+            stroke-width="1"
+          />
+          <path
+            d="M580 344 V318 Q580 312 586 312 H914 Q920 312 920 318 V344 Z"
+            fill="#2d3142"
+            fill-opacity=".05"
+          />
+          <line
+            x1="580"
+            y1="344"
+            x2="920"
+            y2="344"
+            stroke="#2d3142"
+            stroke-opacity=".3"
+          />
+          <text
+            x="592"
+            y="332"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            public.vehicle_action
+          </text>
+          <rect
+            x="868"
+            y="321"
+            width="40"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="888"
+            y="331"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            TABLE
+          </text>
+          <text
+            x="592"
+            y="360"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            id
+          </text>
+          <rect
+            x="708"
+            y="348"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="358"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <text
+            x="908"
+            y="359"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            bigint
+          </text>
+          <rect
+            x="581"
+            y="368"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="384"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            created_by
+          </text>
+          <rect
+            x="708"
+            y="372"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="382"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="383"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <text
+            x="592"
+            y="408"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            vehicle_id
+          </text>
+          <rect
+            x="708"
+            y="396"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="406"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="407"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="581"
+            y="416"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="432"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            dealership_id
+          </text>
+          <rect
+            x="708"
+            y="420"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="430"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="431"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <text
+            x="592"
+            y="456"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            action_type
+          </text>
+          <text
+            x="908"
+            y="455"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <rect
+            x="581"
+            y="464"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="480"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            note
+          </text>
+          <text
+            x="908"
+            y="479"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text NULL
+          </text>
+          <text
+            x="592"
+            y="504"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            created_at
+          </text>
+          <text
+            x="908"
+            y="503"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            timestamptz
+          </text>
+          <line
+            x1="580"
+            y1="512"
+            x2="920"
+            y2="512"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="526"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            CHECKS
+          </text>
+          <text
+            x="592"
+            y="538"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK action_type IN (enum, D4)
+          </text>
+          <text
+            x="592"
+            y="552"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK char_length(note) &lt;= 1000
+          </text>
+          <text
+            x="592"
+            y="566"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            append-only; newest id = current action
+          </text>
+          <line
+            x1="580"
+            y1="574"
+            x2="920"
+            y2="574"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="588"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            INDEXES
+          </text>
+          <text
+            x="592"
+            y="600"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            (vehicle_id, id DESC) latest action, LIMIT 1
+          </text>
+          <text
+            x="592"
+            y="614"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            FK (vehicle_id, dealership_id) → vehicle
+          </text>
+          <rect
+            x="580"
+            y="658"
+            width="340"
+            height="430"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-opacity=".6"
+            stroke-width="1"
+          />
+          <path
+            d="M580 690 V664 Q580 658 586 658 H914 Q920 658 920 664 V690 Z"
+            fill="#2d3142"
+            fill-opacity=".05"
+          />
+          <line
+            x1="580"
+            y1="690"
+            x2="920"
+            y2="690"
+            stroke="#2d3142"
+            stroke-opacity=".3"
+          />
+          <text
+            x="592"
+            y="678"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            public.vehicle
+          </text>
+          <rect
+            x="868"
+            y="667"
+            width="40"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="888"
+            y="677"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            TABLE
+          </text>
+          <text
+            x="592"
+            y="706"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            id
+          </text>
+          <rect
+            x="708"
+            y="694"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="704"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <text
+            x="908"
+            y="705"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="581"
+            y="714"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="730"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            dealership_id
+          </text>
+          <rect
+            x="708"
+            y="718"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="728"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="729"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <text
+            x="592"
+            y="754"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            updated_by
+          </text>
+          <rect
+            x="708"
+            y="742"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="719.0"
+            y="752"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="908"
+            y="753"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            uuid
+          </text>
+          <rect
+            x="581"
+            y="762"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="778"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            vin
+          </text>
+          <text
+            x="908"
+            y="777"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <text
+            x="592"
+            y="802"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            make
+          </text>
+          <text
+            x="908"
+            y="801"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <rect
+            x="581"
+            y="810"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="826"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            model
+          </text>
+          <text
+            x="908"
+            y="825"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <text
+            x="592"
+            y="850"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            status
+          </text>
+          <text
+            x="908"
+            y="849"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            text
+          </text>
+          <rect
+            x="581"
+            y="858"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="874"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            stocked_on
+          </text>
+          <text
+            x="908"
+            y="873"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            date
+          </text>
+          <text
+            x="592"
+            y="898"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            fill="#2d3142"
+          >
+            sold_at
+          </text>
+          <text
+            x="908"
+            y="897"
+            text-anchor="end"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            timestamptz NULL
+          </text>
+          <rect
+            x="581"
+            y="906"
+            width="338"
+            height="24"
+            fill="#2d3142"
+            fill-opacity=".02"
+          />
+          <text
+            x="592"
+            y="922"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            + 5 more: model_year, mileage, list_price, created_at, updated_at
+          </text>
+          <line
+            x1="580"
+            y1="930"
+            x2="920"
+            y2="930"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="944"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            CHECKS
+          </text>
+          <text
+            x="592"
+            y="956"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK status IN ('IN_STOCK','RESERVED','SOLD')
+          </text>
+          <text
+            x="592"
+            y="970"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK vin ~ '^[A-HJ-NPR-Z0-9]{17}$'
+          </text>
+          <text
+            x="592"
+            y="984"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK mileage &gt;= 0
+          </text>
+          <text
+            x="592"
+            y="998"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            CHECK ((status = 'SOLD') = (sold_at IS NOT NULL))
+          </text>
+          <line
+            x1="580"
+            y1="1006"
+            x2="920"
+            y2="1006"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <text
+            x="592"
+            y="1020"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".18em"
+            fill="#4f5d75"
+          >
+            INDEXES
+          </text>
+          <text
+            x="592"
+            y="1032"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            UNIQUE (dealership_id, vin) WHERE status &lt;&gt; 'SOLD'
+          </text>
+          <text
+            x="592"
+            y="1046"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            (dealership_id, status, stocked_on)
+          </text>
+          <text
+            x="592"
+            y="1060"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            (dealership_id, lower(make), lower(model))
+          </text>
+          <text
+            x="592"
+            y="1074"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            UNIQUE (id, dealership_id) target of action FK
+          </text>
+          <line
+            x1="40"
+            y1="1100"
+            x2="1400"
+            y2="1100"
+            stroke="#2d3142"
+            stroke-opacity=".2"
+          />
+          <rect
+            x="40"
+            y="1112"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="51.0"
+            y="1122"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            PK
+          </text>
+          <text
+            x="66"
+            y="1122"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            primary key
+          </text>
+          <rect
+            x="160"
+            y="1112"
+            width="22"
+            height="14"
+            rx="2"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-opacity=".6"
+            stroke-width=".8"
+          />
+          <text
+            x="171.0"
+            y="1122"
+            text-anchor="middle"
+            font-family="Geist Mono,monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing=".06em"
+            fill="#4f5d75"
+          >
+            FK
+          </text>
+          <text
+            x="186"
+            y="1122"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            foreign key
+          </text>
+          <line
+            x1="290"
+            y1="1117"
+            x2="330"
+            y2="1117"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#schema-er-fk)"
+          />
+          <text
+            x="340"
+            y="1120"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            column FK to referenced PK
+          </text>
+          <text
+            x="560"
+            y="1120"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#4f5d75"
+          >
+            CHECKS / INDEXES: constraints and indexes from section 4.3. ON
+            DELETE actions are not specified there, so edges are unlabelled.
+          </text>
+        </svg>

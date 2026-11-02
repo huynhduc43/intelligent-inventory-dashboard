@@ -109,6 +109,25 @@ describe('seed', () => {
     }
   });
 
+  it('adds no rows when re-run a day later', async () => {
+    const all = async () =>
+      (
+        await client.query<{ t: string; n: string }>(
+          `SELECT 'dealership' AS t, count(*) AS n FROM dealership
+           UNION ALL SELECT 'app_user', count(*) FROM app_user
+           UNION ALL SELECT 'user_dealership', count(*) FROM user_dealership
+           UNION ALL SELECT 'vehicle', count(*) FROM vehicle
+           UNION ALL SELECT 'vehicle_action', count(*) FROM vehicle_action
+           ORDER BY t`,
+        )
+      ).rows;
+    const before = await all();
+    await client.query('UPDATE vehicle SET stocked_on = stocked_on - 1');
+    await seed(client);
+
+    expect(await all()).toEqual(before);
+  });
+
   it('seeds the requested count and adds only the missing rows on a larger re-run', async () => {
     await client.query('DELETE FROM vehicle_action');
     await client.query('DELETE FROM vehicle');

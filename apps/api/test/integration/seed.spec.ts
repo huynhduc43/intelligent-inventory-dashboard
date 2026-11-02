@@ -156,6 +156,17 @@ describe('seed', () => {
     await seed(client, undefined, 250);
 
     expect(await stats()).toEqual(first);
+    // A day passes: more vehicles cross aging_days, yet a re-run adds no action.
+    const total = async () =>
+      (
+        await client.query<{ n: string }>(
+          'SELECT count(*) AS n FROM vehicle_action',
+        )
+      ).rows[0]?.n;
+    const before = await total();
+    await client.query('UPDATE vehicle SET stocked_on = stocked_on - 1');
+    await seed(client, undefined, 250);
+    expect(await total()).toBe(before);
     expect(first).toHaveLength(3);
     for (const s of first) {
       const share = Number(s.withHistory) / Number(s.aging);

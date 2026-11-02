@@ -27,7 +27,7 @@ pnpm install                                   # also installs the git hooks
 docker compose up -d postgres
 cp apps/api/.env.example apps/api/.env
 pnpm --filter @inventory/api db:migrate
-pnpm --filter @inventory/api db:seed             # demo users and vehicles; prints new users' random passwords once (or set SEED_PASSWORD; SEED_VEHICLES_PER_DEALERSHIP sets the vehicle count)
+pnpm --filter @inventory/api db:seed             # demo users, vehicles and action history; prints new users' random passwords once (or set SEED_PASSWORD; SEED_VEHICLES_PER_DEALERSHIP sets the vehicle count)
 pnpm dev                                       # API on http://localhost:3000, restarts on change
 ```
 

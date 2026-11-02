@@ -97,7 +97,8 @@ ON CONFLICT DO NOTHING`;
 
 // Action history (D4): about 40% of the IN_STOCK Aging vehicles (every 5th by row number, offsets 0 and 2) get 1-3 entries,
 // authored by the dealership's manager (admin where there is none). One statement per round ($2 = 1..3) so a vehicle's
-// ids rise with its created_at; created_at derives from stocked_on only, so NOT EXISTS makes a re-run add nothing.
+// ids rise with its created_at. The selection depends on today's Aging set, so the rounds run only for a dealership with no
+// action yet (issue #11 Decision 10 amendment); NOT EXISTS stays as a guard against a concurrent run.
 const SEED_ACTIONS = `
 WITH d AS (
   SELECT id, timezone, aging_days, (now() AT TIME ZONE timezone)::date AS today,
@@ -162,6 +163,11 @@ export async function seed(
       vehiclesPerDealership,
       USERS[0][0],
     ]);
+    const seeded = await client.query(
+      'SELECT 1 FROM vehicle_action WHERE dealership_id = $1 LIMIT 1',
+      [dealershipId],
+    );
+    if (seeded.rowCount) continue;
     for (const round of [1, 2, 3]) {
       await client.query(SEED_ACTIONS, [dealershipId, round]);
     }

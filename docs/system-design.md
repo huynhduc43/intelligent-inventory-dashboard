@@ -2,7 +2,7 @@
 
 System Design Document for the Keyloop technical assessment, Scenario B, backend layer. It condenses the design in [`research/backend-architecture.md`](research/backend-architecture.md) (the "architecture doc") for a reviewer. Decision numbers (D1–D19, P1–P3) and section references (§) point back to it; it holds the reasoning and sources this page leaves out. Decisions made since are ADRs in [`adr/`](adr/README.md). Each PR updates this page when it changes what the page describes.
 
-Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`), and the dashboard read (`GET …/dashboard`); everything else on this page is the design being built.
+Status: the MVP is being built in the order of architecture doc §4.16. Today the repo has the skeleton (validated config, the Drizzle schema and migration, the injected `Clock`, readiness with a Postgres ping, Docker Compose), `AgingPolicy` with its unit tests, auth, the OpenAPI document, the vehicle list and detail endpoints (`GET …/vehicles`, `GET …/vehicles/{vehicleId}`), the dashboard read (`GET …/dashboard`), and the vehicle actions endpoints (`POST` and `GET …/vehicles/{vehicleId}/actions`); everything else on this page is the design being built.
 
 ---
 
@@ -26,7 +26,7 @@ The backend is a REST API on PostgreSQL. The client is stubbed with Swagger UI (
 
 A **modular monolith**: one stateless NestJS process (`apps/api`), one PostgreSQL database, five tables.
 
-![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table; dashboard, and inventory for the latest action, read across them.](diagrams/architecture.svg)
+![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table; dashboard, inventory (latest action) and actions (vehicle status) read across them.](diagrams/architecture.svg)
 
 _Figure 1. Containers and modules. The auth guards gate every dealership route; each module writes only its own table; the only cross-table reads are `dashboard`, `inventory`'s latest-action lookup ([ADR 0011](adr/0011-inventory-reads-latest-action.md)) and `actions`' vehicle-status check ([ADR 0013](adr/0013-actions-read-vehicle-status-in-the-insert.md))._
 

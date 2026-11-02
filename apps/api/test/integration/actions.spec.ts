@@ -219,6 +219,16 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
       }
     ).items.find((i) => i.id === v);
     expect(current?.currentAction.actionType).toBe(top?.actionType);
+    const detail = await auth(
+      request(app.getHttpServer()).get(
+        `/api/v1/dealerships/${LONDON}/vehicles/${v}`,
+      ),
+      VIEWER,
+    );
+    expect(
+      (detail.body as { currentAction: { actionType: string } }).currentAction
+        .actionType,
+    ).toBe(top?.actionType);
     expect(top?.id).toBe(Math.max(...items.map((i) => i.id)));
   });
 
@@ -273,5 +283,10 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
       VIEWER,
     ).send({ actionType: 'OTHER' });
     expect(postNonMember.status).toBe(404);
+    const postMissing = await auth(
+      request(app.getHttpServer()).post(path(OTHER, vid(0, '0009'))),
+      VIEWER,
+    ).send({ actionType: 'OTHER' });
+    expect(strip(postNonMember)).toEqual(strip(postMissing));
   });
 });

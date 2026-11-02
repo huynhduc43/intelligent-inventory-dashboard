@@ -158,6 +158,30 @@ describe('D15/D16 route x role', () => {
       },
     );
 
+    it('POST actions: admin and manager 201, viewer 403, non-member 404 with the missing-dealership body, no token 401', async () => {
+      const post = (d: string, user?: string) => {
+        const r = request(app.getHttpServer())
+          .post(`/api/v1/dealerships/${d}/vehicles/${vehicleId}/actions`)
+          .send({ actionType: 'OTHER' });
+        return user
+          ? r.set('Authorization', `Bearer ${tokenFor(user, clock)}`)
+          : r;
+      };
+      expect((await post(LONDON, ADMIN)).status).toBe(201);
+      expect((await post(LONDON, MANAGER)).status).toBe(201);
+      expect((await post(LONDON, VIEWER)).status).toBe(403);
+      expect((await post(LONDON)).status).toBe(401);
+      const bodies = await Promise.all(
+        [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
+          (d) => post(d, VIEWER),
+        ),
+      );
+      const strip = (r: request.Response) =>
+        JSON.stringify({ ...(r.body as object), instance: '' });
+      expect(bodies.map((r) => r.status)).toEqual([404, 404, 404]);
+      expect(new Set(bodies.map(strip)).size).toBe(1);
+    });
+
     it.each([0, 1, 2, 3])(
       'route %i: non-member 404 body equals the missing-dealership body',
       async (i) => {

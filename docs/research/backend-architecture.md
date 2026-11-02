@@ -165,13 +165,14 @@ Both inserts succeed and both stay in the history. "Current" is the newest by `i
 | `dashboard`   | — (read only)                 | Dashboard aggregate query                                                                                                                   |
 | `health`      | —                             | `/health/live`, `/health/ready`                                                                                                             |
 
-Rules: only the owning module writes a table; `dashboard` is the only module that reads across tables (superseded by [ADR 0011](../adr/0011-inventory-reads-latest-action.md)); no cycles. No ESLint boundary enforcement and no facade layer at this size (§6).
+Rules: only the owning module writes a table; `dashboard` is the only module that reads across tables (superseded by [ADR 0011](../adr/0011-inventory-reads-latest-action.md) and [ADR 0013](../adr/0013-actions-read-vehicle-status-in-the-insert.md)); no cycles. No ESLint boundary enforcement and no facade layer at this size (§6).
 
 ```mermaid
 flowchart TD
   auth --> shared
   dealerships --> auth
   inventory --> dealerships
+  %% superseded by ADR 0013 (docs/adr/0013-actions-read-vehicle-status-in-the-insert.md)
   actions --> inventory
   dashboard --> dealerships
   dashboard -. read-only SQL .-> inventory
@@ -464,6 +465,7 @@ flowchart LR
   PG[(PostgreSQL)]
   H -->|REST/JSON + Bearer| MW --> G
   G --> AUTH & DLR & INV & ACT & DSH
+  %% superseded by ADR 0013 (docs/adr/0013-actions-read-vehicle-status-in-the-insert.md)
   ACT --> INV
   AUTH & DLR & INV & ACT & DSH & HC --> PG
 ```

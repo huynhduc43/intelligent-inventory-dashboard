@@ -3,15 +3,9 @@ import { sql } from 'drizzle-orm';
 import { Clock } from '../../shared/clock.js';
 import { DB, type Db } from '../../shared/db.js';
 import { CodedHttpException } from '../../shared/problem.js';
+import { vehicleAction } from '../../shared/schema.js';
 
-export const ACTION_TYPES = [
-  'PRICE_REDUCTION_PLANNED',
-  'TRANSFER',
-  'AUCTION',
-  'PROMOTION',
-  'MONITOR',
-  'OTHER',
-] as const;
+export const ACTION_TYPES = vehicleAction.actionType.enumValues;
 
 export interface Action {
   id: number;
@@ -37,7 +31,10 @@ const toAction = (r: Row): Action => ({
   createdAt: r.created_at,
 });
 
-const createdAt = sql`to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
+const isoUtc = (col: string) =>
+  sql.raw(
+    `to_char(${col} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`,
+  );
 
 @Injectable()
 export class ActionsService {
@@ -61,7 +58,7 @@ export class ActionsService {
       SELECT v.id, v.dealership_id, ${input.actionType}, ${note}, ${userId}::uuid, ${this.clock.now().toISOString()}::timestamptz
       FROM vehicle v
       WHERE v.id = ${vehicleId} AND v.dealership_id = ${dealershipId} AND v.status = 'IN_STOCK'
-      RETURNING id, action_type, note, created_by, ${createdAt} AS created_at`);
+      RETURNING id, action_type, note, created_by, ${isoUtc('created_at')} AS created_at`);
     if (rows[0]) return toAction(rows[0]);
     const found = await this.db.execute<{ status: string }>(
       sql`SELECT status FROM vehicle WHERE id = ${vehicleId} AND dealership_id = ${dealershipId}`,
@@ -81,7 +78,7 @@ export class ActionsService {
   ): Promise<{ items: Action[] }> {
     const { rows } = await this.db.execute<Row & { aid: number | null }>(sql`
       SELECT a.id AS aid, a.id, a.action_type, a.note, a.created_by,
-             to_char(a.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS created_at
+             ${isoUtc('a.created_at')} AS created_at
       FROM vehicle v LEFT JOIN vehicle_action a ON a.vehicle_id = v.id
       WHERE v.id = ${vehicleId} AND v.dealership_id = ${dealershipId}
       ORDER BY a.id DESC`);

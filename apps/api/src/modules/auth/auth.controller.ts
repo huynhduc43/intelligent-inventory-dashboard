@@ -17,13 +17,14 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
+import { text } from '../../shared/text.js';
 import { AuthService } from './auth.service.js';
 import { Public } from './decorators.js';
 import type { AuthedRequest } from './request-context.js';
 
 const loginSchema = z.strictObject({
-  email: z.string().min(1).max(254),
-  password: z.string().min(1).max(128),
+  email: text().min(1).max(254),
+  password: text().min(1).max(128),
 });
 
 @ApiTags('auth')

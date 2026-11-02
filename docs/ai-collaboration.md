@@ -39,7 +39,9 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#20](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/20) | `/deliver` keeps docs in sync, logs AI collaboration               | Audited the repo against the brief, compared two workflow proposals, changed the skill and agents, evaluated the change against a frozen baseline           | `pnpm verify`; six-step eval, 94% vs 68% for the old skill (C7)                                                           | Four workflow decisions (C6); keep the sub-skills, fix three findings without rerunning (C7)                                               |
 | [#21](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/21) | This log, README narrative, design doc §8, Status fixes            | Rebuilt the history above from GitHub                                                                                                                       | Every row links its source                                                                                                | Log format                                                                                                                                 |
 | [#23](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/23) | Problem+json errors and request-scoped pino logging (#7)           | Implemented the filter, logging and tests; fixed nine review findings in one round                                                                          | `pnpm verify`; two review rounds plus a body-only round; Tester passed AC 1–6 against the running API                     | None: the agent decided (`grill`/`approve` manual, no `decision-needed`)                                                                   |
+| [#24](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/24) | Retro fixes from #23 | Applied retro candidates 1–3: orchestrator edits PR bodies, hooks load Node 24, a supersession mark | Retro proposals only; applied after the user's go | The user approved the fixes and waived the `/deliver` eval rerun (see C11) |
 | [#25](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/25) | Auth: login, JWT, dealership guards, permissions, `/me`, seed (#8) | `/deliver` end to end under `grill=auto`/`approve=auto`: research note, 15 decisions, ADRs 0008–0009, contract, implementation, three review rounds, tester | `pnpm verify` (153 tests); three review rounds, 8 findings fixed (C9, C10); Tester passed AC 1–11 against the running API | None: decisions and contract choices were the agent's recommendations (`approve=auto`); the user chose the modes and the implementer model |
+| [#26](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/26) | Retro fixes from #25 | Applied five retro proposals: `format:check` in pre-push, `verify` output as Evidence, two reviewer rules, `pnpm install` after `git worktree add`, `engine-strict` | `pnpm verify` | The user approved all five (C12) |
 
 ## Cases
 
@@ -132,3 +134,21 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** all five were fixed as posted; none changed a decision.
 - **Verification:** [business review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/25#issuecomment-6568241510) and its inline threads, resolved in 730d6f6; round 2 clean.
 - **Outcome:** formatted docs, `warn` log line on failed login with a test, seed step in `docs/environment-setup.md`, README and `.env.example`.
+
+### C11: Retro after #23 applied as proposals, one skipped (#24)
+
+- **Problem:** the retro on #23 found that body-only review findings had no owner, that git hooks ran on Node 23 (the shell is non-interactive and ignores `.nvmrc`), and that a diagram label still named the superseded `ValidationPipe`.
+- **AI proposal:** four candidates, none applied without a go. Candidate 4 (grep the docs for superseded terms) was marked "only pays off if supersessions become frequent".
+- **Decided by:** user (applied candidates 1–3, skipped 4, waived the `/deliver` eval rerun that CLAUDE.md otherwise requires).
+- **Decision and reasoning:** cheap, local fixes now; the eval rerun was not worth its cost for three one-line rule changes.
+- **Verification:** the PR body states the waiver under **Deviations**.
+- **Outcome:** `/deliver` has the orchestrator fix body-only findings and rerun only the commenting reviewer; `docs/environment-setup.md` documents `~/.config/husky/init.sh`; the architecture diagram label is marked superseded.
+
+### C12: The implementer's "verify passed" was wrong; retro fixes after #25 (#26)
+
+- **Problem:** the Implementer reported `pnpm verify` green on #25 while `format:check` failed, and the failure surfaced only in CI because `pre-push` skipped `format:check`. The reviewers missed C9, and a fresh worktree had no `node_modules`, so Prettier and the hooks did not run on the first commit. The shell was on Node 23 while `crypto.argon2` needs ≥ 24.7.
+- **AI proposal:** five retro proposals, ordered by severity: `format:check` in pre-push; the Implementer pastes the tail of `pnpm verify` into **Evidence**; two reviewer rules (a remark about a security property is a finding, and a fix to a branching flow re-checks every refusal condition); `pnpm install` right after `git worktree add`; `engine-strict` to make a wrong Node fail loudly.
+- **Decided by:** user ("fix issue từ retro"): all five applied.
+- **Decision and reasoning:** each closes a gap where a claim went unchecked. For the fifth, `engines` (`>=24.7`) and the Husky init (C11) already existed, so only `.npmrc` `engine-strict=true` was added.
+- **Verification:** `pnpm verify`; the reviewer rules are not exercised yet, and the `/deliver` evals were not rerun (see the PR).
+- **Outcome:** `.husky/pre-push`, `.npmrc`, `deliver-implementer`, both reviewer agents, `/deliver` SKILL.md and `docs/environment-setup.md`.

@@ -26,6 +26,7 @@ export function testConfig(
   return loadConfig({
     DATABASE_URL: databaseUrl,
     JWT_SECRET: 'test-secret-test-secret-test-secret',
+    LOG_LEVEL: 'silent',
     ...overrides,
   });
 }

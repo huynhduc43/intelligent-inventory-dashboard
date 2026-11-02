@@ -1,0 +1,3 @@
+# Every problem has a minted `type` and a `code`, including statuses §4.8 does not list
+
+§4.8 shows a coded problem with a minted `type` URI. We apply that to every problem rather than using `about:blank` for generic errors: `type` is a constant base plus the kebab-cased `code` (`…/problems/validation-failed`), `title` is the HTTP status phrase, and a status §4.8 does not name (413 from the body parser, 405, 415) gets the code `HTTP_<status>`. Clients then branch on one rule, `code`, for every response; changing these strings later would break them, which is why it is recorded. The base uses `example.dev` until the API has a real domain (a `shortcut:` in code); RFC 9457 does not require the URI to resolve.

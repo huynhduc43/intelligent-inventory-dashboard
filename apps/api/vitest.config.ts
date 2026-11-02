@@ -23,7 +23,12 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.ts'],
       // schema.ts is declarations only; the migration generated from it is checked by test/integration/db.spec.ts.
-      exclude: ['src/main.ts', 'src/**/*.module.ts', 'src/shared/schema.ts'],
+      exclude: [
+        'src/main.ts',
+        'src/export-openapi.ts',
+        'src/**/*.module.ts',
+        'src/shared/schema.ts',
+      ],
       thresholds: {
         lines: 80,
         branches: 80,

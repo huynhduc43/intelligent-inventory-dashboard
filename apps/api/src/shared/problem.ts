@@ -1,23 +1,24 @@
 import { STATUS_CODES } from 'node:http';
 import { BadRequestException, HttpException } from '@nestjs/common';
+import { z } from 'zod';
 
 // shortcut: placeholder domain (RFC 9457 does not require it to resolve), replace when the API has a real one.
 export const PROBLEM_TYPE_BASE = 'https://api.example.dev/problems/';
 
-export interface ValidationError {
-  pointer: string;
-  message: string;
-}
+export const problemSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.number().int().min(100).max(599),
+  detail: z.string(),
+  instance: z.string(),
+  code: z.string(),
+  errors: z
+    .array(z.object({ pointer: z.string(), message: z.string() }))
+    .optional(),
+});
 
-export interface Problem {
-  type: string;
-  title: string;
-  status: number;
-  detail: string;
-  instance: string;
-  code: string;
-  errors?: ValidationError[];
-}
+export type Problem = z.infer<typeof problemSchema>;
+export type ValidationError = NonNullable<Problem['errors']>[number];
 
 /** 400 raised by the validation pipe; carries the per-field `errors[]`. */
 export class ValidationFailedException extends BadRequestException {
@@ -141,3 +142,10 @@ export function describeException(
     detail: 'An unexpected error occurred.',
   };
 }
+
+/** OpenAPI `content` for a problem+json response. */
+export const problemRef = {
+  'application/problem+json': {
+    schema: { $ref: '#/components/schemas/Problem' },
+  },
+};

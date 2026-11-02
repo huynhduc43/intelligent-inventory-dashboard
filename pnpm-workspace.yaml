@@ -2,8 +2,10 @@ packages:
   - apps/*
 
 # Install scripts not needed: esbuild ships its binary as an optional dependency;
-# cpu-features/ssh2/protobufjs come via testcontainers and work without them.
+# cpu-features/ssh2/protobufjs come via testcontainers and work without them;
+# @scarf/scarf (via swagger-ui) only sends install telemetry.
 allowBuilds:
+  '@scarf/scarf': false
   cpu-features: false
   esbuild: false
   protobufjs: false

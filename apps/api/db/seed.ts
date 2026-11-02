@@ -56,10 +56,55 @@ const MEMBERSHIPS = [
   [2, 0, 'VIEWER'],
 ] as const;
 
+// One statement per dealership. Ages are measured from the dealership-local date in SQL (never in Node), ids and VINs
+// are derived from the row number, so a re-run conflicts on the primary key and adds nothing.
+// Rows n = 1..4 sit at exactly watch-1, watch, aging and aging+1 days; about 10% are RESERVED and 10% SOLD.
+const SEED_VEHICLES = `
+WITH d AS (
+  SELECT id, timezone, watch_days, aging_days,
+         (now() AT TIME ZONE timezone)::date AS today, right(id::text, 1) AS dch
+  FROM dealership WHERE id = $1
+), g AS (
+  SELECT d.*, n,
+         CASE n WHEN 1 THEN watch_days - 1 WHEN 2 THEN watch_days
+                WHEN 3 THEN aging_days WHEN 4 THEN aging_days + 1
+                ELSE (n * 37) % 201 END AS age,
+         CASE WHEN n % 20 = 0 THEN 'SOLD' WHEN n % 10 = 5 THEN 'RESERVED' ELSE 'IN_STOCK' END AS st
+  FROM d, generate_series(1, $2::int) AS n
+)
+INSERT INTO vehicle (id, dealership_id, vin, make, model, model_year, mileage, list_price,
+                     status, stocked_on, sold_at, updated_by)
+SELECT format('0000000%s-0000-4000-8000-%s', dch, lpad(to_hex(n), 12, '0'))::uuid, id,
+       'SEED' || dch || lpad(n::text, 12, '0'),
+       (ARRAY['Toyota','Ford','BMW','Kia','Tesla'])[1 + n % 5],
+       (ARRAY['Corolla','Focus','X3','Ceed','Model 3'])[1 + n % 5],
+       2015 + n % 10, (n * 1237) % 150000,
+       CASE WHEN n % 13 = 0 THEN NULL ELSE 8000 + (n * 311) % 40000 END,
+       CASE WHEN age < 2 AND st = 'SOLD' THEN 'IN_STOCK' ELSE st END,
+       today - age,
+       CASE WHEN st = 'SOLD' AND age >= 2
+            THEN ((today - age / 2)::timestamp + time '12:00') AT TIME ZONE timezone END,
+       $3
+FROM g
+ON CONFLICT DO NOTHING`;
+
+// A SOLD vehicle (n = 20) bought back: same VIN, new row, in stock again (D18).
+const SEED_REACQUIRED = `
+INSERT INTO vehicle (id, dealership_id, vin, make, model, model_year, mileage, list_price,
+                     status, stocked_on, updated_by)
+SELECT format('0000000%s-0000-4000-8000-%s', right(s.dealership_id::text, 1), 'f00000000020')::uuid,
+       s.dealership_id, s.vin, s.make, s.model, s.model_year, s.mileage, s.list_price, 'IN_STOCK',
+       (now() AT TIME ZONE d.timezone)::date - 10, s.updated_by
+FROM vehicle s JOIN dealership d ON d.id = s.dealership_id
+WHERE s.id = format('0000000%s-0000-4000-8000-%s', right(d.id::text, 1), lpad(to_hex(20), 12, '0'))::uuid
+  AND s.dealership_id = $1 AND s.status = 'SOLD'
+ON CONFLICT DO NOTHING`;
+
 /** Returns the password of each user this run inserted (none on a re-run). */
 export async function seed(
   client: pg.ClientBase,
   fixedPassword?: string,
+  vehiclesPerDealership = 250,
 ): Promise<{ email: string; password: string }[]> {
   if (fixedPassword !== undefined && fixedPassword.length < 15) {
     throw new Error('SEED_PASSWORD must be at least 15 characters');
@@ -88,6 +133,14 @@ export async function seed(
       [USERS[u][0], DEALERSHIPS[d][0], role],
     );
   }
+  for (const [dealershipId] of DEALERSHIPS) {
+    await client.query(SEED_VEHICLES, [
+      dealershipId,
+      vehiclesPerDealership,
+      USERS[0][0],
+    ]);
+    await client.query(SEED_REACQUIRED, [dealershipId]);
+  }
   return created;
 }
 
@@ -101,7 +154,13 @@ if (import.meta.main) {
   await client.connect();
   try {
     const fixed = process.env.SEED_PASSWORD;
-    const created = await seed(client, fixed === '' ? undefined : fixed);
+    const count = Number(process.env.SEED_VEHICLES_PER_DEALERSHIP ?? 250);
+    if (!Number.isInteger(count) || count < 0 || count > 1_000_000) {
+      throw new Error(
+        'SEED_VEHICLES_PER_DEALERSHIP must be an integer from 0 to 1000000',
+      );
+    }
+    const created = await seed(client, fixed === '' ? undefined : fixed, count);
     for (const { email, password } of created) {
       process.stdout.write(`${email}  ${password}\n`);
     }

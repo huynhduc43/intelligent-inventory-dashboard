@@ -202,6 +202,500 @@
         ]
       }
     },
+    "/api/v1/dealerships/{dealershipId}/vehicles": {
+      "get": {
+        "operationId": "VehiclesController_list",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated list of IN_STOCK, RESERVED, SOLD. Default IN_STOCK.",
+            "schema": {
+              "description": "Comma-separated list of IN_STOCK, RESERVED, SOLD. Default IN_STOCK.",
+              "type": "string"
+            }
+          },
+          {
+            "name": "make",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive, exact.",
+            "schema": {
+              "description": "Case-insensitive, exact.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "model",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive, exact.",
+            "schema": {
+              "description": "Case-insensitive, exact.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "tier",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FRESH",
+                "WATCH",
+                "AGING"
+              ]
+            }
+          },
+          {
+            "name": "minAgeDays",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 36500,
+              "pattern": "^\\d+$"
+            }
+          },
+          {
+            "name": "maxAgeDays",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 36500,
+              "pattern": "^\\d+$"
+            }
+          },
+          {
+            "name": "hasAction",
+            "required": false,
+            "in": "query",
+            "description": "Whether any action was ever logged.",
+            "schema": {
+              "description": "Whether any action was ever logged.",
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "oldest",
+              "type": "string",
+              "enum": [
+                "oldest",
+                "newest"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Default 50.",
+            "schema": {
+              "description": "Default 50.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "pattern": "^\\d+$"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Default 0.",
+            "schema": {
+              "description": "Default 0.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "pattern": "^\\d+$"
+            }
+          },
+          {
+            "name": "dealershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of vehicles and the total matching the filters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "total"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "vin",
+                          "make",
+                          "model",
+                          "modelYear",
+                          "mileage",
+                          "listPrice",
+                          "status",
+                          "stockedOn",
+                          "daysInStock",
+                          "tier",
+                          "currentAction"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "vin": {
+                            "type": "string"
+                          },
+                          "make": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "modelYear": {
+                            "type": "integer"
+                          },
+                          "mileage": {
+                            "type": "integer"
+                          },
+                          "listPrice": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Decimal string, e.g. \"23995.00\""
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "IN_STOCK",
+                              "RESERVED",
+                              "SOLD"
+                            ]
+                          },
+                          "stockedOn": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "daysInStock": {
+                            "type": "integer"
+                          },
+                          "tier": {
+                            "type": "string",
+                            "enum": [
+                              "FRESH",
+                              "WATCH",
+                              "AGING"
+                            ]
+                          },
+                          "currentAction": {
+                            "type": "object",
+                            "nullable": true,
+                            "required": [
+                              "actionType",
+                              "note",
+                              "createdBy",
+                              "createdAt"
+                            ],
+                            "properties": {
+                              "actionType": {
+                                "type": "string",
+                                "enum": [
+                                  "PRICE_REDUCTION_PLANNED",
+                                  "TRANSFER",
+                                  "AUCTION",
+                                  "PROMOTION",
+                                  "MONITOR",
+                                  "OTHER"
+                                ]
+                              },
+                              "note": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "createdBy": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown dealership, or the caller is not a member",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
+    "/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}": {
+      "get": {
+        "operationId": "VehiclesController_get",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dealershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The vehicle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "vin",
+                    "make",
+                    "model",
+                    "modelYear",
+                    "mileage",
+                    "listPrice",
+                    "status",
+                    "stockedOn",
+                    "daysInStock",
+                    "tier",
+                    "currentAction"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "vin": {
+                      "type": "string"
+                    },
+                    "make": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "modelYear": {
+                      "type": "integer"
+                    },
+                    "mileage": {
+                      "type": "integer"
+                    },
+                    "listPrice": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Decimal string, e.g. \"23995.00\""
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "IN_STOCK",
+                        "RESERVED",
+                        "SOLD"
+                      ]
+                    },
+                    "stockedOn": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "daysInStock": {
+                      "type": "integer"
+                    },
+                    "tier": {
+                      "type": "string",
+                      "enum": [
+                        "FRESH",
+                        "WATCH",
+                        "AGING"
+                      ]
+                    },
+                    "currentAction": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "actionType",
+                        "note",
+                        "createdBy",
+                        "createdAt"
+                      ],
+                      "properties": {
+                        "actionType": {
+                          "type": "string",
+                          "enum": [
+                            "PRICE_REDUCTION_PLANNED",
+                            "TRANSFER",
+                            "AUCTION",
+                            "PROMOTION",
+                            "MONITOR",
+                            "OTHER"
+                          ]
+                        },
+                        "note": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdBy": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed (the route takes no query parameters)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "inventory"
+        ]
+      }
+    },
     "/health/live": {
       "get": {
         "operationId": "HealthController_live",

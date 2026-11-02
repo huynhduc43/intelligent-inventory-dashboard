@@ -27,9 +27,11 @@ describe('openapi document', () => {
     expect(generated).toEqual(committed);
   });
 
-  it('lists the auth and health routes', () => {
+  it('lists the auth, inventory and health routes', () => {
     expect(Object.keys(generated.paths).sort()).toEqual([
       '/api/v1/auth/login',
+      '/api/v1/dealerships/{dealershipId}/vehicles',
+      '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}',
       '/api/v1/me',
       '/health/live',
       '/health/ready',
@@ -74,6 +76,49 @@ describe('openapi per-route statuses', () => {
     expect(statuses('/api/v1/me', 'get')).toEqual(['200', '401', '500']);
     expect(statuses('/health/live', 'get')).not.toContain('401');
     expect(statuses('/health/ready', 'get')).not.toContain('400');
+  });
+});
+
+describe('openapi vehicle routes', () => {
+  it('lists each list query parameter as an integer, enum or string', async () => {
+    const doc = JSON.parse(JSON.stringify(await generateOpenApi())) as Doc;
+    const op = doc.paths['/api/v1/dealerships/{dealershipId}/vehicles']?.get;
+    const params = (op?.parameters ?? []) as {
+      name: string;
+      in: string;
+      schema?: { type?: string; minimum?: number; enum?: string[] };
+    }[];
+    const query = Object.fromEntries(
+      params.filter((p) => p.in === 'query').map((p) => [p.name, p.schema]),
+    );
+
+    expect(Object.keys(query).sort()).toEqual(
+      [
+        'hasAction',
+        'limit',
+        'make',
+        'maxAgeDays',
+        'minAgeDays',
+        'model',
+        'offset',
+        'sort',
+        'status',
+        'tier',
+      ].sort(),
+    );
+    expect(query.limit).toMatchObject({
+      type: 'integer',
+      minimum: 1,
+      maximum: 100,
+    });
+    expect(query.hasAction?.enum).toEqual(['true', 'false']);
+    expect(Object.keys(op?.responses ?? {}).sort()).toEqual([
+      '200',
+      '400',
+      '401',
+      '404',
+      '500',
+    ]);
   });
 });
 

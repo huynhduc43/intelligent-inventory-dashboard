@@ -18,7 +18,8 @@ import {
 } from './domain/permissions.js';
 import type { AuthedRequest } from './request-context.js';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface ContextRow extends Record<string, unknown> {
   role: Role;

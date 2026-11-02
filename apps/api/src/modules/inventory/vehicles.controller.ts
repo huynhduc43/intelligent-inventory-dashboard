@@ -1,14 +1,18 @@
 import {
+  Body,
   Controller,
   Get,
   Header,
   NotFoundException,
   Param,
+  Post,
   Query,
   Req,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiQuery,
@@ -16,12 +20,14 @@ import {
   ApiTags,
   type SchemaObject,
 } from '@nestjs/swagger';
-import type { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import type { Response } from 'express';
+import { z } from 'zod';
+import { problemRef, ValidationFailedException } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
 import type { AuthedRequest } from '../auth/request-context.js';
+import { createVehicleSchema } from './vehicles.body.js';
 import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
 
@@ -155,6 +161,61 @@ export class VehiclesController {
   ) {
     const { id, ctx } = context(req);
     return this.vehicles.list(id, ctx, query);
+  }
+
+  @Post()
+  @RequirePermission('vehicle:create')
+  @dealershipParam
+  @ApiCreatedResponse({
+    description: 'The new vehicle; Location names it',
+    schema: vehicleOpenApi,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (body or query parameters)',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthenticated',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'The caller lacks vehicle:create',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Unknown or malformed dealership, or the caller is not a member',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'VIN_ALREADY_IN_STOCK: an IN_STOCK or RESERVED vehicle here has the VIN',
+    content: problemRef,
+  })
+  async create(
+    @Req() req: AuthedRequest,
+    @Query({ schema: noQuery }) _query: z.infer<typeof noQuery>,
+    @Body({ schema: createVehicleSchema })
+    body: z.infer<typeof createVehicleSchema>,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { id, ctx } = context(req);
+    // ISO dates compare as strings; todayLocal is computed in Postgres.
+    if (body.stockedOn > ctx.todayLocal)
+      throw new ValidationFailedException([
+        {
+          pointer: '/stockedOn',
+          message: `Must not be after the dealership's local today (${ctx.todayLocal})`,
+        },
+      ]);
+    const vehicle = await this.vehicles.create(id, req.userId, ctx, body);
+    res.location(`/api/v1/dealerships/${id}/vehicles/${vehicle.id}`);
+    return vehicle;
   }
 
   @Get(':vehicleId')

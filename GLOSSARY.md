@@ -30,6 +30,14 @@ _Avoid_: Deleted user, inactive user
 
 ## Inventory
 
+**VIN**:
+The 17-character vehicle identification number, in capitals, never containing I, O or Q. It never changes once a vehicle is added. Within a dealership, at most one unsold vehicle carries a given VIN.
+_Avoid_: Serial number, chassis number
+
+**Re-acquired vehicle**:
+A car the dealership sold and later took back into stock. It becomes a new vehicle with the same VIN, a new stocked-on date and an empty action history; the sold one stays as it was.
+_Avoid_: Returned vehicle, restocked vehicle
+
 **Stocked on**:
 The date a vehicle arrived in this dealership's stock. A re-acquired car gets a new vehicle with a new stocked-on date.
 _Avoid_: Created date, arrival time

@@ -49,6 +49,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#46](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/46) | CI red on `dev` for four pushes; agents never looked                             | Re-resolved three packages under the release-age cooldown; `verify` runs `install --frozen-lockfile`; agents watch PR checks after every push; `/deliver` fixes the lockfile instead of symlinking `node_modules` (C23)          | `pnpm verify`; CI on the PR                                                                                                         | The user asked why no agent caught it, and waived the `/deliver` eval rerun (C23)                                                                                           |
 | [#47](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/47) | Log and list vehicle actions, seeded action history (#11)                        | `/deliver` under `grill=auto`/`approve=auto`: research note, 12 decisions, ADR 0013, glossary terms, two diagrams, contract, implementation, two review rounds, tester                                                           | `pnpm verify`; two review rounds, 10 findings fixed (C23, C24); Tester passed AC 1–5 and the seed criterion against the running API | None: decisions, the contract choice and the seed amendment were the agent's recommendations (`approve=auto`, C23, C25); the user chose the modes and the implementer model |
 | [#56](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/56) | Spec diagrams move from the `assets` branch into `docs/diagrams/specs/`          | Copied the 22 files, rewrote the `/deliver` publishing rule to commit diagrams on the PR branch and link them by commit permalink, removed `tools/push-assets.sh`                                                                | `pnpm verify`; moved PNGs match the `assets` branch                                                                                 | The user chose the move and kept spec diagrams out of the design doc; waived the `/deliver` eval rerun (C27)                                                                |
+| [#59](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59) | Vehicle intake: `POST …/vehicles` with VIN rules (#12)                           | `/deliver` under `grill=auto`/`approve=auto`: research note, 9 decisions, glossary terms, diagram, contract, implementation on sonnet, three review rounds, tester                                                               | `pnpm verify`; three review rounds, 8 findings fixed (C28–C30); Tester passed AC 1–13 against the running API                       | None: decisions and the contract were the agent's recommendations (`approve=auto`, C31); the user chose the modes and the implementer model                                 |
 
 ## Cases
 
@@ -294,3 +295,39 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** documentation evolves with code and is reviewed with it. Spec diagrams live in `docs/diagrams/specs/issue-<N>/` and ship in the feature PR; issues link them by commit permalink, which outlives the branch. `system-design.md` keeps only its whole-system figures. The eval rerun was waived because the only nearby case (`spec-issue-body`) skips diagrams.
 - **Verification:** `pnpm verify`; the moved PNGs match the `assets` branch byte for byte; the HTML sources differ only by Prettier formatting.
 - **Outcome:** `tools/push-assets.sh` removed; once merged, the issue bodies are relinked to `dev` and the `assets` branch is deleted.
+
+### C28: The first PR skipped tests the spec named (#59)
+
+- **Problem:** AC 3 and §4.15 ask for a unit test on the VIN rules, AC 12 for a `rbac.spec.ts` row, and AC 4, 5 and 9 for specific cases (a RESERVED duplicate, an unchanged sold row, `"-1"` and 11-digit prices). The first push had none of them, yet its Evidence mapped every criterion.
+- **AI proposal:** the implementer (sonnet) covered the criteria with one intake spec and mapped Evidence from the contract comment rather than from the tests.
+- **Decided by:** agent (approve=auto), on the business reviewer's findings.
+- **Decision and reasoning:** the criteria are the spec; each listed case gets its test. The body schema moved to its own file so the unit test can import it.
+- **Verification:** [business-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59#discussion_r4444707770); `create-vehicle-body.spec.ts` and the `POST vehicles` row in `rbac.spec.ts`.
+- **Outcome:** fixed in round 1.
+
+### C29: Two reads of the clock for one row (#59)
+
+- **Problem:** the insert called `clock.now()` once for `created_at` and once for `updated_at`, so with the real clock a new row could show two different instants. `TestClock` returns one instant, so no test could catch it.
+- **AI proposal:** the implementer wrote two calls.
+- **Decided by:** agent (approve=auto), on the code reviewer's finding.
+- **Decision and reasoning:** read the clock once and bind it to both columns (ADR 0002, contract).
+- **Verification:** [code-review r1](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59#discussion_r4444698957).
+- **Outcome:** fixed in round 1.
+
+### C30: A reviewer's own fix created the next finding (#59)
+
+- **Problem:** the code reviewer asked for `trim().toUpperCase().regex()` so the VIN pattern reaches OpenAPI. The published pattern then refused the lower-case and padded VINs that the server accepts.
+- **AI proposal:** the same reviewer flagged its earlier suggestion in round 2 and proposed a field description.
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** keep the strict pattern and say in the description that the value is trimmed and upper-cased first; a looser pattern would document input the database would refuse after normalisation.
+- **Verification:** [code-review r2](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59#discussion_r4444767734); `docs/api/openapi.json`.
+- **Outcome:** fixed in round 2; a client validating strictly against the pattern still refuses lower case.
+
+### C31: A future stocked-on date is a 400, not a new 422 (#59)
+
+- **Problem:** a stocked-on date after the dealership's local today would give negative days in stock. §4.8 reserves 422 for "valid shape, invalid meaning", but §4.7 lists only 201, 400, 404 and 409 for the route.
+- **AI proposal:** reject it as `400 VALIDATION_FAILED` with pointer `/stockedOn`, comparing the ISO string with `todayLocal` from `DealershipGuard`, which Postgres computes.
+- **Decided by:** agent (grill=auto).
+- **Decision and reasoning:** keeps §4.7's status list unchanged and the error shape the same as every other field error; no time-zone maths in Node.
+- **Verification:** issue #12 Decision 4; integration test with a pinned `Clock`; Tester AC 8.
+- **Outcome:** no new problem code.

@@ -124,6 +124,20 @@ describe('vehicle status', { timeout: 30_000 }, () => {
     expect(r.updated_by).toBe(ADMIN);
     expect(r.sold_at).toEqual(clock.current);
     expect(res.body).toMatchObject({ daysInStock: 6 });
+    const control = await insert('IN_STOCK');
+    const days = async (v: string) =>
+      (
+        await auth(
+          request(app.getHttpServer()).get(
+            `/api/v1/dealerships/${LONDON}/vehicles/${v}`,
+          ),
+          MANAGER,
+        )
+      ).body as { daysInStock: number };
+    const controlBefore = (await days(control)).daysInStock;
+    clock.current = new Date('2026-07-04T16:00:00.000Z');
+    expect(await days(id)).toMatchObject({ daysInStock: 6 });
+    expect((await days(control)).daysInStock).toBe(controlBefore + 3);
     clock.current = new Date(NOW);
   });
 
@@ -170,7 +184,13 @@ describe('vehicle status', { timeout: 30_000 }, () => {
         [id, NOW],
       );
       const blocked = move(id, 'RESERVED').then((r) => r);
-      await new Promise((r) => setTimeout(r, 300));
+      for (let i = 0; i < 50; i++) {
+        const w = await db.query(
+          `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%UPDATE vehicle%'`,
+        );
+        if (w.rowCount) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
       await holder.query('COMMIT');
       const res = await blocked;
       expect(res.status).toBe(409);
@@ -220,7 +240,11 @@ describe('vehicle status', { timeout: 30_000 }, () => {
         MANAGER,
       ).send({ actionType: 'OTHER' });
     await move(id, 'RESERVED');
-    expect((await act()).status).toBe(409);
+    const blocked = await act();
+    expect(blocked.status).toBe(409);
+    expect(blocked.body).toMatchObject({
+      type: expect.stringContaining('vehicle-not-in-stock') as string,
+    });
     await move(id, 'IN_STOCK');
     expect((await act()).status).toBe(201);
   });

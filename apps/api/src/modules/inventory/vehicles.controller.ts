@@ -1,14 +1,18 @@
 import {
+  Body,
   Controller,
   Get,
   Header,
   NotFoundException,
   Param,
+  Post,
   Query,
   Req,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiQuery,
@@ -16,14 +20,42 @@ import {
   ApiTags,
   type SchemaObject,
 } from '@nestjs/swagger';
-import type { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import type { Response } from 'express';
+import { z } from 'zod';
+import { problemRef, ValidationFailedException } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
+import { text } from '../../shared/text.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
 import type { AuthedRequest } from '../auth/request-context.js';
 import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
+
+const createVehicleSchema = z.strictObject({
+  vin: z
+    .string()
+    .trim()
+    .transform((s) => s.toUpperCase())
+    .pipe(
+      z
+        .string()
+        .regex(
+          /^[A-HJ-NPR-Z0-9]{17}$/,
+          'Invalid VIN: 17 characters, letters and digits except I, O and Q',
+        ),
+    ),
+  make: text().trim().min(1).max(100),
+  model: text().trim().min(1).max(100),
+  modelYear: z.int().min(1900).max(2100),
+  mileage: z.int().min(0).max(2147483647),
+  listPrice: z
+    .string()
+    .regex(/^(0|[1-9]\d{0,9})(\.\d{1,2})?$/, 'Must be a decimal string')
+    .nullish(),
+  stockedOn: z.iso
+    .date()
+    .refine((d) => d >= '1900-01-01', 'Must be 1900-01-01 or later'),
+});
 
 const vehicleOpenApi: SchemaObject = {
   type: 'object',
@@ -155,6 +187,61 @@ export class VehiclesController {
   ) {
     const { id, ctx } = context(req);
     return this.vehicles.list(id, ctx, query);
+  }
+
+  @Post()
+  @RequirePermission('vehicle:create')
+  @dealershipParam
+  @ApiCreatedResponse({
+    description: 'The new vehicle; Location names it',
+    schema: vehicleOpenApi,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (body or query parameters)',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthenticated',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'The caller lacks vehicle:create',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Unknown or malformed dealership, or the caller is not a member',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'VIN_ALREADY_IN_STOCK: an IN_STOCK or RESERVED vehicle here has the VIN',
+    content: problemRef,
+  })
+  async create(
+    @Req() req: AuthedRequest,
+    @Query({ schema: noQuery }) _query: z.infer<typeof noQuery>,
+    @Body({ schema: createVehicleSchema })
+    body: z.infer<typeof createVehicleSchema>,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { id, ctx } = context(req);
+    // ISO dates compare as strings; todayLocal is computed in Postgres.
+    if (body.stockedOn > ctx.todayLocal)
+      throw new ValidationFailedException([
+        {
+          pointer: '/stockedOn',
+          message: `Must not be after the dealership's local today (${ctx.todayLocal})`,
+        },
+      ]);
+    const vehicle = await this.vehicles.create(id, req.userId, ctx, body);
+    res.location(`/api/v1/dealerships/${id}/vehicles/${vehicle.id}`);
+    return vehicle;
   }
 
   @Get(':vehicleId')

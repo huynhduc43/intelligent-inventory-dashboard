@@ -1,6 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, type SQL, sql } from 'drizzle-orm';
 import { DB, type Db } from '../../shared/db.js';
+import { Clock } from '../../shared/clock.js';
+import { CodedHttpException } from '../../shared/problem.js';
 import type { DealershipContext } from '../auth/request-context.js';
 import { type Tier, tierOf, toStockedOnBounds } from './domain/aging-policy.js';
 import type { VehicleListQuery } from './vehicles.query.js';
@@ -23,6 +25,16 @@ export interface Vehicle {
     createdBy: string;
     createdAt: string;
   } | null;
+}
+
+export interface NewVehicle {
+  vin: string;
+  make: string;
+  model: string;
+  modelYear: number;
+  mileage: number;
+  listPrice?: string | null;
+  stockedOn: string;
 }
 
 interface Row extends Record<string, unknown> {
@@ -51,7 +63,33 @@ const latestAction = sql`LEFT JOIN LATERAL (
 
 @Injectable()
 export class VehiclesService {
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    private readonly clock: Clock,
+  ) {}
+
+  /** One conditional INSERT, no lock: 0 rows means an unsold vehicle already has the VIN (409). */
+  async create(
+    dealershipId: string,
+    userId: string,
+    ctx: DealershipContext,
+    v: NewVehicle,
+  ): Promise<Vehicle> {
+    const { rows } = await this.db.execute<{ id: string }>(sql`
+      INSERT INTO vehicle (dealership_id, vin, make, model, model_year, mileage, list_price, stocked_on, updated_by, created_at, updated_at)
+      VALUES (${dealershipId}, ${v.vin}, ${v.make}, ${v.model}, ${v.modelYear}, ${v.mileage}, ${v.listPrice ?? null}::numeric,
+        ${v.stockedOn}::date, ${userId}::uuid, ${this.clock.now().toISOString()}::timestamptz, ${this.clock.now().toISOString()}::timestamptz)
+      ON CONFLICT (dealership_id, vin) WHERE status <> 'SOLD' DO NOTHING
+      RETURNING id`);
+    const created = rows[0];
+    if (!created)
+      throw new CodedHttpException(
+        409,
+        'VIN_ALREADY_IN_STOCK',
+        `VIN ${v.vin} is already on an unsold vehicle in this dealership.`,
+      );
+    return this.get(dealershipId, ctx, created.id);
+  }
 
   /** `today_local` and the time zone come from DealershipGuard; a SOLD vehicle's age stops at the local date of `sold_at`. */
   private columns(ctx: DealershipContext): SQL {

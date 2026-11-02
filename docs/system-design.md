@@ -26,7 +26,7 @@ The backend is a REST API on PostgreSQL. The client is stubbed with Swagger UI (
 
 A **modular monolith**: one stateless NestJS process (`apps/api`), one PostgreSQL database, five tables.
 
-![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table and dashboard reads across them.](diagrams/architecture.svg)
+![Architecture: a client stub calls the stateless NestJS API, where the auth guards gate four dealership-scoped modules; each module writes its own Postgres table; dashboard, and inventory for the latest action, read across them.](diagrams/architecture.svg)
 
 _Figure 1. Containers and modules. The auth guards gate every dealership route; each module writes only its own table; the only cross-table reads are `dashboard` and `inventory`'s latest-action lookup ([ADR 0011](adr/0011-inventory-reads-latest-action.md))._
 

@@ -42,6 +42,22 @@ _Avoid_: Returned vehicle, restocked vehicle
 The date a vehicle arrived in this dealership's stock. A re-acquired car gets a new vehicle with a new stocked-on date.
 _Avoid_: Created date, arrival time
 
+**Vehicle status**:
+Where a vehicle is in its life at the dealership: in stock, reserved or sold. A vehicle starts in stock, moves between in stock and reserved, and either can become sold. Sold is final. Asking for the status a vehicle already has is refused.
+_Avoid_: State, stage, tier
+
+**In stock**:
+On the lot and for sale. Only an in-stock vehicle can have actions logged, and only in-stock vehicles are counted on the dashboard.
+_Avoid_: Available, active
+
+**Reserved**:
+Held for a buyer and off the market, but not yet sold. It can go back to in stock or be sold.
+_Avoid_: On hold, pending
+
+**Sold**:
+The final status. The sale time is recorded, days in stock stop at its local date, and the VIN is free for a re-acquired vehicle.
+_Avoid_: Closed, archived
+
 **Days in stock**:
 Today's date in the dealership's time zone minus the stocked-on date, in whole calendar days. For a sold vehicle it stops at the local date of the sale. Derived on every read, never stored.
 _Avoid_: Age in hours, vehicle age

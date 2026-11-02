@@ -26,6 +26,10 @@ Git hooks run in a non-interactive shell that does not read `.nvmrc`, so they ca
 
 Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 
+## Seed data
+
+After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs.
+
 ## Docker Compose
 
 `docker compose up --build` starts `postgres`, runs the one-off `migrate` service, then starts `api` on port 3000. Compose sets a dev-only `JWT_SECRET`; nothing else is needed. `docker compose down -v` also drops the database volume.

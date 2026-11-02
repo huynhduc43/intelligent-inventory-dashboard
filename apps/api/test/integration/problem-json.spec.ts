@@ -10,6 +10,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { z } from 'zod';
+import { Public } from '../../src/modules/auth/decorators.js';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/configure-app.js';
 import { testConfig } from './support/postgres.js';
@@ -35,6 +36,7 @@ const schema = z.strictObject({
   password: z.string().optional(),
 });
 
+@Public()
 @Controller('test')
 class TestController {
   @Post('validate')

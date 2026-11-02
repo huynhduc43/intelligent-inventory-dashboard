@@ -28,6 +28,8 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       res.end();
       return;
     }
+    // RFC 9110 §15.5.2: every 401 carries a challenge.
+    if (status === 401) res.setHeader('WWW-Authenticate', 'Bearer');
     res
       .status(status)
       .type('application/problem+json')

@@ -26,6 +26,17 @@ export class ValidationFailedException extends BadRequestException {
   }
 }
 
+/** An HTTP error that carries its own problem `code` (e.g. 401 INVALID_CREDENTIALS). */
+export class CodedHttpException extends HttpException {
+  constructor(
+    status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message, status);
+  }
+}
+
 const escapeToken = (token: string) =>
   token.replaceAll('~', '~0').replaceAll('/', '~1');
 
@@ -63,7 +74,10 @@ export function toValidationErrors(
 
 export function codeForStatus(status: number): string {
   if (status === 400) return 'VALIDATION_FAILED';
+  if (status === 401) return 'UNAUTHENTICATED';
+  if (status === 403) return 'FORBIDDEN';
   if (status === 404) return 'NOT_FOUND';
+  if (status === 429) return 'RATE_LIMITED';
   if (status === 500) return 'INTERNAL';
   return `HTTP_${String(status)}`;
 }
@@ -115,7 +129,11 @@ export function describeException(
         detail: 'Request body is not valid JSON.',
       };
     }
-    return { status, code: codeForStatus(status), detail: exception.message };
+    const code =
+      exception instanceof CodedHttpException
+        ? exception.code
+        : codeForStatus(status);
+    return { status, code, detail: exception.message };
   }
   return {
     status: 500,

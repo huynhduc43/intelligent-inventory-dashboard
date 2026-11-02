@@ -7,6 +7,8 @@ import {
 import { z } from 'zod';
 import {
   buildProblem,
+  CodedHttpException,
+  codeForStatus,
   describeException,
   toPointer,
   toValidationErrors,
@@ -160,5 +162,23 @@ describe('describeException', () => {
       detail: 'An unexpected error occurred.',
     });
     expect(describeException('string')).toMatchObject({ status: 500 });
+  });
+});
+
+describe('auth problem codes', () => {
+  it.each([
+    [401, 'UNAUTHENTICATED'],
+    [403, 'FORBIDDEN'],
+    [429, 'RATE_LIMITED'],
+  ])('maps %i to %s', (status, code) => {
+    expect(codeForStatus(status)).toBe(code);
+  });
+
+  it('uses the code a CodedHttpException carries', () => {
+    expect(
+      describeException(
+        new CodedHttpException(401, 'INVALID_CREDENTIALS', 'x'),
+      ),
+    ).toEqual({ status: 401, code: 'INVALID_CREDENTIALS', detail: 'x' });
   });
 });

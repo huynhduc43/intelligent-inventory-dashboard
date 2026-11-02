@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
 import { AuthService } from './auth.service.js';
@@ -19,6 +20,7 @@ const loginSchema = z.strictObject({
   password: z.string().min(1).max(128),
 });
 
+@ApiTags('auth')
 @Controller()
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -33,6 +35,7 @@ export class AuthController {
     return this.auth.login(body.email, body.password);
   }
 
+  @ApiBearerAuth()
   @Get('me')
   @Header('Cache-Control', 'no-store')
   me(@Req() req: AuthedRequest) {

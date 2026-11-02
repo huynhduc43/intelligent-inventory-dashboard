@@ -10,6 +10,7 @@ import {
   CodedHttpException,
   codeForStatus,
   describeException,
+  problemSchema,
   toPointer,
   toValidationErrors,
   ValidationFailedException,
@@ -180,5 +181,16 @@ describe('auth problem codes', () => {
         new CodedHttpException(401, 'INVALID_CREDENTIALS', 'x'),
       ),
     ).toEqual({ status: 401, code: 'INVALID_CREDENTIALS', detail: 'x' });
+  });
+});
+
+describe('problemSchema', () => {
+  it('accepts what buildProblem emits, with and without errors', () => {
+    const plain = buildProblem(404, 'NOT_FOUND', 'x', 'id');
+    const withErrors = buildProblem(400, 'VALIDATION_FAILED', 'x', 'id', [
+      { pointer: '/a', message: 'm' },
+    ]);
+    expect(problemSchema.parse(plain)).toEqual(plain);
+    expect(problemSchema.parse(withErrors)).toEqual(withErrors);
   });
 });

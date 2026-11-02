@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { configureApp } from './configure-app.js';
+import { setupDocs } from './shared/docs.js';
 import { type AppConfig, ConfigError, loadConfig } from './shared/config.js';
 
 function configOrExit(): AppConfig {
@@ -20,6 +21,7 @@ async function bootstrap() {
     bufferLogs: true,
   });
   configureApp(app, config);
+  setupDocs(app);
   app.enableShutdownHooks();
   await app.listen(config.PORT);
 }

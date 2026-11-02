@@ -1,9 +1,11 @@
 import { Controller, Get, UseFilters } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 import { Public } from '../auth/decorators.js';
 import { HealthPassthroughFilter } from '../../shared/problem-details.filter.js';
 import { DatabaseHealthIndicator } from './database.health.js';
 
+@ApiTags('health')
 @Public()
 @Controller('health')
 @UseFilters(HealthPassthroughFilter)

@@ -50,3 +50,4 @@ Two places hold this project's accepted decisions:
 | [0010](0010-openapi-from-code-and-committed-export.md)      | OpenAPI from code at `/docs`, committed `openapi.json` exported by a script                  | —                        |
 | [0011](0011-inventory-reads-latest-action.md)               | `inventory` list and detail read the latest action with read-only SQL                        | §4.2 (cross-table reads) |
 | [0012](0012-composite-fk-on-vehicle-action.md)              | `vehicle_action` references its vehicle through a composite FK `(vehicle_id, dealership_id)` | —                        |
+| [0013](0013-actions-read-vehicle-status-in-the-insert.md)   | Logging an action reads `vehicle.status` in the same SQL statement                           | —                        |

@@ -95,6 +95,34 @@ SELECT format('0000000%s-0000-4000-8000-%s', dch, 'f00000000020')::uuid, dealers
 FROM r WHERE n = 20 AND status = 'SOLD'
 ON CONFLICT DO NOTHING`;
 
+// Action history (D4): about 40% of the IN_STOCK Aging vehicles (every 5th by row number, offsets 0 and 2) get 1-3 entries,
+// authored by the dealership's manager (admin where there is none). One statement per round ($2 = 1..3) so a vehicle's
+// ids rise with its created_at; created_at derives from stocked_on only, so NOT EXISTS makes a re-run add nothing.
+const SEED_ACTIONS = `
+WITH d AS (
+  SELECT id, timezone, aging_days, (now() AT TIME ZONE timezone)::date AS today,
+         (SELECT user_id FROM user_dealership WHERE dealership_id = dealership.id AND role IN ('MANAGER', 'ADMIN')
+          ORDER BY (role = 'MANAGER') DESC, user_id LIMIT 1) AS author
+  FROM dealership WHERE id = $1
+), e AS (
+  SELECT v.id, v.dealership_id, v.stocked_on, d.timezone, d.author,
+         row_number() OVER (ORDER BY v.vin) AS rn
+  FROM vehicle v JOIN d ON d.id = v.dealership_id
+  WHERE v.status = 'IN_STOCK' AND d.today - v.stocked_on > d.aging_days
+), p AS (
+  SELECT *, CASE rn % 10 WHEN 0 THEN 3 WHEN 5 THEN 2 ELSE 1 END AS rounds FROM e WHERE rn % 5 IN (0, 2)
+), r AS (
+  SELECT id, dealership_id, author,
+         (ARRAY['PRICE_REDUCTION_PLANNED','TRANSFER','AUCTION','PROMOTION','MONITOR','OTHER'])[1 + (rn + $2::int) % 6] AS action_type,
+         CASE WHEN $2::int % 2 = 1 THEN 'Seed note, round ' || $2::int END AS note,
+         ((stocked_on + 10 * $2::int)::timestamp + time '10:00') AT TIME ZONE timezone AS created_at
+  FROM p WHERE rounds >= $2::int
+)
+INSERT INTO vehicle_action (vehicle_id, dealership_id, action_type, note, created_by, created_at)
+SELECT id, dealership_id, action_type, note, author, created_at FROM r
+WHERE author IS NOT NULL AND NOT EXISTS (
+  SELECT 1 FROM vehicle_action a WHERE a.vehicle_id = r.id AND a.action_type = r.action_type AND a.created_at = r.created_at)`;
+
 /** Returns the password of each user this run inserted (none on a re-run). */
 export async function seed(
   client: pg.ClientBase,
@@ -134,6 +162,9 @@ export async function seed(
       vehiclesPerDealership,
       USERS[0][0],
     ]);
+    for (const round of [1, 2, 3]) {
+      await client.query(SEED_ACTIONS, [dealershipId, round]);
+    }
   }
   return created;
 }

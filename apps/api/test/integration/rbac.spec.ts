@@ -138,11 +138,16 @@ describe('D15/D16 route x role', () => {
 
   describe('vehicle routes', () => {
     const vehicleId = `0000000${LONDON.slice(-1)}-0000-4000-8000-000000000001`;
-    const suffix = ['vehicles', `vehicles/${vehicleId}`, 'dashboard'];
+    const suffix = [
+      'vehicles',
+      `vehicles/${vehicleId}`,
+      'dashboard',
+      `vehicles/${vehicleId}/actions`,
+    ];
     const route = (d: string, i: number) =>
       `/api/v1/dealerships/${d}/${suffix[i] ?? ''}`;
 
-    it.each([0, 1, 2])(
+    it.each([0, 1, 2, 3])(
       'route %i: every role 200, non-member 404, no token 401',
       async (i) => {
         for (const u of [ADMIN, MANAGER, VIEWER]) {
@@ -153,7 +158,7 @@ describe('D15/D16 route x role', () => {
       },
     );
 
-    it.each([0, 1, 2])(
+    it.each([0, 1, 2, 3])(
       'route %i: non-member 404 body equals the missing-dealership body',
       async (i) => {
         const bodies = await Promise.all(

@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAPI Document Flow</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --color-paper: #f5f5f5; /* white-smoke */
+        --color-ink: #2d3142; /* jet-black */
+        --color-muted: #4f5d75; /* blue-slate */
+        --color-accent: #bf4520; /* burnt-tangerine */
+        --font-sans: 'Geist', system-ui, sans-serif;
+        --font-serif: 'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+        --font-mono: 'Geist Mono', ui-monospace, monospace;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-paper);
+        color: var(--color-ink);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+      }
+
+      .frame {
+        max-width: 1200px;
+        width: 100%;
+      }
+      /* The SVG holds its readable width (min-width == the viewBox width, so the
+       type ramp is never silently scaled down). This wrapper lets a narrow
+       screen scroll the diagram instead of the whole page. */
+      .diagram-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--color-ink);
+        margin-bottom: 1.5rem;
+      }
+
+      svg {
+        width: 100%;
+        min-width: 960px;
+        display: block;
+      }
+      /* Paper has no scrollbar, so the local scroller would clip instead of
+       scroll. Let the diagram scale down to the sheet: smaller but whole
+       beats sharp but cut off. Must come after the svg rule above - a media
+       query adds no specificity, so a later plain rule would win. */
+      @media print {
+        .diagram-container {
+          overflow-x: visible;
+        }
+        svg {
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Architecture · Diagram Design</p>
+      <h1>How openapi.json is produced, served and kept honest</h1>
+
+      <!-- Replace openapi with a unique slug for this diagram before export. -->
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 600"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="openapi-title openapi-desc"
+        >
+          <title id="openapi-title">
+            How openapi.json is produced, served and kept honest
+          </title>
+          <desc id="openapi-desc">
+            Controllers and zod schemas feed one SwaggerModule document that is
+            served by Swagger UI, exported to a committed openapi.json, and
+            checked by a drift test.
+          </desc>
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#4f5d75" />
+            </marker>
+            <marker
+              id="arrow-accent"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#bf4520" />
+            </marker>
+            <marker
+              id="arrow-link"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8" />
+            </marker>
+
+            <!-- OPTIONAL: dot-pattern background. Uncomment the <pattern> and the second <rect> below if you want the dotted paper look. -->
+            <!--
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          --></defs>
+
+          <rect width="100%" height="100%" fill="#f5f5f5" />
+          <!-- <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/> -->
+
+          <path
+            d="M196 182 H218 A8 8 0 0 1 226 190 V202 A8 8 0 0 0 234 210 H256"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M196 262 H218 A8 8 0 0 0 226 254 V242 A8 8 0 0 1 234 234 H256"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M456 210 H476 A8 8 0 0 0 484 202 V110 A8 8 0 0 1 492 102 H536"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M456 234 H500 A8 8 0 0 1 508 242 V334 A8 8 0 0 0 516 342 H536"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M726 102 H786"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <rect x="734.0" y="80" width="44" height="14" fill="#f5f5f5" />
+          <text
+            x="756"
+            y="90"
+            text-anchor="middle"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            letter-spacing="0.5"
+            fill="#4f5d75"
+          >
+            SERVES
+          </text>
+          <path
+            d="M726 342 H786"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <rect x="734.0" y="320" width="44" height="14" fill="#f5f5f5" />
+          <text
+            x="756"
+            y="330"
+            text-anchor="middle"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            letter-spacing="0.5"
+            fill="#4f5d75"
+          >
+            WRITES
+          </text>
+          <path
+            d="M356 258 V458 A8 8 0 0 0 364 466 H536"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <rect x="412.0" y="444" width="76" height="14" fill="#f5f5f5" />
+          <text
+            x="450"
+            y="454"
+            text-anchor="middle"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            letter-spacing="0.5"
+            fill="#4f5d75"
+          >
+            REGENERATES
+          </text>
+          <path
+            d="M861 374 V458 A8 8 0 0 1 853 466 H726"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <rect x="752.0" y="444" width="76" height="14" fill="#f5f5f5" />
+          <text
+            x="790"
+            y="454"
+            text-anchor="middle"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            letter-spacing="0.5"
+            fill="#4f5d75"
+          >
+            DIFF AGAINST
+          </text>
+          <text
+            x="24"
+            y="142"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing="1.4"
+            fill="#4f5d75"
+          >
+            SOURCES
+          </text>
+          <rect x="24" y="150" width="172" height="64" rx="6" fill="#f5f5f5" />
+          <rect
+            x="24"
+            y="150"
+            width="172"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="36"
+            y="178"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            Controllers
+          </text>
+          <text
+            x="36"
+            y="196"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            auth, me · health
+          </text>
+          <rect x="24" y="230" width="172" height="64" rx="6" fill="#f5f5f5" />
+          <rect
+            x="24"
+            y="230"
+            width="172"
+            height="64"
+            rx="6"
+            fill="rgba(79,93,117,0.10)"
+            stroke="#5a6580"
+            stroke-width="1"
+          />
+          <text
+            x="36"
+            y="258"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            zod schemas
+          </text>
+          <text
+            x="36"
+            y="276"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            @Body, problemSchema
+          </text>
+          <text
+            x="256"
+            y="178"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing="1.4"
+            fill="#bf4520"
+          >
+            ONE DOCUMENT
+          </text>
+          <rect x="256" y="186" width="200" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="256"
+            y="186"
+            width="200"
+            height="72"
+            rx="6"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+            stroke-width="1.5"
+          />
+          <text
+            x="268"
+            y="216"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            createDocument
+          </text>
+          <text
+            x="268"
+            y="234"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            SwaggerModule · one document
+          </text>
+          <text
+            x="536"
+            y="58"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing="1.4"
+            fill="#4f5d75"
+          >
+            (A) SERVE
+          </text>
+          <rect x="536" y="66" width="190" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="536"
+            y="66"
+            width="190"
+            height="72"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="548"
+            y="96"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            setupDocs(app)
+          </text>
+          <text
+            x="548"
+            y="114"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            called only from main.ts
+          </text>
+          <rect x="786" y="66" width="150" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="786"
+            y="66"
+            width="150"
+            height="72"
+            rx="6"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <text
+            x="798"
+            y="96"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            Swagger UI
+          </text>
+          <text
+            x="798"
+            y="114"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            /docs · /docs-json
+          </text>
+          <text
+            x="536"
+            y="298"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing="1.4"
+            fill="#4f5d75"
+          >
+            (B) EXPORT
+          </text>
+          <rect x="536" y="306" width="190" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="536"
+            y="306"
+            width="190"
+            height="72"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="548"
+            y="332"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            Export script
+          </text>
+          <text
+            x="548"
+            y="350"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            NestFactory.create, no listen
+          </text>
+          <text
+            x="548"
+            y="364"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            JSON.stringify(doc,null,2)
+          </text>
+          <rect x="786" y="306" width="150" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="786"
+            y="306"
+            width="150"
+            height="72"
+            rx="6"
+            fill="rgba(45,49,66,0.05)"
+            stroke="#4f5d75"
+            stroke-width="1"
+          />
+          <text
+            x="798"
+            y="332"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            openapi.json
+          </text>
+          <text
+            x="798"
+            y="350"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            docs/api/openapi.json
+          </text>
+          <text
+            x="798"
+            y="364"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            committed
+          </text>
+          <text
+            x="536"
+            y="422"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            font-weight="500"
+            letter-spacing="1.4"
+            fill="#bf4520"
+          >
+            GUARD
+          </text>
+          <rect x="536" y="430" width="190" height="72" rx="6" fill="#f5f5f5" />
+          <rect
+            x="536"
+            y="430"
+            width="190"
+            height="72"
+            rx="6"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+            stroke-width="1.5"
+          />
+          <text
+            x="548"
+            y="456"
+            font-family="Geist,sans-serif"
+            font-size="12"
+            font-weight="600"
+            fill="#2d3142"
+          >
+            Drift test
+          </text>
+          <text
+            x="548"
+            y="474"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            regenerate, diff vs committed
+          </text>
+          <text
+            x="548"
+            y="488"
+            font-family="'Geist Mono',monospace"
+            font-size="9"
+            fill="#5a6580"
+          >
+            run by pnpm verify and CI
+          </text>
+          <rect
+            x="24"
+            y="552"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#2d3142"
+          />
+          <text
+            x="44"
+            y="561"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            Code
+          </text>
+          <rect
+            x="93.6"
+            y="552"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(79,93,117,0.10)"
+            stroke="#5a6580"
+          />
+          <text
+            x="113.6"
+            y="561"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            Schema
+          </text>
+          <rect
+            x="174.0"
+            y="552"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+          />
+          <text
+            x="194.0"
+            y="561"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            Served output
+          </text>
+          <rect
+            x="292.2"
+            y="552"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(45,49,66,0.05)"
+            stroke="#4f5d75"
+          />
+          <text
+            x="312.2"
+            y="561"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            Committed file
+          </text>
+          <rect
+            x="415.8"
+            y="552"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+          />
+          <text
+            x="435.8"
+            y="561"
+            font-family="'Geist Mono',monospace"
+            font-size="8"
+            fill="#4f5d75"
+          >
+            Focal
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

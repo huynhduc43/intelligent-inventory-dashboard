@@ -15,6 +15,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 const NOW = '2026-07-01T12:00:00.000Z';
 const vid = (n: number, d = '0001') =>
@@ -109,9 +110,8 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
   ])('409s on a %s vehicle and writes nothing', async (status, v) => {
     const res = await post(v, { actionType: 'MONITOR' });
 
-    expect(res.status).toBe(409);
+    expectProblem(res, 409, 'VEHICLE_NOT_IN_STOCK');
     expect(res.body).toMatchObject({
-      code: 'VEHICLE_NOT_IN_STOCK',
       detail: `Vehicle is ${status}; an action can only be logged on an IN_STOCK vehicle.`,
     });
     expect(await count(v)).toBe(0);
@@ -120,9 +120,8 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
   it('404s on unknown, non-UUID and other-dealership vehicles', async () => {
     for (const v of [vid(99), 'not-a-uuid', OTHER]) {
       const res = await post(v, { actionType: 'MONITOR' });
-      expect(res.status).toBe(404);
-      expect(res.body).toMatchObject({ code: 'NOT_FOUND' });
-      expect((await get(v)).status).toBe(404);
+      expectProblem(res, 404, 'NOT_FOUND');
+      expectProblem(await get(v), 404, 'NOT_FOUND');
     }
     expect(await count(OTHER)).toBe(0);
   });
@@ -138,8 +137,7 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
     ];
     for (const body of bad) {
       const res = await post(FRESH, body);
-      expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
+      expectProblem(res, 400, 'VALIDATION_FAILED');
       expect((res.body as { errors: unknown[] }).errors.length).toBeGreaterThan(
         0,
       );
@@ -152,8 +150,12 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
       request(app.getHttpServer()).post(`${path(FRESH)}?note=x`),
       MANAGER,
     ).send({ actionType: 'MONITOR' });
-    expect(query.status).toBe(400);
-    expect((await get(FRESH, VIEWER).query({ a: 1 })).status).toBe(400);
+    expectProblem(query, 400, 'VALIDATION_FAILED');
+    expectProblem(
+      await get(FRESH, VIEWER).query({ a: 1 }),
+      400,
+      'VALIDATION_FAILED',
+    );
   });
 
   it('accepts a 1000-character note and stores a blank or null note as null', async () => {
@@ -251,7 +253,7 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
         request(app.getHttpServer())[m](path(FRESH)),
         MANAGER,
       );
-      expect(res.status).toBe(404);
+      expectProblem(res, 404, 'NOT_FOUND');
     }
   });
 
@@ -265,15 +267,19 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
     expect((await post(FRESH, { actionType: 'OTHER' }, VIEWER)).status).toBe(
       403,
     );
-    expect((await post(FRESH, { actionType: 'OTHER' }, null)).status).toBe(401);
-    expect((await get(FRESH, null)).status).toBe(401);
+    expectProblem(
+      await post(FRESH, { actionType: 'OTHER' }, null),
+      401,
+      'UNAUTHENTICATED',
+    );
+    expectProblem(await get(FRESH, null), 401, 'UNAUTHENTICATED');
     const missing = await get(FRESH, VIEWER, vid(0, '0009'));
     const nonMember = await get(FRESH, VIEWER, NEW_YORK);
     const strip = (r: request.Response) => ({
       ...(r.body as object),
       instance: '',
     });
-    expect(nonMember.status).toBe(404);
+    expectProblem(nonMember, 404, 'NOT_FOUND');
     expect(strip(nonMember)).toEqual(strip(missing));
     expect((await post(FRESH, { actionType: 'OTHER' }, VIEWER)).status).toBe(
       403,
@@ -282,7 +288,7 @@ describe('vehicle actions', { timeout: 30_000 }, () => {
       request(app.getHttpServer()).post(path(OTHER, NEW_YORK)),
       VIEWER,
     ).send({ actionType: 'OTHER' });
-    expect(postNonMember.status).toBe(404);
+    expectProblem(postNonMember, 404, 'NOT_FOUND');
     const postMissing = await auth(
       request(app.getHttpServer()).post(path(OTHER, vid(0, '0009'))),
       VIEWER,

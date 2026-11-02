@@ -16,6 +16,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 interface Item {
   id: string;
@@ -279,7 +280,7 @@ describe('vehicles list and detail', () => {
   ])('rejects ?%s with 400 VALIDATION_FAILED', async (q) => {
     const res = await list(`?${q}`);
 
-    expect(res.status).toBe(400);
+    expectProblem(res, 400, 'VALIDATION_FAILED');
     expect(res.headers['content-type']).toMatch(/problem\+json/);
     expect(res.body).toMatchObject({
       code: 'VALIDATION_FAILED',
@@ -361,7 +362,7 @@ describe('vehicles list and detail', () => {
       ]);
 
       for (const r of bodies) {
-        expect(r.status).toBe(404);
+        expectProblem(r, 404, 'NOT_FOUND');
         expect(r.body).toMatchObject({
           code: 'NOT_FOUND',
           detail: 'Resource not found.',
@@ -375,8 +376,7 @@ describe('vehicles list and detail', () => {
     it('rejects any query parameter with 400', async () => {
       const res = await one(vid(5), LONDON, '?status=SOLD');
 
-      expect(res.status).toBe(400);
-      expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
+      expectProblem(res, 400, 'VALIDATION_FAILED');
     });
   });
 });

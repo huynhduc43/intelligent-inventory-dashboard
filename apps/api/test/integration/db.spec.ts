@@ -51,6 +51,7 @@ describe('database', () => {
         'vehicle_dealership_make_model_idx',
         'vehicle_dealership_status_stocked_idx',
         'vehicle_dealership_vin_open_uq',
+        'vehicle_id_dealership_uq',
       ]);
       expect(defs.app_user_email_lower_uq).toContain(
         'UNIQUE INDEX app_user_email_lower_uq ON public.app_user USING btree (lower(email))',
@@ -194,6 +195,22 @@ describe('database', () => {
           [watch, aging],
         ),
       ).rejects.toMatchObject({ constraint: 'dealership_thresholds_chk' });
+    });
+
+    it("rejects an action whose dealership differs from its vehicle's", async () => {
+      const { rows } = await insertVehicle();
+      const otherId = await idOf(
+        `INSERT INTO dealership (name, timezone) VALUES ('Other', 'UTC') RETURNING id`,
+      );
+      await expect(
+        pool.query(
+          `INSERT INTO vehicle_action (vehicle_id, dealership_id, action_type, created_by)
+           VALUES ($1, $2, 'MONITOR', $3)`,
+          [rows[0]?.id, otherId, userId],
+        ),
+      ).rejects.toMatchObject({
+        constraint: 'vehicle_action_vehicle_dealership_fk',
+      });
     });
 
     it('rejects a second non-sold vehicle with the same VIN in a dealership', async () => {

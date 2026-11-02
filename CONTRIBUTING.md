@@ -2,7 +2,7 @@
 
 ## Setup
 
-Node 24 (`nvm use`) and pnpm via corepack (`corepack enable`, version pinned in `package.json`). `pnpm install` also installs the git hooks.
+Node 24 (`nvm use`; pnpm itself runs scripts on the `use-node-version` in `.npmrc`) and pnpm via corepack (`corepack enable`, version pinned in `package.json`). `pnpm install` also installs the git hooks.
 
 ## Branches
 

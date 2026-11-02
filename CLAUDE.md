@@ -30,7 +30,7 @@ Node 24, TypeScript 6 strict (pinned `~6.0`: typescript-eslint supports only TS 
 
 Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `dashboard`, `health`, plus `src/shared` (config, Drizzle, `Clock`, problem+json filter). Pure rules go in `<module>/domain/`. Rules:
 
-- Only the owning module writes its table. `dashboard` is the only module that reads across tables (read-only SQL). No dependency cycles.
+- Only the owning module writes its table. Cross-table reads are read-only SQL, only where the design names them: `dashboard`, and `inventory` list/detail → latest action (ADR 0011). No dependency cycles.
 - Five tables: `dealership`, `app_user`, `user_dealership`, `vehicle`, `vehicle_action`. `dealership_id` is on every row and every query.
 
 ## Invariants that are easy to get wrong

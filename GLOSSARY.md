@@ -27,3 +27,21 @@ _Avoid_: Right, scope, privilege
 **Disabled user**:
 A user who can no longer log in or use any dealership, while their history stays attributed to them.
 _Avoid_: Deleted user, inactive user
+
+## Inventory
+
+**Stocked on**:
+The date a vehicle arrived in this dealership's stock. A re-acquired car gets a new vehicle with a new stocked-on date.
+_Avoid_: Created date, arrival time
+
+**Days in stock**:
+Today's date in the dealership's time zone minus the stocked-on date, in whole calendar days. For a sold vehicle it stops at the local date of the sale. Derived on every read, never stored.
+_Avoid_: Age in hours, vehicle age
+
+**Tier**:
+Fresh, Watch or Aging, derived from days in stock and the dealership's thresholds.
+_Avoid_: Flag, aging status
+
+**Current action**:
+The most recently logged action on a vehicle, or none if no action was ever logged.
+_Avoid_: Latest status, active action

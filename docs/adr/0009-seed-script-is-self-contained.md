@@ -1,0 +1,3 @@
+# The seed script is self-contained and repeats the password hash
+
+`db/seed.ts` runs with Node's type stripping, like `db/migrate.ts`, so it imports packages only and cannot import the app's `.ts` sources under the repo's `.js` import convention. It therefore carries its own copy of the argon2id hash (about ten lines) and writes rows with plain SQL. A unit test imports the seed's hash function and checks that the app's password verification accepts its output, which guards against the two copies drifting. Running the seed through `tsx` or a build step was rejected: it adds a dependency or a build, for a script that runs a few times.

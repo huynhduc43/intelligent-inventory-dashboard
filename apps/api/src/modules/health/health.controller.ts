@@ -1,8 +1,10 @@
 import { Controller, Get, UseFilters } from '@nestjs/common';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
+import { Public } from '../auth/decorators.js';
 import { HealthPassthroughFilter } from '../../shared/problem-details.filter.js';
 import { DatabaseHealthIndicator } from './database.health.js';
 
+@Public()
 @Controller('health')
 @UseFilters(HealthPassthroughFilter)
 export class HealthController {

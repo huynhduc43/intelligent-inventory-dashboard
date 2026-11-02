@@ -12,6 +12,7 @@
     "start:prod": "node dist/main",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env db/migrate.ts",
+    "db:seed": "node --env-file-if-exists=.env db/seed.ts",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
@@ -22,8 +23,10 @@
   "dependencies": {
     "@nestjs/common": "^12.0.2",
     "@nestjs/core": "^12.0.2",
+    "@nestjs/jwt": "^12.0.3",
     "@nestjs/platform-express": "^12.0.1",
     "@nestjs/terminus": "^12.1.0",
+    "@nestjs/throttler": "^6.7.1",
     "drizzle-orm": "^0.45.4",
     "nestjs-pino": "^5.3.1",
     "pg": "^8.23.1",

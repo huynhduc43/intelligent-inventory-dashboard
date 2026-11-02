@@ -1,5 +1,7 @@
 import { type DynamicModule, Module } from '@nestjs/common';
+import { RouterModule } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import type { AppConfig } from './shared/config.js';
 import { pinoHttpOptions } from './shared/logging.js';
@@ -22,6 +24,9 @@ export class AppModule {
             ? [pinoHttpOptions(config), logDestination]
             : pinoHttpOptions(config),
         }),
+        // Dealership modules register here too (later issues), so unmatched paths still reach Nest's 404 handler.
+        RouterModule.register([{ path: 'api/v1', module: AuthModule }]),
+        AuthModule,
         HealthModule,
       ],
     };

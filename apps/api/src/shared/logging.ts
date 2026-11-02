@@ -50,7 +50,7 @@ export function pinoHttpOptions(config: AppConfig): Options {
       res.setHeader('X-Request-ID', id);
       return id;
     },
-    // Hook for step 2: auth sets these request fields; absent (and so omitted from the line) until then.
+    // The auth guards set these request fields; absent (so omitted) on unauthenticated requests.
     customProps: (req) => {
       const { userId, dealershipId } = req as Request & {
         userId?: string;
@@ -60,7 +60,14 @@ export function pinoHttpOptions(config: AppConfig): Options {
     },
     customLogLevel: (req, res) => {
       if (res.statusCode >= 500) return 'error';
-      return isHealthProbe(req as Request) ? 'silent' : 'info';
+      if (isHealthProbe(req as Request)) return 'silent';
+      // Failed logins and throttled requests; the line carries no email or password.
+      const r = req as Request;
+      const failedLogin =
+        r.method === 'POST' &&
+        r.originalUrl.split('?')[0] === '/api/v1/auth/login' &&
+        (res.statusCode === 401 || res.statusCode === 429);
+      return failedLogin ? 'warn' : 'info';
     },
     customSuccessObject: (req, res, val: { responseTime: number }) =>
       base(req as Request, res.statusCode, val.responseTime),

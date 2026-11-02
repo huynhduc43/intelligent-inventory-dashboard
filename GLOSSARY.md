@@ -45,3 +45,17 @@ _Avoid_: Flag, aging status
 **Current action**:
 The most recently logged action on a vehicle, or none if no action was ever logged.
 _Avoid_: Latest status, active action
+
+## Dashboard
+
+**Age bucket**:
+One of four fixed ranges of days in stock: 0–30, 31–60, 61–90 and over 90. Buckets do not move when a dealership changes its thresholds.
+_Avoid_: Age band, tier
+
+**Aging without action**:
+An in-stock vehicle in the Aging tier that has never had an action logged. Monitoring counts as an action.
+_Avoid_: Neglected vehicle, unactioned stock
+
+**KPI population**:
+The vehicles the dashboard counts: in-stock only. Reserved and sold vehicles are left out.
+_Avoid_: Inventory, all vehicles

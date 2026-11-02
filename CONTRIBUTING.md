@@ -17,7 +17,7 @@ Never commit or push directly to `dev` or `main`: they only receive changes thro
 ## Pull requests
 
 - Target `dev`. Title `<type>: <summary>`, with `(closes #NNN)` when the PR closes an issue or `(#NNN)` when it only references one; link the issue in the description.
-- Run `pnpm verify` (the same checks as CI: `format:check`, `lint`, `typecheck`, `test:cov`; needs Docker) before opening a PR. Add new checks to that script.
+- Run `pnpm verify` (the same checks as CI: `format:check`, `lint`, `typecheck`, `test:cov`; needs Docker; CI also runs `docker build -f apps/api/Dockerfile .`) before opening a PR. Add new checks to that script.
 - A change that needs a step outside the repo (env var or secret, DB migration to run, cloud/console setting) records it in `docs/environment-setup.md` in the same PR, per environment, and lists it under **Manual steps** in the PR description.
 - Under **Doc impact**, list each doc the change updates, one line with what changed, or `none` with the reason. Check: the `docs/system-design.md` section whose component, flow, schema, technology or observability changed; each diagram in `docs/diagrams/` that shows it (edit the HTML with `diagram-design`, re-export the SVG); `docs/adr/` (a new decision, or one that supersedes a D-number or an ADR); `GLOSSARY.md`; the **Status** in README.md and CLAUDE.md.
 

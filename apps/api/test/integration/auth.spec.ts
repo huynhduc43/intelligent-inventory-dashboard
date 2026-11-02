@@ -78,6 +78,32 @@ describe('auth', () => {
       expect(res.status).toBe(200);
     });
 
+    it('refuses a disabled user even when the dummy check passes', async () => {
+      const pool = new pg.Client({
+        connectionString: container.getConnectionUri(),
+      });
+      await pool.connect();
+      await pool.query(
+        `INSERT INTO app_user (email, display_name, password_hash, status)
+         SELECT 'off2@example.dev', 'Off', password_hash, 'DISABLED' FROM app_user WHERE id = $1`,
+        [ADMIN],
+      );
+      await pool.end();
+      const stub = vi
+        .spyOn(app.get(PasswordService), 'verifyDummy')
+        .mockResolvedValue(true);
+
+      const res = await login({
+        email: 'off2@example.dev',
+        password: SEED_PASSWORD,
+      });
+
+      stub.mockRestore();
+
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({ code: 'INVALID_CREDENTIALS' });
+    });
+
     it('gives unknown email, wrong password and disabled user the same 401', async () => {
       const verifyDummy = vi.spyOn(app.get(PasswordService), 'verifyDummy');
       const pool = new pg.Client({

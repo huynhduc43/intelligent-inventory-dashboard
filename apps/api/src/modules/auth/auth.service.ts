@@ -30,7 +30,7 @@ export class AuthService {
       user?.status === 'ACTIVE'
         ? await this.passwords.verify(password, user.passwordHash)
         : await this.passwords.verifyDummy(password);
-    if (!user || !ok) {
+    if (user?.status !== 'ACTIVE' || !ok) {
       throw new CodedHttpException(
         401,
         'INVALID_CREDENTIALS',

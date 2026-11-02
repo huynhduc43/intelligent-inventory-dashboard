@@ -105,11 +105,27 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
   });
 
   it('409s on the same VIN while unsold, in any case or padding, and writes nothing', async () => {
-    const res = await post(body());
+    const res = await post(body({ vin: VIN }));
 
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ code: 'VIN_ALREADY_IN_STOCK' });
     expect(await rows()).toHaveLength(1);
+  });
+
+  it('409s on the same VIN while RESERVED', async () => {
+    await db.query(
+      `UPDATE vehicle SET status='RESERVED' WHERE vin=$1 AND dealership_id=$2`,
+      [VIN, LONDON],
+    );
+
+    const res = await post(body({ vin: VIN }));
+    await db.query(
+      `UPDATE vehicle SET status='IN_STOCK' WHERE vin=$1 AND dealership_id=$2`,
+      [VIN, LONDON],
+    );
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'VIN_ALREADY_IN_STOCK' });
   });
 
   it('allows the same VIN in another dealership and, once SOLD, again in the same one', async () => {
@@ -119,7 +135,21 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
       [NOW, VIN, LONDON],
     );
 
-    expect((await post(body())).status).toBe(201);
+    const [sold] = (
+      await db.query(
+        'SELECT * FROM vehicle WHERE vin=$1 AND dealership_id=$2',
+        [VIN, LONDON],
+      )
+    ).rows as { id: string }[];
+
+    const res = await post(body());
+
+    expect(res.status).toBe(201);
+    expect((res.body as { id: string }).id).not.toBe(sold?.id);
+    const after = await db.query('SELECT * FROM vehicle WHERE id=$1', [
+      sold?.id,
+    ]);
+    expect(after.rows[0]).toMatchObject(sold as object);
     expect((await rows()).filter((r) => r.status === 'SOLD')).toHaveLength(1);
   });
 
@@ -151,6 +181,11 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
   it.each([
     ['vin with O', { vin: '1HGCM82633A00435O' }, '/vin'],
     ['short vin', { vin: 'ABC' }, '/vin'],
+    ['18-char vin', { vin: '1HGCM82633A0043522' }, '/vin'],
+    ['vin with I', { vin: '1HGCM82633A00435I' }, '/vin'],
+    ['vin with Q', { vin: '1HGCM82633A00435Q' }, '/vin'],
+    ['negative price', { listPrice: '-1' }, '/listPrice'],
+    ['11-digit price', { listPrice: '99999999999' }, '/listPrice'],
     ['empty make', { make: '  ' }, '/make'],
     ['NUL in model', { model: 'A\u0000B' }, '/model'],
     ['101-char make', { make: 'x'.repeat(101) }, '/make'],

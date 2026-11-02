@@ -75,10 +75,11 @@ export class VehiclesService {
     ctx: DealershipContext,
     v: NewVehicle,
   ): Promise<Vehicle> {
+    const now = this.clock.now().toISOString();
     const { rows } = await this.db.execute<{ id: string }>(sql`
       INSERT INTO vehicle (dealership_id, vin, make, model, model_year, mileage, list_price, stocked_on, updated_by, created_at, updated_at)
       VALUES (${dealershipId}, ${v.vin}, ${v.make}, ${v.model}, ${v.modelYear}, ${v.mileage}, ${v.listPrice ?? null}::numeric,
-        ${v.stockedOn}::date, ${userId}::uuid, ${this.clock.now().toISOString()}::timestamptz, ${this.clock.now().toISOString()}::timestamptz)
+        ${v.stockedOn}::date, ${userId}::uuid, ${now}::timestamptz, ${now}::timestamptz)
       ON CONFLICT (dealership_id, vin) WHERE status <> 'SOLD' DO NOTHING
       RETURNING id`);
     const created = rows[0];

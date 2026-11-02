@@ -532,7 +532,8 @@
                 "type": "object",
                 "properties": {
                   "vin": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[A-HJ-NPR-Z0-9]{17}$"
                   },
                   "make": {
                     "type": "string",

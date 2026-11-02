@@ -98,7 +98,7 @@ docs/
   api/               committed openapi.json and curl-examples.sh
   research/          design research (decisions D1–D19, P1–P3)
   adr/               decisions made since
-  diagrams/          diagram sources (HTML) and exported SVGs
+  diagrams/          diagram sources (HTML) and exported SVGs; specs/issue-<N>/ holds each spec's diagrams
   ai-collaboration.md  log of how the AI was directed and verified
 .claude/             the /deliver skill and its role agents
 ```

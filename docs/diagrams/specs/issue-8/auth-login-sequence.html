@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POST /api/v1/auth/login</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --color-paper: #f5f5f5; /* white-smoke */
+        --color-ink: #2d3142; /* jet-black */
+        --color-muted: #4f5d75; /* blue-slate */
+        --color-accent: #bf4520; /* burnt-tangerine */
+        --font-sans: 'Geist', system-ui, sans-serif;
+        --font-serif: 'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+        --font-mono: 'Geist Mono', ui-monospace, monospace;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-paper);
+        color: var(--color-ink);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+      }
+
+      .frame {
+        max-width: 1200px;
+        width: 100%;
+      }
+      /* The SVG holds its readable width (min-width == the viewBox width, so the
+       type ramp is never silently scaled down). This wrapper lets a narrow
+       screen scroll the diagram instead of the whole page. */
+      .diagram-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--color-ink);
+        margin-bottom: 1.5rem;
+      }
+
+      svg {
+        width: 100%;
+        min-width: 1100px;
+        display: block;
+      }
+      /* Paper has no scrollbar, so the local scroller would clip instead of
+       scroll. Let the diagram scale down to the sheet: smaller but whole
+       beats sharp but cut off. Must come after the svg rule above - a media
+       query adds no specificity, so a later plain rule would win. */
+      @media print {
+        .diagram-container {
+          overflow-x: visible;
+        }
+        svg {
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Sequence · Diagram Design</p>
+      <h1>POST /api/v1/auth/login</h1>
+
+      <!-- Replace auth-login-sequence with a unique slug for this diagram before export. -->
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 1100 980"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="auth-login-sequence-title auth-login-sequence-desc"
+        >
+          <title id="auth-login-sequence-title">POST /api/v1/auth/login</title>
+          <desc id="auth-login-sequence-desc">
+            Sequence diagram of login: rate limit, body validation, user lookup,
+            constant-cost argon2id check, then either one identical 401 or a
+            signed HS256 access token.
+          </desc>
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#4f5d75" />
+            </marker>
+            <marker
+              id="arrow-accent"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#bf4520" />
+            </marker>
+            <marker
+              id="arrow-link"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8" />
+            </marker>
+
+            <!-- OPTIONAL: dot-pattern background. Uncomment the <pattern> and the second <rect> below if you want the dotted paper look. -->
+            <!--
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          --></defs>
+
+          <rect width="100%" height="100%" fill="#f5f5f5" />
+          <!-- <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/> -->
+
+          <line
+            x1="96"
+            y1="128"
+            x2="96"
+            y2="880"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+            stroke-dasharray="3,3"
+          />
+          <line
+            x1="300"
+            y1="128"
+            x2="300"
+            y2="880"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+            stroke-dasharray="3,3"
+          />
+          <line
+            x1="520"
+            y1="128"
+            x2="520"
+            y2="880"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+            stroke-dasharray="3,3"
+          />
+          <line
+            x1="740"
+            y1="128"
+            x2="740"
+            y2="880"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+            stroke-dasharray="3,3"
+          />
+          <line
+            x1="984"
+            y1="128"
+            x2="984"
+            y2="880"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+            stroke-dasharray="3,3"
+          />
+          <rect
+            x="296"
+            y="168"
+            width="8"
+            height="128"
+            fill="rgba(45,49,66,0.06)"
+            stroke="#4f5d75"
+            stroke-width="0.8"
+          />
+          <rect
+            x="516"
+            y="280"
+            width="8"
+            height="128"
+            fill="rgba(45,49,66,0.06)"
+            stroke="#4f5d75"
+            stroke-width="0.8"
+          />
+          <rect
+            x="736"
+            y="392"
+            width="8"
+            height="464"
+            fill="rgba(45,49,66,0.06)"
+            stroke="#4f5d75"
+            stroke-width="0.8"
+          />
+          <rect
+            x="980"
+            y="448"
+            width="8"
+            height="68"
+            fill="rgba(45,49,66,0.06)"
+            stroke="#4f5d75"
+            stroke-width="0.8"
+          />
+          <rect
+            x="84"
+            y="604"
+            width="708"
+            height="272"
+            rx="4"
+            fill="rgba(45,49,66,0.02)"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+          />
+          <line
+            x1="96"
+            y1="176"
+            x2="296"
+            y2="176"
+            stroke="#2e5aa8"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <line
+            x1="296"
+            y1="232"
+            x2="96"
+            y2="232"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="304"
+            y1="288"
+            x2="516"
+            y2="288"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="516"
+            y1="344"
+            x2="96"
+            y2="344"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="524"
+            y1="400"
+            x2="736"
+            y2="400"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="744"
+            y1="456"
+            x2="980"
+            y2="456"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="980"
+            y1="508"
+            x2="744"
+            y2="508"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M 744 548 L 772 548 L 772 576 L 744 576"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="736"
+            y1="676"
+            x2="96"
+            y2="676"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#arrow)"
+          />
+          <path
+            d="M 744 772 L 772 772 L 772 800 L 744 800"
+            fill="none"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="736"
+            y1="848"
+            x2="96"
+            y2="848"
+            stroke="#bf4520"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <rect
+            x="84"
+            y="604"
+            width="40"
+            height="16"
+            rx="2"
+            fill="#f5f5f5"
+            stroke="rgba(45,49,66,0.22)"
+            stroke-width="1"
+          />
+          <text
+            x="104"
+            y="616"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.12em"
+          >
+            ALT
+          </text>
+          <line
+            x1="92"
+            y1="716"
+            x2="784"
+            y2="716"
+            stroke="rgba(45,49,66,0.20)"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+          />
+          <text
+            x="108"
+            y="636"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.04em"
+          >
+            [mismatch · unknown · DISABLED]
+          </text>
+          <text
+            x="108"
+            y="740"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.04em"
+          >
+            [match]
+          </text>
+          <rect x="135" y="158" width="125" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="198.0"
+            y="167"
+            fill="#2e5aa8"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            POST /api/v1/auth/login
+          </text>
+          <rect x="146" y="183" width="105" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="198.0"
+            y="192"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            { email, password }
+          </text>
+          <rect x="153" y="214" width="90" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="198.0"
+            y="223"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            429 RATE_LIMITED
+          </text>
+          <rect x="107" y="239" width="181" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="198.0"
+            y="248"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            Retry-After · 11th req / 60 s / IP
+          </text>
+          <rect x="375" y="270" width="69" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="410.0"
+            y="279"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            WITHIN LIMIT
+          </text>
+          <rect x="345" y="295" width="130" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="410.0"
+            y="304"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            max 10 req / 60 s per IP
+          </text>
+          <rect x="352" y="326" width="115" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="410"
+            y="335"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            400 VALIDATION_FAILED
+          </text>
+          <rect x="368" y="351" width="84" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="410"
+            y="360"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            zod body schema
+          </text>
+          <rect x="600" y="382" width="59" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="630.0"
+            y="391"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            VALID BODY
+          </text>
+          <rect x="802" y="438" width="120" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="862.0"
+            y="447"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            SELECT … FROM app_user
+          </text>
+          <rect x="787" y="463" width="151" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="862.0"
+            y="472"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            WHERE lower(email)=lower($1)
+          </text>
+          <rect x="830" y="490" width="64" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="862.0"
+            y="499"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            ROW OR NONE
+          </text>
+          <text
+            x="804"
+            y="553"
+            fill="#2d3142"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            ARGON2ID VERIFY
+          </text>
+          <text
+            x="804"
+            y="565"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            ACTIVE: STORED PHC HASH
+          </text>
+          <text
+            x="804"
+            y="577"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            ELSE: DUMMY HASH, SAME COST
+          </text>
+          <rect x="567" y="658" width="125" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="630"
+            y="667"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            401 INVALID_CREDENTIALS
+          </text>
+          <rect x="567" y="683" width="125" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="630"
+            y="692"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            same body for all three
+          </text>
+          <text
+            x="804"
+            y="777"
+            fill="#2d3142"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            SIGN HS256 JWT
+          </text>
+          <text
+            x="804"
+            y="789"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            ISS · AUD · SUB=USER ID
+          </text>
+          <text
+            x="804"
+            y="801"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.04em"
+          >
+            IAT=CLOCK · EXP=IAT+JWT_TTL_S
+          </text>
+          <rect x="550" y="830" width="161" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="630"
+            y="839"
+            fill="#bf4520"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.04em"
+          >
+            200 { accessToken, expiresIn }
+          </text>
+          <rect x="22" y="72" width="148" height="56" rx="6" fill="#f5f5f5" />
+          <rect
+            x="22"
+            y="72"
+            width="148"
+            height="56"
+            rx="6"
+            fill="rgba(79,93,117,0.10)"
+            stroke="#5a6580"
+            stroke-width="1"
+          />
+          <rect
+            x="30"
+            y="80"
+            width="28"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="#5a6580"
+            stroke-opacity="0.5"
+            stroke-width="0.8"
+          />
+          <text
+            x="44"
+            y="89"
+            fill="#5a6580"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            EXT
+          </text>
+          <text
+            x="96"
+            y="108"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Client
+          </text>
+          <text
+            x="96"
+            y="122"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            browser / app
+          </text>
+          <rect x="226" y="72" width="148" height="56" rx="6" fill="#f5f5f5" />
+          <rect
+            x="226"
+            y="72"
+            width="148"
+            height="56"
+            rx="6"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <rect
+            x="234"
+            y="80"
+            width="40"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="#5a6580"
+            stroke-opacity="0.5"
+            stroke-width="0.8"
+          />
+          <text
+            x="254"
+            y="89"
+            fill="#5a6580"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            GUARD
+          </text>
+          <text
+            x="300"
+            y="108"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            ThrottlerGuard
+          </text>
+          <text
+            x="300"
+            y="122"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            per-IP limiter
+          </text>
+          <rect x="446" y="72" width="148" height="56" rx="6" fill="#f5f5f5" />
+          <rect
+            x="446"
+            y="72"
+            width="148"
+            height="56"
+            rx="6"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <rect
+            x="454"
+            y="80"
+            width="34"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="#5a6580"
+            stroke-opacity="0.5"
+            stroke-width="0.8"
+          />
+          <text
+            x="471"
+            y="89"
+            fill="#5a6580"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            PIPE
+          </text>
+          <text
+            x="520"
+            y="108"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Zod validation
+          </text>
+          <text
+            x="520"
+            y="122"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            request body
+          </text>
+          <rect x="666" y="72" width="148" height="56" rx="6" fill="#f5f5f5" />
+          <rect
+            x="666"
+            y="72"
+            width="148"
+            height="56"
+            rx="6"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+            stroke-width="1"
+          />
+          <rect
+            x="674"
+            y="80"
+            width="28"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="#bf4520"
+            stroke-opacity="0.5"
+            stroke-width="0.8"
+          />
+          <text
+            x="688"
+            y="89"
+            fill="#bf4520"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            SVC
+          </text>
+          <text
+            x="740"
+            y="108"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            AuthService
+          </text>
+          <text
+            x="740"
+            y="122"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            argon2id · HS256
+          </text>
+          <rect x="910" y="72" width="148" height="56" rx="6" fill="#f5f5f5" />
+          <rect
+            x="910"
+            y="72"
+            width="148"
+            height="56"
+            rx="6"
+            fill="rgba(45,49,66,0.06)"
+            stroke="rgba(45,49,66,0.55)"
+            stroke-width="1"
+          />
+          <rect
+            x="918"
+            y="80"
+            width="23"
+            height="12"
+            rx="2"
+            fill="transparent"
+            stroke="#5a6580"
+            stroke-opacity="0.5"
+            stroke-width="0.8"
+          />
+          <text
+            x="930"
+            y="89"
+            fill="#5a6580"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            DB
+          </text>
+          <text
+            x="984"
+            y="108"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Postgres
+          </text>
+          <text
+            x="984"
+            y="122"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            app_user
+          </text>
+          <line
+            x1="56"
+            y1="904"
+            x2="1044"
+            y2="904"
+            stroke="rgba(45,49,66,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="56"
+            y="920"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            LEGEND
+          </text>
+          <line
+            x1="56"
+            y1="942"
+            x2="86"
+            y2="942"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <text
+            x="96"
+            y="945"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+          >
+            Call
+          </text>
+          <line
+            x1="176"
+            y1="942"
+            x2="206"
+            y2="942"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#arrow)"
+          />
+          <text
+            x="216"
+            y="945"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+          >
+            Return / error response
+          </text>
+          <line
+            x1="400"
+            y1="942"
+            x2="430"
+            y2="942"
+            stroke="#bf4520"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <text
+            x="440"
+            y="945"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+          >
+            Headline success
+          </text>
+          <rect
+            x="580"
+            y="936"
+            width="28"
+            height="12"
+            rx="2"
+            fill="#f5f5f5"
+            stroke="rgba(45,49,66,0.22)"
+          />
+          <text
+            x="594"
+            y="945"
+            fill="#4f5d75"
+            font-size="7"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            ALT
+          </text>
+          <text
+            x="618"
+            y="945"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+          >
+            Branch fragment
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

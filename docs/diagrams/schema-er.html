@@ -897,7 +897,7 @@
             x="580"
             y="312"
             width="340"
-            height="302"
+            height="316"
             rx="6"
             fill="#ffffff"
             stroke="#2d3142"
@@ -1273,11 +1273,20 @@
           >
             (vehicle_id, id DESC) latest action, LIMIT 1
           </text>
+          <text
+            x="592"
+            y="614"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            FK (vehicle_id, dealership_id) → vehicle
+          </text>
           <rect
             x="580"
             y="658"
             width="340"
-            height="416"
+            height="430"
             rx="6"
             fill="#ffffff"
             stroke="#2d3142"
@@ -1719,6 +1728,15 @@
             fill="#2d3142"
           >
             (dealership_id, lower(make), lower(model))
+          </text>
+          <text
+            x="592"
+            y="1074"
+            font-family="Geist Mono,monospace"
+            font-size="9"
+            fill="#2d3142"
+          >
+            UNIQUE (id, dealership_id) target of action FK
           </text>
           <line
             x1="40"

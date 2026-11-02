@@ -199,3 +199,12 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** a CLAUDE.md invariant, not a choice.
 - **Verification:** [review thread](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/30#discussion_r4439384154), resolved in round 2.
 - **Outcome:** fixed in `084c41d`.
+
+### C18: The generated migration added the foreign key before its target (#34)
+
+- **Problem:** `drizzle-kit generate` emitted `ADD CONSTRAINT … FOREIGN KEY (vehicle_id, dealership_id) REFERENCES vehicle (id, dealership_id)` ahead of the `UNIQUE (id, dealership_id)` it needs, so the migration would fail on a real database.
+- **AI proposal:** read the generated SQL before relying on it, reorder it by hand, then apply it to a Postgres 17 container that already held rows, and check that a mismatched row fails the constraint.
+- **Decided by:** agent.
+- **Decision and reasoning:** the SQL is the artifact that ships, so it is checked, not trusted; the unit and integration tests alone would not have caught it because they build the schema from the migration but never ran a migration over existing data.
+- **Verification:** clean upgrade over seeded rows succeeded; the mismatched insert was rejected with a foreign key violation.
+- **Outcome:** `0001_vehicle_action_tenancy_fk.sql`, ADR 0012.

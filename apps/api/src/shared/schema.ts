@@ -3,6 +3,7 @@ import {
   bigint,
   check,
   date,
+  foreignKey,
   index,
   integer,
   numeric,
@@ -11,6 +12,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -108,6 +110,8 @@ export const vehicle = pgTable(
       .defaultNow(),
   },
   (t) => [
+    // Target of vehicle_action's composite FK, so an action cannot point at another dealership's vehicle.
+    unique('vehicle_id_dealership_uq').on(t.id, t.dealershipId),
     uniqueIndex('vehicle_dealership_vin_open_uq')
       .on(t.dealershipId, t.vin)
       .where(sql`${t.status} <> 'SOLD'`),
@@ -145,9 +149,7 @@ export const vehicleAction = pgTable(
     id: bigint('id', { mode: 'number' })
       .primaryKey()
       .generatedAlwaysAsIdentity(),
-    vehicleId: uuid('vehicle_id')
-      .notNull()
-      .references(() => vehicle.id),
+    vehicleId: uuid('vehicle_id').notNull(),
     dealershipId: uuid('dealership_id')
       .notNull()
       .references(() => dealership.id),
@@ -170,6 +172,11 @@ export const vehicleAction = pgTable(
       .defaultNow(),
   },
   (t) => [
+    foreignKey({
+      name: 'vehicle_action_vehicle_dealership_fk',
+      columns: [t.vehicleId, t.dealershipId],
+      foreignColumns: [vehicle.id, vehicle.dealershipId],
+    }),
     // DESC NULLS FIRST is plain DESC, so `ORDER BY id DESC` matches it exactly (drizzle defaults to NULLS LAST).
     index('vehicle_action_vehicle_id_idx').on(
       t.vehicleId,

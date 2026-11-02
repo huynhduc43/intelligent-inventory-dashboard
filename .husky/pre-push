@@ -8,4 +8,4 @@ case "$branch" in
     fi
     ;;
 esac
-pnpm turbo run typecheck test
+pnpm format:check && pnpm turbo run typecheck test

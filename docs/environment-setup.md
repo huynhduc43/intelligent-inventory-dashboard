@@ -24,7 +24,7 @@ Validated at startup by `apps/api/src/shared/config.ts`; the api exits non-zero 
 4. Seed the demo users: `pnpm --filter @inventory/api db:seed` (see Seed data).
 5. `pnpm dev`, then `curl localhost:3000/health/ready`.
 
-Git hooks run in a non-interactive shell that does not read `.nvmrc`, so they can run on the wrong Node (`Unsupported engine: wanted >=24.7`). Once per machine, make them load nvm: put `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use >/dev/null 2>&1` in `~/.config/husky/init.sh` (Husky sources it before every hook; `nvm use` reads the repo's `.nvmrc`).
+Git hooks run in a non-interactive shell that does not read `.nvmrc`, so they can run on the wrong Node (`Unsupported engine: wanted >=24.7`). Once per machine, make them load nvm: put `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use >/dev/null 2>&1` in `~/.config/husky/init.sh` (Husky sources it before every hook; `nvm use` reads the repo's `.nvmrc`). `.npmrc` sets `engine-strict=true`, so `pnpm install` on a Node below the `engines` floor fails at once instead of at the first `crypto.argon2` call.
 
 Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 

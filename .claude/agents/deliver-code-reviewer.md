@@ -23,6 +23,10 @@ Your prompt gives `pr`, `issue`, `round` and `worktree` (the PR head, checked ou
    - an error not shaped as problem+json by the shared filter, or a relative import without `.js`;
    - an existing test or assertion weakened, skipped or deleted so the code passes, or a new dependency in a `package.json` that the PR body does not justify.
 
+   - a fix that changes a branching flow (login, guards, state transitions) without re-checking every refusal condition: list each one and confirm it still holds in the code, not by an accident of another value.
+
+   A remark about a security property (who may log in, who may read what) is a finding, never a side note.
+
    Be relentless: every defect you can show goes in this review, since later ones look only at the fixes.
 
 3. **With `since`, review only the fixes.** Your scope is `git diff <since>..HEAD` in `worktree`, plus the code you must read to judge it. Do not review the rest of the PR again: a defect outside that diff is out of scope, whatever its severity.

@@ -4,10 +4,14 @@ import {
   Inject,
   Module,
   type OnApplicationShutdown,
+  StandardSchemaValidationPipe,
 } from '@nestjs/common';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { Clock, SystemClock } from './clock.js';
 import { APP_CONFIG, type AppConfig } from './config.js';
 import { createDb, DB, type Db } from './db.js';
+import { ProblemDetailsFilter } from './problem-details.filter.js';
+import { toValidationErrors, ValidationFailedException } from './problem.js';
 
 @Global()
 @Module({})
@@ -23,7 +27,18 @@ export class SharedModule implements OnApplicationShutdown {
     ];
     return {
       module: SharedModule,
-      providers,
+      providers: [
+        ...providers,
+        { provide: APP_FILTER, useClass: ProblemDetailsFilter },
+        {
+          // A route opts in by passing a zod schema: `@Body({ schema })`; without one the pipe is a no-op.
+          provide: APP_PIPE,
+          useValue: new StandardSchemaValidationPipe({
+            exceptionFactory: (issues) =>
+              new ValidationFailedException(toValidationErrors(issues)),
+          }),
+        },
+      ],
       exports: providers.map((p) => p.provide),
     };
   }

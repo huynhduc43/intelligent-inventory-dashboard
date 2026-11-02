@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
+import { configureApp } from './configure-app.js';
 import { type AppConfig, ConfigError, loadConfig } from './shared/config.js';
 
 function configOrExit(): AppConfig {
@@ -15,7 +16,10 @@ function configOrExit(): AppConfig {
 
 async function bootstrap() {
   const config = configOrExit();
-  const app = await NestFactory.create(AppModule.forRoot(config));
+  const app = await NestFactory.create(AppModule.forRoot(config), {
+    bufferLogs: true,
+  });
+  configureApp(app, config);
   app.enableShutdownHooks();
   await app.listen(config.PORT);
 }

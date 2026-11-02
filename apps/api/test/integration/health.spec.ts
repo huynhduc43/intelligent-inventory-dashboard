@@ -4,6 +4,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
+import { configureApp } from '../../src/configure-app.js';
 import { startMigratedPostgres, testConfig } from './support/postgres.js';
 
 describe('health', () => {
@@ -12,10 +13,12 @@ describe('health', () => {
 
   beforeAll(async () => {
     container = await startMigratedPostgres();
+    const config = testConfig(container.getConnectionUri());
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule.forRoot(testConfig(container.getConnectionUri()))],
+      imports: [AppModule.forRoot(config)],
     }).compile();
     app = moduleRef.createNestApplication();
+    configureApp(app, config);
     await app.init();
   });
 
@@ -54,6 +57,8 @@ describe('health', () => {
       const res = await request(app.getHttpServer()).get('/health/ready');
 
       expect(res.status).toBe(503);
+      expect(res.headers['content-type']).not.toMatch(/problem\+json/);
+      expect(res.headers['x-request-id']).toBeDefined();
       expect(res.body).toEqual({
         status: 'error',
         info: {},

@@ -8,7 +8,7 @@ Backend for a dealership inventory dashboard (Keyloop technical assessment, Scen
 
 A REST API (NestJS 12, TypeScript) on PostgreSQL. The System Design Document is [`docs/system-design.md`](docs/system-design.md); the full design research (data model, API, decisions and trade-offs) is in [`docs/research/backend-architecture.md`](docs/research/backend-architecture.md), and later decisions are ADRs in [`docs/adr/`](docs/adr/README.md).
 
-> **Status:** skeleton. Tooling, validated config, the Drizzle schema and migration, the injected `Clock`, health checks (readiness pings Postgres), Docker Compose and the aging rules (`AgingPolicy`) with tests are in place; error handling and logging, auth and the inventory endpoints follow the build order in §4.16 of the design research.
+> **Status:** skeleton. Tooling, validated config, the Drizzle schema and migration, the injected `Clock`, problem+json errors with a request ID and structured pino logging, health checks (readiness pings Postgres), Docker Compose and the aging rules (`AgingPolicy`) with tests are in place; auth and the inventory endpoints follow the build order in §4.16 of the design research.
 
 ## Prerequisites
 

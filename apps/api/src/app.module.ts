@@ -2,6 +2,7 @@ import { type DynamicModule, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import type { AppConfig } from './shared/config.js';
@@ -29,9 +30,11 @@ export class AppModule {
         RouterModule.register([
           { path: 'api/v1', module: AuthModule },
           { path: 'api/v1', module: InventoryModule },
+          { path: 'api/v1', module: DashboardModule },
         ]),
         AuthModule,
         InventoryModule,
+        DashboardModule,
         HealthModule,
       ],
     };

@@ -9,7 +9,7 @@
           <desc id="architecture-desc">
             A client stub calls the stateless NestJS modular monolith; the auth
             guards gate the four dealership-scoped modules, each module writes
-            only its own Postgres table, the dashboard reads across tables, and
+            only its own Postgres table, the dashboard and the inventory (latest action) read across tables, and
             health is public.
           </desc>
           <defs>
@@ -209,6 +209,30 @@
             stroke-width="1.2"
             marker-end="url(#architecture-arrow)"
           />
+
+          <!-- A13 inventory → Postgres (read-only latest action, ADR 0011) -->
+          <line
+            x1="652"
+            y1="236"
+            x2="744"
+            y2="236"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            stroke-dasharray="5,4"
+            marker-end="url(#architecture-arrow)"
+          />
+          <rect x="668" y="248" width="60" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="698"
+            y="257"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            READ ONLY
+          </text>
 
           <!-- A11 dashboard → Postgres (read-only, across tables) -->
           <line

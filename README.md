@@ -8,7 +8,7 @@ Backend for a dealership inventory dashboard (Keyloop technical assessment, Scen
 
 A REST API (NestJS 12, TypeScript) on PostgreSQL. The System Design Document is [`docs/system-design.md`](docs/system-design.md); the full design research (data model, API, decisions and trade-offs) is in [`docs/research/backend-architecture.md`](docs/research/backend-architecture.md), and later decisions are ADRs in [`docs/adr/`](docs/adr/README.md).
 
-> **Status:** early build. Tooling, validated config, the Drizzle schema and migration, the injected `Clock`, problem+json errors with a request ID and structured pino logging, health checks (readiness pings Postgres), Docker Compose, the aging rules (`AgingPolicy`) with tests, auth (login, JWT, dealership guards, permissions, `/me`, `pnpm db:seed`), and the OpenAPI document (Swagger UI at `/docs`, committed `docs/api/openapi.json`) are in place; the inventory endpoints follow the build order in §4.16 of the design research.
+> **Status:** early build. Tooling, validated config, the Drizzle schema and migration, the injected `Clock`, problem+json errors with a request ID and structured pino logging, health checks (readiness pings Postgres), Docker Compose, the aging rules (`AgingPolicy`) with tests, auth (login, JWT, dealership guards, permissions, `/me`, `pnpm db:seed`), the vehicle list and detail endpoints with derived age and tier, and the OpenAPI document (Swagger UI at `/docs`, committed `docs/api/openapi.json`) are in place; the inventory endpoints follow the build order in §4.16 of the design research.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ pnpm install                                   # also installs the git hooks
 docker compose up -d postgres
 cp apps/api/.env.example apps/api/.env
 pnpm --filter @inventory/api db:migrate
-pnpm --filter @inventory/api db:seed             # demo users; prints their random passwords once (or set SEED_PASSWORD)
+pnpm --filter @inventory/api db:seed             # demo users and vehicles; prints new users' random passwords once (or set SEED_PASSWORD; SEED_VEHICLES_PER_DEALERSHIP sets the vehicle count)
 pnpm dev                                       # API on http://localhost:3000, restarts on change
 ```
 

@@ -6,15 +6,16 @@ Steps that live outside the repo, per environment. A PR that adds one records it
 
 Validated at startup by `apps/api/src/shared/config.ts`; the api exits non-zero and names every bad variable (§4.13).
 
-| Variable                  | Required | Default | Notes                                                           |
-| ------------------------- | -------- | ------- | --------------------------------------------------------------- |
-| `DATABASE_URL`            | yes      | —       | `postgres://user:password@host:port/db`                         |
-| `JWT_SECRET`              | yes      | —       | at least 32 characters; generate with `openssl rand -base64 48` |
-| `PORT`                    | no       | `3000`  |                                                                 |
-| `LOG_LEVEL`               | no       | `info`  | `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`    |
-| `DB_STATEMENT_TIMEOUT_MS` | no       | `5000`  | Postgres `statement_timeout` on every pooled connection         |
-| `JWT_TTL_S`               | no       | `3600`  |                                                                 |
-| `SEED_PASSWORD`           | no       | random  | `db:seed` only: password for new users, at least 15 characters  |
+| Variable                       | Required | Default | Notes                                                           |
+| ------------------------------ | -------- | ------- | --------------------------------------------------------------- |
+| `DATABASE_URL`                 | yes      | —       | `postgres://user:password@host:port/db`                         |
+| `JWT_SECRET`                   | yes      | —       | at least 32 characters; generate with `openssl rand -base64 48` |
+| `PORT`                         | no       | `3000`  |                                                                 |
+| `LOG_LEVEL`                    | no       | `info`  | `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`    |
+| `DB_STATEMENT_TIMEOUT_MS`      | no       | `5000`  | Postgres `statement_timeout` on every pooled connection         |
+| `JWT_TTL_S`                    | no       | `3600`  |                                                                 |
+| `SEED_PASSWORD`                | no       | random  | `db:seed` only: password for new users, at least 15 characters  |
+| `SEED_VEHICLES_PER_DEALERSHIP` | no       | `250`   | `db:seed` only: vehicles per dealership (0 to 1000000)          |
 
 ## Local development (host Node)
 
@@ -30,7 +31,7 @@ Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 
 ## Seed data
 
-After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs.
+After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs. It also adds `SEED_VEHICLES_PER_DEALERSHIP` (default 250) demo vehicles per dealership with deterministic ids, ages 0 to 200 days, four in-stock vehicles at exactly watch−1, watch, aging and aging+1 days, 10% `RESERVED` and 10% `SOLD`, and one re-acquired VIN (a `SOLD` row bought back); a re-run adds only missing rows. Ages are fixed on the day of seeding. Set `SEED_VEHICLES_PER_DEALERSHIP=2000` to seed enough rows for `EXPLAIN ANALYZE`.
 
 ## Docker Compose
 

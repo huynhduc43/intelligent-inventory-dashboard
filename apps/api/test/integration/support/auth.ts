@@ -29,11 +29,12 @@ export class TestClock extends Clock {
   }
 }
 
-export async function seedDatabase(url: string): Promise<void> {
+/** Seeds users and dealerships; vehicles only when asked, since their ages follow the real clock, not a TestClock. */
+export async function seedDatabase(url: string, vehicles = 0): Promise<void> {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   try {
-    await seed(client, SEED_PASSWORD);
+    await seed(client, SEED_PASSWORD, vehicles);
   } finally {
     await client.end();
   }

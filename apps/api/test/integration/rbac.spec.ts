@@ -109,7 +109,7 @@ describe('D15/D16 route x role', () => {
 
   beforeAll(async () => {
     container = await startMigratedPostgres();
-    await seedDatabase(container.getConnectionUri());
+    await seedDatabase(container.getConnectionUri(), 1);
     app = await buildApp(container.getConnectionUri(), clock, [
       ProbeController,
     ]);
@@ -135,6 +135,41 @@ describe('D15/D16 route x role', () => {
       expect((await get(url(p, NEW_YORK), VIEWER)).status).toBe(404);
     },
   );
+
+  describe('vehicle routes', () => {
+    const vehicleId = `0000000${LONDON.slice(-1)}-0000-4000-8000-000000000001`;
+    const route = (d: string, i: number) =>
+      i === 0
+        ? `/api/v1/dealerships/${d}/vehicles`
+        : `/api/v1/dealerships/${d}/vehicles/${vehicleId}`;
+
+    it.each([0, 1])(
+      'route %i: every role 200, non-member 404, no token 401',
+      async (i) => {
+        for (const u of [ADMIN, MANAGER, VIEWER]) {
+          expect((await get(route(LONDON, i), u)).status).toBe(200);
+        }
+        expect((await get(route(NEW_YORK, i), VIEWER)).status).toBe(404);
+        expect((await get(route(LONDON, i))).status).toBe(401);
+      },
+    );
+
+    it.each([0, 1])(
+      'route %i: non-member 404 body equals the missing-dealership body',
+      async (i) => {
+        const bodies = await Promise.all(
+          [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
+            (d) => get(route(d, i), VIEWER),
+          ),
+        );
+        const strip = (r: request.Response) =>
+          JSON.stringify({ ...(r.body as object), instance: '' });
+
+        expect(bodies.map((r) => r.status)).toEqual([404, 404, 404]);
+        expect(new Set(bodies.map(strip)).size).toBe(1);
+      },
+    );
+  });
 
   it('answers 403 with a fixed problem body', async () => {
     const res = await get(url('settings:update'), VIEWER);

@@ -1,6 +1,7 @@
 import {
   bucketOf,
   tierOf,
+  toStockedOnBounds,
 } from '../../../src/modules/inventory/domain/aging-policy.js';
 
 describe('tierOf', () => {
@@ -28,5 +29,80 @@ describe('bucketOf', () => {
     [91, '90+'],
   ] as const)('%i days is %s', (days, bucket) => {
     expect(bucketOf(days)).toBe(bucket);
+  });
+});
+
+describe('toStockedOnBounds', () => {
+  const t = { watch: 60, aging: 90 };
+  const today = '2026-11-02';
+  // Day n before today.
+  const ago = (n: number) =>
+    new Date(Date.parse(`${today}T00:00:00Z`) - n * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+
+  it('returns no bounds without a filter', () => {
+    expect(toStockedOnBounds(today, {}, t)).toEqual({});
+  });
+
+  it('bounds AGING at aging+1 days and older', () => {
+    expect(toStockedOnBounds(today, { tier: 'AGING' }, t)).toEqual({
+      stockedOnMax: ago(91),
+    });
+  });
+
+  it('bounds WATCH between aging and watch days, inclusive', () => {
+    expect(toStockedOnBounds(today, { tier: 'WATCH' }, t)).toEqual({
+      stockedOnMin: ago(90),
+      stockedOnMax: ago(60),
+    });
+  });
+
+  it('bounds FRESH at watch-1 days and newer', () => {
+    expect(toStockedOnBounds(today, { tier: 'FRESH' }, t)).toEqual({
+      stockedOnMin: ago(59),
+    });
+  });
+
+  it('turns min and max age into opposite bounds', () => {
+    expect(
+      toStockedOnBounds(today, { minAgeDays: 30, maxAgeDays: 45 }, t),
+    ).toEqual({ stockedOnMin: ago(45), stockedOnMax: ago(30) });
+    expect(toStockedOnBounds(today, { minAgeDays: 0 }, t)).toEqual({
+      stockedOnMax: today,
+    });
+  });
+
+  it('intersects a tier with an age range, tightest bound winning', () => {
+    expect(
+      toStockedOnBounds(
+        today,
+        { tier: 'WATCH', minAgeDays: 70, maxAgeDays: 100 },
+        t,
+      ),
+    ).toEqual({ stockedOnMin: ago(90), stockedOnMax: ago(70) });
+    expect(
+      toStockedOnBounds(
+        today,
+        { tier: 'WATCH', minAgeDays: 50, maxAgeDays: 80 },
+        t,
+      ),
+    ).toEqual({ stockedOnMin: ago(80), stockedOnMax: ago(60) });
+  });
+
+  it('gives min > max for a contradictory pair', () => {
+    const b = toStockedOnBounds(today, { tier: 'FRESH', minAgeDays: 100 }, t);
+    expect(b.stockedOnMin).toBe(ago(59));
+    expect(b.stockedOnMax).toBe(ago(100));
+    expect(ago(59) > ago(100)).toBe(true);
+  });
+
+  it('crosses month, year and leap-day boundaries by calendar day', () => {
+    expect(toStockedOnBounds('2024-03-01', { minAgeDays: 1 }, t)).toEqual({
+      stockedOnMax: '2024-02-29',
+    });
+    expect(toStockedOnBounds('2026-01-01', { minAgeDays: 1 }, t)).toEqual({
+      stockedOnMax: '2025-12-31',
+    });
   });
 });

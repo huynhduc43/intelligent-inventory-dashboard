@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`, extended and superseded by the ADRs in `docs/adr/`; read the relevant section and ADRs before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: validated config, the Drizzle schema and migration, `Clock`, the `health` module (`/health/live`, `/health/ready` with a DB ping), the problem+json filter with request IDs and pino logging, Docker Compose, `AgingPolicy` with its unit tests, and auth (login, JWT, dealership guards, permissions, `/me`, `pnpm db:seed`), and the OpenAPI document (`/docs`, committed `docs/api/openapi.json`, `pnpm --filter @inventory/api openapi:export`). Build order is in §4.16.
+Keyloop technical assessment, Scenario B: Intelligent Inventory Dashboard, backend layer. The design is in `docs/research/backend-architecture.md`, extended and superseded by the ADRs in `docs/adr/`; read the relevant section and ADRs before building anything. Decisions are numbered (D1–D19, P1–P3) and the test plan references them. Only the skeleton and tooling exist so far: validated config, the Drizzle schema and migration, `Clock`, the `health` module (`/health/live`, `/health/ready` with a DB ping), the problem+json filter with request IDs and pino logging, Docker Compose, `AgingPolicy` with its unit tests, and auth (login, JWT, dealership guards, permissions, `/me`, `pnpm db:seed`), the vehicle list and detail endpoints (`inventory`, with `AgingPolicy.toStockedOnBounds`), and the OpenAPI document (`/docs`, committed `docs/api/openapi.json`, `pnpm --filter @inventory/api openapi:export`). Build order is in §4.16.
 
 Conventions (branches, commits, naming, hooks, coverage) are in `CONTRIBUTING.md`.
 
@@ -30,7 +30,7 @@ Node 24, TypeScript 6 strict (pinned `~6.0`: typescript-eslint supports only TS 
 
 Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `dashboard`, `health`, plus `src/shared` (config, Drizzle, `Clock`, problem+json filter). Pure rules go in `<module>/domain/`. Rules:
 
-- Only the owning module writes its table. `dashboard` is the only module that reads across tables (read-only SQL). No dependency cycles.
+- Only the owning module writes its table. Cross-table reads are read-only SQL, only where the design names them: `dashboard`, and `inventory` list/detail → latest action (ADR 0011). No dependency cycles.
 - Five tables: `dealership`, `app_user`, `user_dealership`, `vehicle`, `vehicle_action`. `dealership_id` is on every row and every query.
 
 ## Invariants that are easy to get wrong

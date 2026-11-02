@@ -40,7 +40,7 @@ curl localhost:3000/health/live    # 200 while the process runs
 curl localhost:3000/health/ready   # 200 when Postgres answers, 503 when it doesn't
 ```
 
-API docs: with the API running, Swagger UI is at <http://localhost:3000/docs> and the raw document at `/docs-json`. The same document is committed as [`docs/api/openapi.json`](docs/api/openapi.json); after changing a route or schema, regenerate it (a test fails if it drifts):
+API docs: with the API running (not when `NODE_ENV=production`), Swagger UI is at <http://localhost:3000/docs> and the raw document at `/docs-json`. The same document is committed as [`docs/api/openapi.json`](docs/api/openapi.json); after changing a route or schema, regenerate it (a test fails if it drifts):
 
 ```sh
 pnpm --filter @inventory/api openapi:export

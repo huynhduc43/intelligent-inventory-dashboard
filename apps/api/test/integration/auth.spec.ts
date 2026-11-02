@@ -167,6 +167,16 @@ describe('auth', () => {
       }
     });
 
+    it('rejects a NUL in email and password with 400', async () => {
+      const res = await login({ email: 'a\u0000@b.dev', password: 'x\u0000y' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        errors: [{ pointer: '/email' }, { pointer: '/password' }],
+      });
+    });
+
     it('answers 401, not 400, for a 5-character password', async () => {
       const res = await login({
         email: 'admin@example.dev',

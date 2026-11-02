@@ -24,6 +24,7 @@ import type { Response } from 'express';
 import { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
+import { text } from '../../shared/text.js';
 import { UUID } from '../auth/dealership.guard.js';
 import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
@@ -31,12 +32,7 @@ import { ACTION_TYPES, ActionsService } from './actions.service.js';
 
 const createActionSchema = z.strictObject({
   actionType: z.enum(ACTION_TYPES),
-  note: z
-    .string()
-    .trim()
-    .max(1000)
-    .refine((s) => !s.includes('\u0000'), 'Must not contain NUL (U+0000)')
-    .nullish(),
+  note: text().trim().max(1000).nullish(),
 });
 
 const actionOpenApi: SchemaObject = {

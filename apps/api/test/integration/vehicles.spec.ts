@@ -269,6 +269,8 @@ describe('vehicles list and detail', () => {
     ['status='],
     ['status=IN_STOCK&status=SOLD'],
     ['make='],
+    ['make=a%00b'],
+    ['model=a%00b'],
     ['sort=sideways'],
     ['minAgeDays=10&maxAgeDays=5'],
     ['status=SOLD&tier=AGING'],

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { text } from '../../shared/text.js';
 
 const STATUSES = ['IN_STOCK', 'RESERVED', 'SOLD'] as const;
 
@@ -11,7 +12,7 @@ const integer = (min: number, max: number) =>
     .pipe(z.number().int().min(min).max(max))
     .meta({ type: 'integer', minimum: min, maximum: max });
 
-const text = z.string().min(1).max(100);
+const filter = text().min(1).max(100);
 
 export const vehicleListQuery = z
   .strictObject({
@@ -24,8 +25,8 @@ export const vehicleListQuery = z
         description:
           'Comma-separated list of IN_STOCK, RESERVED, SOLD. Default IN_STOCK.',
       }),
-    make: text.optional().meta({ description: 'Case-insensitive, exact.' }),
-    model: text.optional().meta({ description: 'Case-insensitive, exact.' }),
+    make: filter.optional().meta({ description: 'Case-insensitive, exact.' }),
+    model: filter.optional().meta({ description: 'Case-insensitive, exact.' }),
     tier: z.enum(['FRESH', 'WATCH', 'AGING']).optional(),
     minAgeDays: integer(0, 36500).optional(),
     maxAgeDays: integer(0, 36500).optional(),

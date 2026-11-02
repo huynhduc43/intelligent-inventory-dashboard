@@ -10,7 +10,7 @@ import { Clock } from '../../shared/clock.js';
 import { IS_PUBLIC, JWT_AUDIENCE, JWT_ISSUER } from './auth.constants.js';
 import type { AuthedRequest } from './request-context.js';
 
-const BEARER = /^Bearer ([A-Za-z0-9._~+/-]+=*)$/;
+const BEARER = /^Bearer ([A-Za-z0-9._~+/-]+=*)$/i;
 
 /** Global, fail-closed (ADR 0008). jsonwebtoken's messages are never forwarded. */
 @Injectable()

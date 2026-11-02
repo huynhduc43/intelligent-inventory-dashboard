@@ -105,6 +105,8 @@ describe('auth', () => {
         password: SEED_PASSWORD,
       });
 
+      expect(verifyDummy).toHaveBeenCalledTimes(2);
+
       for (const res of [unknown, wrong, disabled]) {
         expect(res.status).toBe(401);
         expect(res.headers['content-type']).toMatch(PROBLEM);
@@ -199,6 +201,14 @@ describe('auth', () => {
   });
 
   describe('GET /me', () => {
+    it('accepts the Bearer scheme in any case', async () => {
+      const res = await http()
+        .get('/api/v1/me')
+        .set('Authorization', `bearer ${tokenFor(ADMIN, clock)}`);
+
+      expect(res.status).toBe(200);
+    });
+
     const me = (id: string) =>
       http()
         .get('/api/v1/me')

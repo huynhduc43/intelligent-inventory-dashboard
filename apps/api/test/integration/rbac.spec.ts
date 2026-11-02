@@ -1,3 +1,4 @@
+import { Writable } from 'node:stream';
 import { Controller, Get, type INestApplication, Req } from '@nestjs/common';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
@@ -208,5 +209,45 @@ describe('D15/D16 route x role', () => {
       VIEWER,
     ]);
     expect((await get(url('vehicle:read'), VIEWER)).status).toBe(404);
+  });
+
+  it('logs user_id and dealership_id on guarded requests and warns on a failed login', async () => {
+    const lines: Record<string, unknown>[] = [];
+    const dest = new Writable({
+      write(chunk: Buffer, _enc, cb) {
+        for (const l of chunk.toString().split('\n').filter(Boolean)) {
+          lines.push(JSON.parse(l) as Record<string, unknown>);
+        }
+        cb();
+      },
+    });
+    const logged = await buildApp(
+      container.getConnectionUri(),
+      clock,
+      [ProbeController],
+      dest,
+    );
+    try {
+      const server = request(logged.getHttpServer());
+      await server
+        .get(url('vehicle:read'))
+        .set('Authorization', `Bearer ${tokenFor(ADMIN, clock)}`);
+      await server
+        .post('/api/v1/auth/login')
+        .send({ email: 'admin@example.dev', password: 'wrong-password-123' });
+    } finally {
+      await logged.close();
+    }
+
+    expect(lines).toContainEqual(
+      expect.objectContaining({
+        level: 'info',
+        user_id: ADMIN,
+        dealership_id: LONDON,
+      }),
+    );
+    const failed = lines.find((l) => l.status === 401);
+    expect(failed).toMatchObject({ level: 'warn' });
+    expect(JSON.stringify(failed)).not.toContain('admin@example.dev');
   });
 });

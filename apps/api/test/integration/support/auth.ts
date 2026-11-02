@@ -43,17 +43,18 @@ export async function buildApp(
   url: string,
   clock: Clock,
   controllers: Type[] = [],
+  logDestination?: NodeJS.WritableStream,
 ): Promise<INestApplication<App>> {
-  const config = testConfig(url);
+  const config = testConfig(url, logDestination ? { LOG_LEVEL: 'info' } : {});
   const moduleRef = await Test.createTestingModule({
-    imports: [AppModule.forRoot(config)],
+    imports: [AppModule.forRoot(config, logDestination)],
     controllers,
   })
     .overrideProvider(Clock)
     .useValue(clock)
     .compile();
   const app = moduleRef.createNestApplication<INestApplication<App>>();
-  configureApp(app, config);
+  configureApp(app, config, logDestination);
   await app.init();
   return app;
 }

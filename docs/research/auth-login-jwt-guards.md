@@ -9,18 +9,19 @@ Method: claims were checked against the Node v24.15.0 docs source (`doc/api/cryp
 - **Since / stability.** `added: v24.7.0`, `Stability: 1.2 - Release candidate` (Node v24.15.0 `doc/api/crypto.md:3292-3300`). Not experimental. The probe (v24.15.0, stderr captured) printed no warning. `.nvmrc` pins 24, so it is available.
 - **Signature.** `crypto.argon2(algorithm, parameters, callback)` and `crypto.argon2Sync(algorithm, parameters)` (`crypto.md:3292, 3378`). `algorithm` is `'argon2d' | 'argon2i' | 'argon2id'`. Required `parameters`:
 
-  | Name          | Meaning                                                                          |
-  | ------------- | -------------------------------------------------------------------------------- |
-  | `message`     | the password (string, ArrayBuffer, Buffer, TypedArray, DataView)                 |
-  | `nonce`       | the salt, **at least 8 bytes**; 16 random bytes recommended (`crypto.md:3328`)    |
-  | `parallelism` | lanes (`p`)                                                                      |
-  | `tagLength`   | output length in bytes                                                           |
-  | `memory`      | memory cost in **KiB** blocks (`m`); 19 MiB is `19456`                           |
-  | `passes`      | iterations (`t`)                                                                 |
-  | `secret`      | optional pepper, not stored with the hash                                        |
-  | `associatedData` | optional extra data                                                           |
+  | Name             | Meaning                                                                        |
+  | ---------------- | ------------------------------------------------------------------------------ |
+  | `message`        | the password (string, ArrayBuffer, Buffer, TypedArray, DataView)               |
+  | `nonce`          | the salt, **at least 8 bytes**; 16 random bytes recommended (`crypto.md:3328`) |
+  | `parallelism`    | lanes (`p`)                                                                    |
+  | `tagLength`      | output length in bytes                                                         |
+  | `memory`         | memory cost in **KiB** blocks (`m`); 19 MiB is `19456`                         |
+  | `passes`         | iterations (`t`)                                                               |
+  | `secret`         | optional pepper, not stored with the hash                                      |
+  | `associatedData` | optional extra data                                                            |
 
   The docs say `parallelism` "must be greater than 1", but the probe ran `parallelism: 1` fine; treat that sentence as a doc slip. The probe also showed `ERR_OUT_OF_RANGE` for `memory < 8` and for a nonce under 8 bytes.
+
 - **Callback vs promise.** The callback is `(err, derivedKey: Buffer)`. There is no native promise form, but `util.promisify(crypto.argon2)` works (the probe returned a `Buffer`). Argon2 runs on the libuv thread pool in the async form, so it does not block the event loop; `argon2Sync` does. Use the async form in the request path.
 - **Output.** A raw `Buffer` of `tagLength` bytes, not a PHC string. The probe: 32 bytes.
 - **Timing.** One hash at `{memory: 19456, passes: 2, parallelism: 1, tagLength: 32}`: 28–29 ms sync, 27–28 ms promisified (Node 24.15.0, macOS). A unit test that hashes a handful of passwords is cheap.
@@ -36,17 +37,18 @@ Method: claims were checked against the Node v24.15.0 docs source (`doc/api/cryp
 - **Issuer and audience.** With `issuer` / `audience` set on verify, a token with a different or missing value fails with `JsonWebTokenError('jwt issuer invalid…')` / `('jwt audience invalid…')` (`verify.js:194-217`).
 - **Errors** (all from `jsonwebtoken`; the probe printed each):
 
-  | Case                         | Class                | Message                             |
-  | ---------------------------- | -------------------- | ----------------------------------- |
-  | expired                      | `TokenExpiredError`  | `jwt expired` (has `expiredAt`)     |
-  | not yet valid (`nbf`)        | `NotBeforeError`     | `jwt not active`                    |
-  | bad signature                | `JsonWebTokenError`  | `invalid signature`                 |
-  | wrong `alg`, including HS512 | `JsonWebTokenError`  | `invalid algorithm`                 |
-  | `alg: none`                  | `JsonWebTokenError`  | `jwt signature is required`         |
-  | wrong `iss` / `aud`          | `JsonWebTokenError`  | `jwt issuer invalid. expected: …`   |
-  | garbage                      | `JsonWebTokenError`  | `jwt malformed`                     |
+  | Case                         | Class               | Message                           |
+  | ---------------------------- | ------------------- | --------------------------------- |
+  | expired                      | `TokenExpiredError` | `jwt expired` (has `expiredAt`)   |
+  | not yet valid (`nbf`)        | `NotBeforeError`    | `jwt not active`                  |
+  | bad signature                | `JsonWebTokenError` | `invalid signature`               |
+  | wrong `alg`, including HS512 | `JsonWebTokenError` | `invalid algorithm`               |
+  | `alg: none`                  | `JsonWebTokenError` | `jwt signature is required`       |
+  | wrong `iss` / `aud`          | `JsonWebTokenError` | `jwt issuer invalid. expected: …` |
+  | garbage                      | `JsonWebTokenError` | `jwt malformed`                   |
 
   `TokenExpiredError` and `NotBeforeError` extend `JsonWebTokenError` (`jsonwebtoken index.js:6-7`; both are `instanceof JsonWebTokenError`). The guard can catch any of them and return one `401 UNAUTHENTICATED`; it does not need to tell the client which one. Do not forward `err.message` into the problem `detail`.
+
 - **Pinning time.** Verify reads `options.clockTimestamp || Math.floor(Date.now()/1000)` (`verify.js:57`) and compares `clockTimestamp >= payload.exp` (`verify.js:189`). Sign uses `payload.iat || Math.floor(Date.now()/1000)` and computes `exp = iat + expiresIn` (`sign.js:185, 205-207`). So the service can sign with `iat: Math.floor(clock.now().getTime()/1000)`, and the guard can verify with `clockTimestamp` from the same `Clock`. Probe: a token signed with `iat = now - 1000` and `expiresIn: 900` failed with `TokenExpiredError`; passing `clockTimestamp: iat + 10` accepted it; `clockTimestamp: now + 901` rejected a fresh token. `clockTimestamp` of `0` is falsy and falls back to `Date.now()`, which no realistic test hits.
 
 ## 3. `@nestjs/throttler`

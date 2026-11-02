@@ -26,10 +26,11 @@ export class AuthService {
       .from(appUser)
       .where(sql`lower(${appUser.email}) = lower(${email})`);
     // Unknown and disabled users verify against a dummy hash, so all failures cost the same.
-    const ok = user
-      ? await this.passwords.verify(password, user.passwordHash)
-      : await this.passwords.verifyDummy(password);
-    if (!user || !ok || user.status !== 'ACTIVE') {
+    const ok =
+      user?.status === 'ACTIVE'
+        ? await this.passwords.verify(password, user.passwordHash)
+        : await this.passwords.verifyDummy(password);
+    if (!user || !ok) {
       throw new CodedHttpException(
         401,
         'INVALID_CREDENTIALS',

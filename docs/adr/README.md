@@ -47,4 +47,4 @@ Two places hold this project's accepted decisions:
 | [0007](0007-problem-type-and-code-for-every-status.md)      | Minted problem `type` and a `code` for every status                               | —                       |
 | [0008](0008-authentication-is-global-and-fail-closed.md)    | Global fail-closed `JwtAuthGuard`; `@RequirePermission` applies `DealershipGuard` | —                       |
 | [0009](0009-seed-script-is-self-contained.md)               | Seed script is self-contained and repeats the password hash                       | —                       |
-| [0010](0010-openapi-from-code-and-committed-export.md)       | OpenAPI from code at `/docs`, committed `openapi.json` exported by a script        | —                       |
+| [0010](0010-openapi-from-code-and-committed-export.md)      | OpenAPI from code at `/docs`, committed `openapi.json` exported by a script       | —                       |

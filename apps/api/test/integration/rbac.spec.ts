@@ -182,6 +182,30 @@ describe('D15/D16 route x role', () => {
       expect(new Set(bodies.map(strip)).size).toBe(1);
     });
 
+    it('PATCH status: admin and manager 200, viewer 403, non-member 404 with the missing-dealership body, no token 401', async () => {
+      const patch = (d: string, status: string, user?: string) => {
+        const r = request(app.getHttpServer())
+          .patch(`/api/v1/dealerships/${d}/vehicles/${vehicleId}/status`)
+          .send({ status });
+        return user
+          ? r.set('Authorization', `Bearer ${tokenFor(user, clock)}`)
+          : r;
+      };
+      expect((await patch(LONDON, 'RESERVED', ADMIN)).status).toBe(200);
+      expect((await patch(LONDON, 'IN_STOCK', MANAGER)).status).toBe(200);
+      expect((await patch(LONDON, 'RESERVED', VIEWER)).status).toBe(403);
+      expect((await patch(LONDON, 'RESERVED')).status).toBe(401);
+      const bodies = await Promise.all(
+        [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
+          (d) => patch(d, 'RESERVED', VIEWER),
+        ),
+      );
+      const strip = (r: request.Response) =>
+        JSON.stringify({ ...(r.body as object), instance: '' });
+      expect(bodies.map((r) => r.status)).toEqual([404, 404, 404]);
+      expect(new Set(bodies.map(strip)).size).toBe(1);
+    });
+
     it('POST vehicles: admin and manager 201, viewer 403, non-member 404 with the missing-dealership body, no token 401', async () => {
       let n = 0;
       const post = (d: string, user?: string) => {

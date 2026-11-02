@@ -5,6 +5,7 @@ import {
   Header,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -27,7 +28,7 @@ import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
 import type { AuthedRequest } from '../auth/request-context.js';
-import { createVehicleSchema } from './vehicles.body.js';
+import { changeStatusSchema, createVehicleSchema } from './vehicles.body.js';
 import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
 
@@ -249,5 +250,59 @@ export class VehiclesController {
       throw new NotFoundException('Resource not found.');
     const { id, ctx } = context(req);
     return this.vehicles.get(id, ctx, vehicleId);
+  }
+
+  @Patch(':vehicleId/status')
+  @RequirePermission('vehicle:change_status')
+  @dealershipParam
+  @ApiParam({ name: 'vehicleId', type: 'string', format: 'uuid' })
+  @ApiOkResponse({
+    description: 'The vehicle after the move',
+    schema: vehicleOpenApi,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (body or query parameters)',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthenticated',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'The caller lacks vehicle:change_status',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 404,
+    description:
+      'Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member',
+    content: problemRef,
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'INVALID_TRANSITION: the move is not allowed from the current status, including the same status',
+    content: problemRef,
+  })
+  changeStatus(
+    @Req() req: AuthedRequest,
+    @Param('vehicleId') vehicleId: string,
+    @Query({ schema: noQuery }) _query: z.infer<typeof noQuery>,
+    @Body({ schema: changeStatusSchema })
+    body: z.infer<typeof changeStatusSchema>,
+  ) {
+    if (!UUID.test(vehicleId))
+      throw new NotFoundException('Resource not found.');
+    const { id, ctx } = context(req);
+    return this.vehicles.changeStatus(
+      id,
+      req.userId,
+      ctx,
+      vehicleId,
+      body.status,
+    );
   }
 }

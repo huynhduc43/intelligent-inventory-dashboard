@@ -12,6 +12,13 @@ const int = (min: number, max: number) =>
     .max(max, `must be <= ${String(max)}`);
 
 const schema = z.object({
+  NODE_ENV: env(
+    z
+      .enum(['development', 'test', 'production'], {
+        error: 'must be one of development, test, production',
+      })
+      .default('development'),
+  ),
   PORT: env(int(1, 65535).default(3000)),
   LOG_LEVEL: env(
     z

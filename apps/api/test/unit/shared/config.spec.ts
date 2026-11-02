@@ -19,6 +19,7 @@ describe('loadConfig', () => {
   it('applies the §4.13 defaults', () => {
     expect(loadConfig(valid)).toEqual({
       ...valid,
+      NODE_ENV: 'development',
       PORT: 3000,
       LOG_LEVEL: 'info',
       DB_STATEMENT_TIMEOUT_MS: 5000,

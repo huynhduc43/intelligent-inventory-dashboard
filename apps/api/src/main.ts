@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
 import { configureApp } from './configure-app.js';
 import { setupDocs } from './shared/docs.js';
@@ -21,8 +22,14 @@ async function bootstrap() {
     bufferLogs: true,
   });
   configureApp(app, config);
-  setupDocs(app);
+  const docs = config.NODE_ENV !== 'production';
+  if (docs) setupDocs(app);
   app.enableShutdownHooks();
   await app.listen(config.PORT);
+  const log = app.get(Logger);
+  log.log(`API listening on port ${String(config.PORT)}`);
+  if (docs) {
+    log.log(`Swagger UI: http://localhost:${String(config.PORT)}/docs`);
+  }
 }
 await bootstrap();

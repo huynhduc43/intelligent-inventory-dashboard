@@ -21,11 +21,15 @@ export const NEW_YORK = '00000000-0000-4000-8000-0000000000d2';
 export const SYDNEY = '00000000-0000-4000-8000-0000000000d3';
 
 export class TestClock extends Clock {
+  /** Opt-in: each now() advances this many ms, so a second clock read in one write shows up as differing timestamps. */
+  tickMs = 0;
   constructor(public current = new Date('2026-07-01T12:00:00Z')) {
     super();
   }
   now() {
-    return this.current;
+    const at = this.current;
+    this.current = new Date(at.getTime() + this.tickMs);
+    return at;
   }
 }
 

@@ -67,7 +67,7 @@ On `from=implement`: find the worktree and branch carrying `<N>` with `git workt
 
 Spawn `deliver-implementer` with the prompt `issue=<N> worktree=<path> branch=<branch> bug=<yes|no>`. It returns the PR number, or `decision-needed: …` (see **Decisions**).
 
-**Done:** `gh pr view <P>` shows the PR open into `dev`, with `Closes #<N>` and an **Evidence** section in its body that maps each acceptance criterion to its test (for a bug, the regression test's failing output on `origin/dev`).
+**Done:** `gh pr view <P>` shows the PR open into `dev`, with `Closes #<N>` and an **Evidence** section in its body that maps each acceptance criterion to its test (for a bug, the regression test's failing output on `origin/dev`), and a **Spec check** that marks every `## Decisions` item and contract row `covered` or `deviated`.
 
 ## 5–6. Review (agents)
 
@@ -93,7 +93,7 @@ A **round** is one pass of the Implementer over returned findings, counted per P
 
 1. Read the PR body's **Deviations** section and check that each entry links to its line in the issue's `## Decisions` or to an `Amended:` comment. Record any that does not, through **Decisions**, before you report.
 2. **AI log.** Add the PR to `docs/ai-collaboration.md` in the format its **How to add an entry** gives: one row in the PR table, and one case for each moment that shows how the AI was directed or corrected (a finding that caught an agent's mistake, a `decision-needed`, an `Amended:` comment, a Tester failure). Say who decided: the user, or the agent under `approve=auto`. Commit it to the PR branch as `docs(docs): log AI collaboration (#<N>)` and push; it is narrative, so it needs no review round.
-3. **Retro.** Follow `retro` (see **Ground rules**) on this PR: its review and tester comments, its rounds and its decisions. Apply none of its candidates without the user's go, in either `approve` mode; approved ones go in their own `chore/` PR.
-4. Report to the user, in their language: the issue and PR links, how many rounds the PR took, the Tester's result, the follow-up comments the reviewers posted, the cases added to the AI log, the retro candidates, and the manual steps still to do in each environment (from `docs/environment-setup.md` and the PR's **Manual steps**).
+3. **Retro.** Follow `retro` (see **Ground rules**) on this PR: its review and tester comments, its rounds and its decisions. Then file the candidates (`docs/agents/issue-tracker.md`): one parent issue `Retro: <topic> follow-ups (#<P>)` listing them in severity order, and one sub-issue per candidate (`gh issue create --parent <parent> --label needs-triage`), titled by the change, its body the evidence (the case or comment it came from) and the suggestion. Before filing, check open issues for a duplicate and link it instead. Apply none of the candidates without the user's go, in either `approve` mode; approved ones go in their own `chore/` PR that closes its sub-issue.
+4. Report to the user, in their language: the issue and PR links, how many rounds the PR took, the Tester's result, the follow-up comments the reviewers posted, the cases added to the AI log, the retro parent issue and its sub-issues, and the manual steps still to do in each environment (from `docs/environment-setup.md` and the PR's **Manual steps**).
 
 Merging waits for the user. Once the PR is merged, follow CLAUDE.md **Agent workflow** to clean up the worktree and branch.

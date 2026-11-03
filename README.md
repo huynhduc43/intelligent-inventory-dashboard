@@ -331,6 +331,10 @@ docs/
 
 The code, tests and docs here were written by an AI agent (Claude Code, Claude Opus) that I directed. I owned the decisions and the verification. The evidence, case by case with links, is in [`docs/ai-collaboration.md`](docs/ai-collaboration.md).
 
+![Claude Code usage for this project over 7 days: 5h 45m agent time, $198.88, 315.1M tokens, 59 sessions](docs/images/ponytail-card.png)
+
+_Measured with [ponytail](https://ponytail.dev) over the last 7 days of the build: 59 agent sessions, 5h 45m of agent time._
+
 **Strategy: decide first, then let the agent build inside the decisions.**
 
 - **Design before code.** The agent researched primary sources and drafted the design ([`backend-architecture.md`](docs/research/backend-architecture.md)). Every decision is numbered and marked as mine (**U**, 14 of 19) or the agent's assumption (**A**, 5), and the assumptions are listed in the System Design Document. Later decisions are ADRs.

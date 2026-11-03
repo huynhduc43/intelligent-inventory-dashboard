@@ -50,6 +50,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#47](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/47) | Log and list vehicle actions, seeded action history (#11)                        | `/deliver` under `grill=auto`/`approve=auto`: research note, 12 decisions, ADR 0013, glossary terms, two diagrams, contract, implementation, two review rounds, tester                                                           | `pnpm verify`; two review rounds, 10 findings fixed (C23, C24); Tester passed AC 1–5 and the seed criterion against the running API | None: decisions, the contract choice and the seed amendment were the agent's recommendations (`approve=auto`, C23, C25); the user chose the modes and the implementer model |
 | [#56](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/56) | Spec diagrams move from the `assets` branch into `docs/diagrams/specs/`          | Copied the 22 files, rewrote the `/deliver` publishing rule to commit diagrams on the PR branch and link them by commit permalink, removed `tools/push-assets.sh`                                                                | `pnpm verify`; moved PNGs match the `assets` branch                                                                                 | The user chose the move and kept spec diagrams out of the design doc; waived the `/deliver` eval rerun (C27)                                                                |
 | [#59](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59) | Vehicle intake: `POST …/vehicles` with VIN rules (#12)                           | `/deliver` under `grill=auto`/`approve=auto`: research note, 9 decisions, glossary terms, diagram, contract, implementation on sonnet, three review rounds, tester                                                               | `pnpm verify`; three review rounds, 8 findings fixed (C28–C30); Tester passed AC 1–13 against the running API                       | None: decisions and the contract were the agent's recommendations (`approve=auto`, C31); the user chose the modes and the implementer model                                 |
+| [#66](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/66) | Vehicle status lifecycle: `PATCH …/vehicles/{v}/status` (#13)                    | `/deliver` under `grill=auto`/`approve=auto`: no research note (the design settled it), 7 decisions, glossary terms, two diagrams, contract, implementation on sonnet, two review rounds, tester                                 | `pnpm verify`; two review rounds, 4 findings fixed (C33, C34); Tester passed AC 1–11 against the running API                        | None: decisions and the contract choice were the agent's recommendations (`approve=auto`, C32); the user chose the modes and the implementer model                          |
 
 ## Cases
 
@@ -331,3 +332,30 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** keeps §4.7's status list unchanged and the error shape the same as every other field error; no time-zone maths in Node.
 - **Verification:** issue #12 Decision 4; integration test with a pinned `Clock`; Tester AC 8.
 - **Outcome:** no new problem code.
+
+### C32: "Sell + reserve → one wins, one 409" is only true in one order (#66)
+
+- **Problem:** §4.15 and the issue asked for a concurrency test where a sell and a reserve race and one gets 409. If the reserve commits first, selling a reserved vehicle is legal, so both succeed and the test would be flaky.
+- **AI proposal:** force the order: hold an uncommitted sell `UPDATE` on the row, send the reserve PATCH so it blocks on the row lock, commit, and assert 409 with a final SOLD; add two parallel sells for exactly one 200 and one 409 ([issue #13 Decisions 6](https://github.com/huynhduc43/intelligent-inventory-dashboard/issues/13)).
+- **Decided by:** agent (grill=auto).
+- **Decision and reasoning:** kept P2 as designed and made the test deterministic, relying on Postgres READ COMMITTED re-checking the blocked `UPDATE`'s `WHERE`.
+- **Verification:** `vehicle-status.spec.ts` concurrency tests; the Tester's live run of four parallel sells gave one 200 and three 409.
+- **Outcome:** test design recorded in the spec; no ADR.
+
+### C33: A fixed sleep could let the race test pass without a race (#66)
+
+- **Problem:** the first concurrency test waited 300 ms before committing; if the PATCH had not reached Postgres by then, the test passed without exercising the blocked `UPDATE`.
+- **AI proposal:** the code reviewer asked to poll `pg_stat_activity` for a lock waiter ([comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/66#discussion_r4445284047)); the same round also added the missing `VEHICLE_NOT_IN_STOCK` type assertion.
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** poll for `wait_event_type = 'Lock'` before `COMMIT`, so the test proves the blocked path.
+- **Verification:** round 2 code review `clean`; CI green on `4715c23`.
+- **Outcome:** the poll still commits after 5 s without failing; both reviewers noted it and left it as negligible.
+
+### C34: A frozen-age test that could not fail, and docs that described the old flow (#66)
+
+- **Problem:** the test sold a vehicle and read days in stock on the same day, so it would pass even if selling did not stop the count; `docs/system-design.md` and figure 3 still said `RETURNING *`, and the PR's Doc impact said the diagram was unchanged and omitted the glossary.
+- **AI proposal:** the business reviewer asked to advance the clock after the sale and to align the docs ([comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/66#discussion_r4445289790), [comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/66#issuecomment-6583205084)).
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** advance the clock 3 days and assert the sold vehicle stays at 6 while an in-stock control grows by 3; fix the doc text and relabel figure 3; the orchestrator fixed the PR body.
+- **Verification:** round 2 business review `clean`.
+- **Outcome:** user story 5 is now proven by a test; docs match `RETURNING id` plus the detail read.

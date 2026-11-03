@@ -67,7 +67,7 @@ On `from=implement`: find the worktree and branch carrying `<N>` with `git workt
 
 Spawn `deliver-implementer` with the prompt `issue=<N> worktree=<path> branch=<branch> bug=<yes|no>`. It returns the PR number, or `decision-needed: …` (see **Decisions**).
 
-**Done:** `gh pr view <P>` shows the PR open into `dev`, with `Closes #<N>` and an **Evidence** section in its body that maps each acceptance criterion to a named test (`file › test name`) (for a bug, the regression test's failing output on `origin/dev`), and a **Spec check** that marks every `## Decisions` item and contract row `covered` or `deviated`.
+**Done:** `gh pr view <P>` shows the PR open into `dev`, with `Closes #<N>` and an **Evidence** section in its body that maps each acceptance criterion to a named test (`file › test name`) (for a bug, the regression test's failing output on `origin/dev`), and a **Spec check** that marks every `## Decisions` item and contract row `covered` or `deviated`, and `gh pr checks <P>` is green (the Implementer watches CI itself).
 
 ## 5–6. Review (agents)
 

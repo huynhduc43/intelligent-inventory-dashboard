@@ -34,6 +34,7 @@ describe('openapi document', () => {
       '/api/v1/dealerships/{dealershipId}/vehicles',
       '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}',
       '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}/actions',
+      '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}/status',
       '/api/v1/me',
       '/health/live',
       '/health/ready',
@@ -66,7 +67,7 @@ describe('openapi document', () => {
 describe('openapi per-route statuses', () => {
   it('documents only the statuses each route can return', async () => {
     const doc = JSON.parse(JSON.stringify(await generateOpenApi())) as Doc;
-    const statuses = (path: string, method: 'get' | 'post') =>
+    const statuses = (path: string, method: 'get' | 'post' | 'patch') =>
       Object.keys(doc.paths[path]?.[method]?.responses ?? {}).sort();
     expect(statuses('/api/v1/auth/login', 'post')).toEqual([
       '200',
@@ -76,6 +77,12 @@ describe('openapi per-route statuses', () => {
       '500',
     ]);
     expect(statuses('/api/v1/me', 'get')).toEqual(['200', '401', '500']);
+    expect(
+      statuses(
+        '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}/status',
+        'patch',
+      ),
+    ).toEqual(['200', '400', '401', '403', '404', '409', '500']);
     expect(statuses('/health/live', 'get')).not.toContain('401');
     expect(statuses('/health/ready', 'get')).not.toContain('400');
   });

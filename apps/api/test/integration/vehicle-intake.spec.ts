@@ -15,6 +15,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 const NOW = '2026-07-01T12:00:00.000Z';
 const VIN = '1HGCM82633A004352';
@@ -108,8 +109,7 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
   it('409s on the same VIN while unsold, in any case or padding, and writes nothing', async () => {
     const res = await post(body({ vin: VIN }));
 
-    expect(res.status).toBe(409);
-    expect(res.body).toMatchObject({ code: 'VIN_ALREADY_IN_STOCK' });
+    expectProblem(res, 409, 'VIN_ALREADY_IN_STOCK');
     expect(await rows()).toHaveLength(1);
   });
 
@@ -125,8 +125,7 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
       [VIN, LONDON],
     );
 
-    expect(res.status).toBe(409);
-    expect(res.body).toMatchObject({ code: 'VIN_ALREADY_IN_STOCK' });
+    expectProblem(res, 409, 'VIN_ALREADY_IN_STOCK');
   });
 
   it('allows the same VIN in another dealership and, once SOLD, again in the same one', async () => {
@@ -205,17 +204,20 @@ describe('vehicle intake', { timeout: 30_000 }, () => {
   ])('400s on %s', async (_n, o, pointer) => {
     const res = await post(body(o));
 
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
+    expectProblem(res, 400, 'VALIDATION_FAILED');
     expect(pointers(res)).toContain(pointer);
   });
 
   it('400s on a query parameter, 401 / 403 / 404 on the guards', async () => {
-    expect((await post(body(), MANAGER, LONDON, '?x=1')).status).toBe(400);
-    expect((await post(body(), null)).status).toBe(401);
-    expect((await post(body(), VIEWER)).status).toBe(403);
-    expect((await post(body(), VIEWER, NEW_YORK)).status).toBe(404);
-    expect((await post(body(), MANAGER, 'not-a-uuid')).status).toBe(404);
+    expectProblem(
+      await post(body(), MANAGER, LONDON, '?x=1'),
+      400,
+      'VALIDATION_FAILED',
+    );
+    expectProblem(await post(body(), null), 401, 'UNAUTHENTICATED');
+    expectProblem(await post(body(), VIEWER), 403, 'FORBIDDEN');
+    expectProblem(await post(body(), VIEWER, NEW_YORK), 404, 'NOT_FOUND');
+    expectProblem(await post(body(), MANAGER, 'not-a-uuid'), 404, 'NOT_FOUND');
   });
 
   it('rejects a future date by the dealership-local today', async () => {

@@ -26,3 +26,7 @@ export const createVehicleSchema = z.strictObject({
     .date()
     .refine((d) => d >= '1900-01-01', 'Must be 1900-01-01 or later'),
 });
+
+export const changeStatusSchema = z.strictObject({
+  status: z.enum(['IN_STOCK', 'RESERVED', 'SOLD']),
+});

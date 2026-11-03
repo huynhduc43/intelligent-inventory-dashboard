@@ -16,6 +16,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 const PROBLEM = /^application\/problem\+json/;
 const b64 = (o: unknown) =>
@@ -100,8 +101,7 @@ describe('auth', () => {
 
       stub.mockRestore();
 
-      expect(res.status).toBe(401);
-      expect(res.body).toMatchObject({ code: 'INVALID_CREDENTIALS' });
+      expectProblem(res, 401, 'INVALID_CREDENTIALS');
     });
 
     it('gives unknown email, wrong password and disabled user the same 401', async () => {
@@ -159,8 +159,7 @@ describe('auth', () => {
       const missing = await login({ email: 'a@b.dev' });
 
       for (const res of [unknown, missing]) {
-        expect(res.status).toBe(400);
-        expect(res.body).toMatchObject({ code: 'VALIDATION_FAILED' });
+        expectProblem(res, 400, 'VALIDATION_FAILED');
         expect(
           (res.body as { errors: unknown[] }).errors.length,
         ).toBeGreaterThan(0);
@@ -183,7 +182,7 @@ describe('auth', () => {
         password: 'short',
       });
 
-      expect(res.status).toBe(401);
+      expectProblem(res, 401, 'INVALID_CREDENTIALS');
     });
   });
 
@@ -228,8 +227,7 @@ describe('auth', () => {
       clock.current = later;
       try {
         const res = await me(`Bearer ${token}`);
-        expect(res.status).toBe(401);
-        expect(res.body).toMatchObject({ code: 'UNAUTHENTICATED' });
+        expectProblem(res, 401, 'UNAUTHENTICATED');
       } finally {
         clock.current = before;
       }
@@ -309,7 +307,7 @@ describe('auth', () => {
 
     it('answers 401 for a user that does not exist or is disabled', async () => {
       const gone = await me('00000000-0000-4000-8000-00000000ffff');
-      expect(gone.status).toBe(401);
+      expectProblem(gone, 401, 'UNAUTHENTICATED');
 
       const client = new pg.Client({
         connectionString: container.getConnectionUri(),
@@ -326,8 +324,7 @@ describe('auth', () => {
       );
       await client.end();
 
-      expect(disabled.status).toBe(401);
-      expect(disabled.body).toMatchObject({ code: 'UNAUTHENTICATED' });
+      expectProblem(disabled, 401, 'UNAUTHENTICATED');
     });
   });
 });

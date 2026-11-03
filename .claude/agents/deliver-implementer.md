@@ -28,7 +28,8 @@ Your first prompt gives `issue`, `worktree`, `branch` and `bug` (yes or no).
 5. **Spec check.** Walk each item in the issue's `## Decisions` and each row of the `Chosen:` contract (endpoint, status, field, schema change) against the diff. Mark each one `covered` with the `file:line` or test that implements it, or `deviated` with the link to its `decision: … recorded:` line or `Amended:` comment. An acceptance criterion whose **Evidence** row names no test is uncovered and cannot be marked `covered`. Before opening the PR, `grep` the diff for every `file › test name` in **Evidence**; a row whose test the grep does not find, or that sits at a lower level than the criterion or §4.15 names (unit, integration, `rbac.spec.ts` row), is uncovered. An item that is neither goes back to step 3, or out as `decision-needed:`. Write **Deviations** from the `deviated` rows only; never write `none` without this walk.
 6. **ADR doc walk.** For each ADR added or changed in the diff, grep `docs/system-design.md`, `docs/diagrams/*.html` (and their `.svg` and alt text), README.md and CLAUDE.md for the modules and tables it names. List every hit file in the **Doc impact** as `updated` or `checked, no change because …`; `unchanged` with no reason is not allowed.
 7. Commit and push following CONTRIBUTING.md and CLAUDE.md **Agent workflow**, then open the PR into `dev`, with its body written by `mattpocock-skills:pr`. The body carries `Closes #<issue>`, the **Evidence** (a table with one row per acceptance criterion and a required test column filled with `file › test name`; for a bug, the failing output from step 2), the **Spec check** table from step 5 (folded in `<details>`), the **Deviations**, the **Manual steps** (each also recorded in `docs/environment-setup.md`) and the **Doc impact** from step 6, with each doc it lists updated in the PR (CONTRIBUTING.md **Pull requests**).
-8. Return one line: `pr <number>`.
+8. Run `gh pr checks <P> --watch`. On a red check read `gh run view <run> --log-failed`, fix it, push and watch again. Return only when every check is green.
+9. Return one line: `pr <number>`.
 
 ## Answer findings
 
@@ -37,6 +38,6 @@ A prompt that starts `round=<R> pr=<P> issue=<N> worktree=<path>` is followed by
 1. Read the spec, the PR body and each comment's whole thread, so you know what earlier rounds settled.
 2. For each review comment, fix it at every site its `Sites:` line lists, then Grep the files the PR changes for any other site of the same mistake and fix it there too; or reply on it with the reason it should stay. The next round's reviewer judges that reason. A fix that would change the spec goes through `decision-needed:`. Do not edit the PR body after opening the PR: the orchestrator fixes body-only findings, so leave any that reach you unanswered.
 3. For each tester failure, reproduce it against the running API (`.claude/skills/deliver/api-runbook.md`), turn it into a failing test, then fix it.
-4. Run `pnpm verify` until it passes, on every change, then commit and push.
+4. Run `pnpm verify` until it passes, on every change, then commit and push, then run `gh pr checks <P> --watch` and fix any red check as in the build's step 8.
 5. Before replying on a fixed comment, find the fix in `git show <sha>`. Reply with the SHA and the `file:line` of each site you fixed. The next round's reviewer judges the fix and resolves the thread.
 6. Return one line: `pushed <sha>`, plus one line per comment you kept with a reason.

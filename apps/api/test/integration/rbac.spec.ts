@@ -19,6 +19,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 // Test-only probe: one route per permission. Later issues add their real routes as rows of the table below.
 @Controller('api/v1/dealerships/:dealershipId/probe')
@@ -132,7 +133,7 @@ describe('D15/D16 route x role', () => {
       expect((await get(url(p), ADMIN)).status).toBe(status(admin));
       expect((await get(url(p), MANAGER)).status).toBe(status(manager));
       expect((await get(url(p), VIEWER)).status).toBe(status(viewer));
-      expect((await get(url(p, NEW_YORK), VIEWER)).status).toBe(404);
+      expectProblem(await get(url(p, NEW_YORK), VIEWER), 404, 'NOT_FOUND');
     },
   );
 
@@ -153,8 +154,8 @@ describe('D15/D16 route x role', () => {
         for (const u of [ADMIN, MANAGER, VIEWER]) {
           expect((await get(route(LONDON, i), u)).status).toBe(200);
         }
-        expect((await get(route(NEW_YORK, i), VIEWER)).status).toBe(404);
-        expect((await get(route(LONDON, i))).status).toBe(401);
+        expectProblem(await get(route(NEW_YORK, i), VIEWER), 404, 'NOT_FOUND');
+        expectProblem(await get(route(LONDON, i)), 401, 'UNAUTHENTICATED');
       },
     );
 
@@ -169,11 +170,35 @@ describe('D15/D16 route x role', () => {
       };
       expect((await post(LONDON, ADMIN)).status).toBe(201);
       expect((await post(LONDON, MANAGER)).status).toBe(201);
-      expect((await post(LONDON, VIEWER)).status).toBe(403);
-      expect((await post(LONDON)).status).toBe(401);
+      expectProblem(await post(LONDON, VIEWER), 403, 'FORBIDDEN');
+      expectProblem(await post(LONDON), 401, 'UNAUTHENTICATED');
       const bodies = await Promise.all(
         [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
           (d) => post(d, VIEWER),
+        ),
+      );
+      const strip = (r: request.Response) =>
+        JSON.stringify({ ...(r.body as object), instance: '' });
+      expect(bodies.map((r) => r.status)).toEqual([404, 404, 404]);
+      expect(new Set(bodies.map(strip)).size).toBe(1);
+    });
+
+    it('PATCH status: admin and manager 200, viewer 403, non-member 404 with the missing-dealership body, no token 401', async () => {
+      const patch = (d: string, status: string, user?: string) => {
+        const r = request(app.getHttpServer())
+          .patch(`/api/v1/dealerships/${d}/vehicles/${vehicleId}/status`)
+          .send({ status });
+        return user
+          ? r.set('Authorization', `Bearer ${tokenFor(user, clock)}`)
+          : r;
+      };
+      expect((await patch(LONDON, 'RESERVED', ADMIN)).status).toBe(200);
+      expect((await patch(LONDON, 'IN_STOCK', MANAGER)).status).toBe(200);
+      expect((await patch(LONDON, 'RESERVED', VIEWER)).status).toBe(403);
+      expect((await patch(LONDON, 'RESERVED')).status).toBe(401);
+      const bodies = await Promise.all(
+        [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
+          (d) => patch(d, 'RESERVED', VIEWER),
         ),
       );
       const strip = (r: request.Response) =>
@@ -201,8 +226,8 @@ describe('D15/D16 route x role', () => {
       };
       expect((await post(LONDON, ADMIN)).status).toBe(201);
       expect((await post(LONDON, MANAGER)).status).toBe(201);
-      expect((await post(LONDON, VIEWER)).status).toBe(403);
-      expect((await post(LONDON)).status).toBe(401);
+      expectProblem(await post(LONDON, VIEWER), 403, 'FORBIDDEN');
+      expectProblem(await post(LONDON), 401, 'UNAUTHENTICATED');
       const bodies = await Promise.all(
         [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
           (d) => post(d, VIEWER),
@@ -246,7 +271,7 @@ describe('D15/D16 route x role', () => {
       url('vehicle:read', '00000000-0000-4000-8000-0000000000ff'),
     );
 
-    expect(res.status).toBe(401);
+    expectProblem(res, 401, 'UNAUTHENTICATED');
     expect(res.headers['www-authenticate']).toBe('Bearer');
   });
 
@@ -258,7 +283,7 @@ describe('D15/D16 route x role', () => {
     );
 
     for (const res of bodies) {
-      expect(res.status).toBe(404);
+      expectProblem(res, 404, 'NOT_FOUND');
       expect(res.body).toMatchObject({
         code: 'NOT_FOUND',
         detail: 'Resource not found.',
@@ -293,7 +318,7 @@ describe('D15/D16 route x role', () => {
   });
 
   it('applies a role change and a disabled user on the next request with the same token', async () => {
-    expect((await get(url('vehicle:create'), VIEWER)).status).toBe(403);
+    expectProblem(await get(url('vehicle:create'), VIEWER), 403, 'FORBIDDEN');
     await sql(
       `UPDATE user_dealership SET role = 'MANAGER' WHERE user_id = $1 AND dealership_id = $2`,
       [VIEWER, LONDON],
@@ -303,7 +328,7 @@ describe('D15/D16 route x role', () => {
     await sql(`UPDATE app_user SET status = 'DISABLED' WHERE id = $1`, [
       VIEWER,
     ]);
-    expect((await get(url('vehicle:read'), VIEWER)).status).toBe(404);
+    expectProblem(await get(url('vehicle:read'), VIEWER), 404, 'NOT_FOUND');
   });
 
   it('logs user_id and dealership_id on guarded requests and warns on a failed login', async () => {

@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { buildApp, TestClock } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 describe('login throttling', () => {
   let app: INestApplication<App>;
@@ -21,14 +22,12 @@ describe('login throttling', () => {
         .post('/api/v1/auth/login')
         .send({ nope: true });
     for (let i = 0; i < 10; i++) {
-      expect((await attempt()).status).toBe(400);
+      expectProblem(await attempt(), 400, 'VALIDATION_FAILED');
     }
 
     const res = await attempt();
 
-    expect(res.status).toBe(429);
-    expect(res.headers['content-type']).toMatch(/^application\/problem\+json/);
+    expectProblem(res, 429, 'RATE_LIMITED');
     expect(Number(res.headers['retry-after'])).toBeGreaterThan(0);
-    expect(res.body).toMatchObject({ code: 'RATE_LIMITED', status: 429 });
   });
 });

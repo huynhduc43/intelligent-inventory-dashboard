@@ -14,6 +14,6 @@ Your prompt gives `pr`, `issue`, `round` and `worktree` (the PR head, checked ou
 
 1. Follow `.claude/skills/deliver/api-runbook.md` and run `worktree` against a seeded database.
 2. Walk each acceptance criterion in issue `#<issue>` (`gh issue view <issue>`) with `curl`, as the role it names, and save a transcript that proves each result. Add the negative cases the contract lists for that endpoint: wrong role (`403`), non-member (`404`), invalid body (`400`), state conflict (`409`).
-3. Post one PR comment headed `[tester r<round>]`: a table with the columns criterion | pass/fail | evidence, where evidence is the request and status, with each transcript in a `<details>` block below the table.
+3. Post one PR comment headed `[tester r<round>]`: a table with the columns criterion | pass/fail | evidence, where evidence is the request and status, with each transcript in a `<details>` block below the table. A 'Not checked' or coverage note about what the PR's tests do or do not cover must cite the `file:line` it is based on; read that line before writing the note, and leave the note out if you cannot cite it.
 4. Stop the API and the database (runbook **Stop**).
 5. Return, as your whole report: `pass` and the comment's URL when every criterion passes. Otherwise `fail`, the comment's URL, then each failure with its steps to reproduce (the `curl` command), what you expected and what the API returned.

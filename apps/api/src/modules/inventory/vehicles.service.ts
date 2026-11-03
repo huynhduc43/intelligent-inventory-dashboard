@@ -4,6 +4,7 @@ import { DB, type Db } from '../../shared/db.js';
 import { Clock } from '../../shared/clock.js';
 import { CodedHttpException } from '../../shared/problem.js';
 import type { DealershipContext } from '../auth/request-context.js';
+import { allowedFrom } from './domain/vehicle-lifecycle.js';
 import { type Tier, tierOf, toStockedOnBounds } from './domain/aging-policy.js';
 import type { VehicleListQuery } from './vehicles.query.js';
 
@@ -90,6 +91,36 @@ export class VehiclesService {
         `VIN ${v.vin} is already on an unsold vehicle in this dealership.`,
       );
     return this.get(dealershipId, ctx, created.id);
+  }
+
+  /** One conditional UPDATE, no lock (P2): 0 rows means the vehicle is missing (404) or the move is not allowed (409). */
+  async changeStatus(
+    dealershipId: string,
+    userId: string,
+    ctx: DealershipContext,
+    vehicleId: string,
+    to: Vehicle['status'],
+  ): Promise<Vehicle> {
+    const now = this.clock.now().toISOString();
+    const { rows } = await this.db.execute<{ id: string }>(sql`
+      UPDATE vehicle
+      SET status = ${to},
+          sold_at = CASE WHEN ${to} = 'SOLD' THEN ${now}::timestamptz ELSE sold_at END,
+          updated_by = ${userId}::uuid, updated_at = ${now}::timestamptz
+      WHERE id = ${vehicleId} AND dealership_id = ${dealershipId}
+        AND status = ANY(${sql.param([...allowedFrom(to)])}::text[])
+      RETURNING id`);
+    if (rows[0]) return this.get(dealershipId, ctx, vehicleId);
+    const found = await this.db.execute<{ status: Vehicle['status'] }>(
+      sql`SELECT status FROM vehicle WHERE id = ${vehicleId} AND dealership_id = ${dealershipId}`,
+    );
+    const current = found.rows[0]?.status;
+    if (!current) throw new NotFoundException('Resource not found.');
+    throw new CodedHttpException(
+      409,
+      'INVALID_TRANSITION',
+      `${current === 'IN_STOCK' ? 'An' : 'A'} ${current} vehicle cannot move to ${to}.`,
+    );
   }
 
   /** `today_local` and the time zone come from DealershipGuard; a SOLD vehicle's age stops at the local date of `sold_at`. */

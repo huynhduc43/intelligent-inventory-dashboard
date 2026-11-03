@@ -45,8 +45,16 @@ if (!ctx) throw new Error('DealershipGuard set no context');
 
 const vehicles = new VehiclesService(db, clock);
 const dashboard = new DashboardService(db, clock);
-const list = (q: Record<string, string>) => () =>
-  vehicles.list(LONDON, ctx, vehicleListQuery.parse(q));
+// A plan over a few rows is no evidence for the 20k seed (#93): every list case must match at least this many vehicles.
+const MIN_ROWS = 1000;
+const list = (q: Record<string, string>) => async () => {
+  const res = await vehicles.list(LONDON, ctx, vehicleListQuery.parse(q));
+  if (res.total < MIN_ROWS)
+    throw new Error(
+      `List ${new URLSearchParams(q).toString() || 'default'}: ${String(res.total)} matching vehicles, fewer than ${String(MIN_ROWS)}; seed SEED_VEHICLES_PER_DEALERSHIP=20000 into an empty database`,
+    );
+  return res;
+};
 const cases: [string, () => Promise<unknown>][] = [
   ['List: default (IN_STOCK, oldest first, limit 50)', list({})],
   ['List: tier=AGING', list({ tier: 'AGING' })],

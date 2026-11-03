@@ -31,7 +31,16 @@ Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 
 ## Seed data
 
-After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs. It also adds `SEED_VEHICLES_PER_DEALERSHIP` (default 250) demo vehicles per dealership with deterministic ids, ages 0 to 200 days, four in-stock vehicles at exactly watch−1, watch, aging and aging+1 days, 10% `RESERVED` and 10% `SOLD`, and one re-acquired VIN (a `SOLD` row bought back); a re-run adds only missing rows. Ages are fixed on the day of seeding. For the README's `EXPLAIN ANALYZE` evidence, seed `SEED_VEHICLES_PER_DEALERSHIP=20000` into an empty database (`docker compose down -v` first): actions are added only to a dealership that has none, so seeding on top of existing vehicles leaves almost no actions. Then run `pnpm --filter @inventory/api db:explain`.
+After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs. It also adds `SEED_VEHICLES_PER_DEALERSHIP` (default 250) demo vehicles per dealership with deterministic ids, ages 0 to 200 days, four in-stock vehicles at exactly watch−1, watch, aging and aging+1 days, 10% `RESERVED` and 10% `SOLD`, and one re-acquired VIN (a `SOLD` row bought back); a re-run adds only missing rows. Ages are fixed on the day of seeding. It prints one line per dealership with the vehicles and actions it added, or that it skipped actions because the dealership already has some. For the README's `EXPLAIN ANALYZE` evidence, seed `SEED_VEHICLES_PER_DEALERSHIP=20000` into an empty database (`docker compose down -v` first): actions are added only to a dealership that has none, so seeding on top of existing vehicles leaves almost no actions. Then run `pnpm --filter @inventory/api db:explain`; it fails, naming the case, when a list case matches fewer than 1,000 vehicles, so it cannot print a plan over too few rows.
+
+## Claude Code permissions (`/deliver`)
+
+The `/deliver` reviewers and tester post PR comments and resolve review threads. Auto mode can block those calls, which wastes a review round, so the committed `.claude/settings.json` allows them; no per-machine step. A personal deny rule overrides them:
+
+- `Bash(gh pr comment *)`
+- `Bash(gh pr review *)`
+- `Bash(gh api graphql *)`
+- `Bash(gh api repos/*/pulls/*/comments *)`
 
 ## Diagram export (PNG)
 

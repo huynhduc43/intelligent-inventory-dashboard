@@ -1,0 +1,21 @@
+name: PR title
+
+# Its own workflow so a title or body edit reruns only this check, not CI.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: printf '%s\n' "$TITLE" | pnpm exec commitlint
+        env:
+          TITLE: ${{ github.event.pull_request.title }}

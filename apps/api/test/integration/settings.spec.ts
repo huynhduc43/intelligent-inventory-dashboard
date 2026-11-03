@@ -3,6 +3,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
+import { whileRowLocked } from './support/lock.js';
 import { startMigratedPostgres } from './support/postgres.js';
 import {
   ADMIN,
@@ -215,27 +216,16 @@ describe('dealership settings', { timeout: 30_000 }, () => {
   });
 
   it('a threshold check violated by a racing commit is 422 THRESHOLDS_INVALID, not 500', async () => {
-    await db.query('BEGIN');
-    await db.query('UPDATE dealership SET aging_days = 61 WHERE id = $1', [
-      LONDON,
-    ]);
     // The guard reads the committed 60/90, so 89 passes validateThresholds; the UPDATE then blocks on the row lock.
-    const pending = patch({ watchDays: 89 }).then((r) => r);
-    let blocked = false;
-    for (let i = 0; i < 100; i++) {
-      const { rowCount } = await db.query(
-        `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock'`,
-      );
-      if (rowCount) {
-        blocked = true;
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 50));
-    }
-    await db.query('COMMIT');
-    expect(blocked).toBe(true);
-
-    const res = await pending;
+    const res = await whileRowLocked(
+      container.getConnectionUri(),
+      (holder) =>
+        holder.query('UPDATE dealership SET aging_days = 61 WHERE id = $1', [
+          LONDON,
+        ]),
+      () => patch({ watchDays: 89 }),
+      '%UPDATE dealership%',
+    );
 
     expectProblem(res, 422, 'THRESHOLDS_INVALID');
     expect(res.body).toMatchObject({

@@ -3,6 +3,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
+import { whileRowLocked } from './support/lock.js';
 import { startMigratedPostgres } from './support/postgres.js';
 import {
   ADMIN,
@@ -173,37 +174,20 @@ describe('vehicle status', { timeout: 30_000 }, () => {
 
   it('a sell that commits first makes the blocked reserve a 409; final SOLD with sold_at', async () => {
     const id = await insert('IN_STOCK');
-    const holder = new pg.Client({
-      connectionString: container.getConnectionUri(),
-    });
-    await holder.connect();
-    try {
-      await holder.query('BEGIN');
-      await holder.query(
-        `UPDATE vehicle SET status = 'SOLD', sold_at = $2 WHERE id = $1`,
-        [id, NOW],
-      );
-      const blocked = move(id, 'RESERVED').then((r) => r);
-      let waiting = false;
-      for (let i = 0; i < 50 && !waiting; i++) {
-        const w = await db.query(
-          `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%UPDATE vehicle%'`,
-        );
-        waiting = !!w.rowCount;
-        if (!waiting) await new Promise((r) => setTimeout(r, 100));
-      }
-      // Without a waiter the race was never exercised; fail rather than pass vacuously.
-      if (!waiting)
-        throw new Error('blocked UPDATE never appeared as a Lock waiter');
-      await holder.query('COMMIT');
-      const res = await blocked;
-      expect(res.status).toBe(409);
-      const r = await row(id);
-      expect(r.status).toBe('SOLD');
-      expect(r.sold_at).not.toBeNull();
-    } finally {
-      await holder.end();
-    }
+    const res = await whileRowLocked(
+      container.getConnectionUri(),
+      (holder) =>
+        holder.query(
+          `UPDATE vehicle SET status = 'SOLD', sold_at = $2 WHERE id = $1`,
+          [id, NOW],
+        ),
+      () => move(id, 'RESERVED'),
+      '%UPDATE vehicle%',
+    );
+    expect(res.status).toBe(409);
+    const r = await row(id);
+    expect(r.status).toBe('SOLD');
+    expect(r.sold_at).not.toBeNull();
   });
 
   it('two parallel sells: one 200, one 409', async () => {

@@ -15,7 +15,7 @@
     "test:cov": "turbo run test:cov",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "corepack pnpm install --frozen-lockfile && pnpm format:check && turbo run lint typecheck test:cov",
+    "verify": "corepack pnpm install --frozen-lockfile && pnpm format:check && turbo run lint typecheck test:cov && node --test '.claude/skills/deliver/*.test.mjs'",
     "prepare": "husky"
   },
   "lint-staged": {

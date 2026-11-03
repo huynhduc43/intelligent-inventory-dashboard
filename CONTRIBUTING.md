@@ -2,7 +2,7 @@
 
 ## Setup
 
-Node 24 (`nvm use`; pnpm itself runs scripts on the `use-node-version` in `.npmrc`) and pnpm via corepack (`corepack enable`, version pinned in `package.json`; in agent shells call `corepack pnpm`, and check `git diff --quiet pnpm-lock.yaml` after installing). `pnpm install` also installs the git hooks.
+Node 24 (`nvm use`; pnpm itself runs scripts on the Node in `devEngines.runtime` in `package.json`) and pnpm via corepack (`corepack enable`, version pinned in `package.json`; in agent shells call `corepack pnpm`, since a bare `pnpm` can be an older global install that ignores the pin, and check `git diff --quiet pnpm-lock.yaml` after installing). `pnpm install` also installs the git hooks.
 
 ## Branches
 

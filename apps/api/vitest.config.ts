@@ -26,6 +26,7 @@ export default defineConfig({
       exclude: [
         'src/main.ts',
         'src/export-openapi.ts',
+        'src/explain-queries.ts',
         'src/**/*.module.ts',
         'src/shared/schema.ts',
       ],

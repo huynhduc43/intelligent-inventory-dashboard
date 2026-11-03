@@ -16,7 +16,7 @@ Never commit or push directly to `dev` or `main`: they only receive changes thro
 
 ## Pull requests
 
-- Target `dev`. Title `<type>: <summary>`, with `(closes #NNN)` when the PR closes an issue or `(#NNN)` when it only references one; link the issue in the description.
+- Target `dev`. The title is a commit header (see **Commits**), e.g. `feat(inventory): add tier filter (#12)`; the `PR title` workflow checks it with commitlint (CI only: a title does not exist before the PR). Close the issue in the description (`Closes #NNN`).
 - Run `pnpm verify` (the same checks as CI: `install --frozen-lockfile`, which also enforces the release-age cooldown, `format:check`, `lint`, `typecheck`, `test:cov`, and the `/deliver` evidence-check tests; needs Docker; CI also runs `docker build -f apps/api/Dockerfile .`) before opening a PR. Add new checks to that script.
 - A change that needs a step outside the repo (env var or secret, DB migration to run, cloud/console setting) records it in `docs/environment-setup.md` in the same PR, per environment, and lists it under **Manual steps** in the PR description.
 - Under **Doc impact**, list each doc the change updates, one line with what changed, or `none` with the reason. Check: the `docs/system-design.md` section whose component, flow, schema, technology or observability changed; each diagram in `docs/diagrams/` that shows it (edit the HTML with `diagram-design`, re-export the SVG); `docs/adr/` (a new decision, or one that supersedes a D-number or an ADR); `GLOSSARY.md`; the **Status** in README.md and CLAUDE.md.
@@ -29,6 +29,7 @@ Never commit or push directly to `dev` or `main`: they only receive changes thro
 | commit-msg | commitlint                                                           |
 | pre-push   | branch-name check, then `turbo run typecheck test`                   |
 | CI         | `format:check`, `lint`, `typecheck`, `test:cov` (coverage gate here) |
+| PR title   | commitlint on the PR title                                           |
 
 ## Naming
 
@@ -59,4 +60,4 @@ Vitest, two projects in `apps/api/vitest.config.ts`:
 - `test/unit/**/*.spec.ts`: pure logic, no I/O. Runs on pre-push.
 - `test/integration/**/*.spec.ts`: real Postgres via Testcontainers (needs Docker).
 
-Coverage (`pnpm test:cov`, gated in CI): **80%** lines, branches, functions and statements globally; **100%** for `src/modules/*/domain/**`. `main.ts`, `*.module.ts` and `src/shared/schema.ts` (declarations only; its migration is checked by the DB integration test) are excluded.
+Coverage (`pnpm test:cov`, gated in CI): **80%** lines, branches, functions and statements globally; **100%** for `src/modules/*/domain/**`. `main.ts`, `export-openapi.ts`, `explain-queries.ts`, `*.module.ts` and `src/shared/schema.ts` (declarations only; its migration is checked by the DB integration test) are excluded.

@@ -221,14 +221,19 @@ describe('dealership settings', { timeout: 30_000 }, () => {
     ]);
     // The guard reads the committed 60/90, so 89 passes validateThresholds; the UPDATE then blocks on the row lock.
     const pending = patch({ watchDays: 89 }).then((r) => r);
+    let blocked = false;
     for (let i = 0; i < 100; i++) {
       const { rowCount } = await db.query(
         `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock'`,
       );
-      if (rowCount) break;
+      if (rowCount) {
+        blocked = true;
+        break;
+      }
       await new Promise((r) => setTimeout(r, 50));
     }
     await db.query('COMMIT');
+    expect(blocked).toBe(true);
 
     const res = await pending;
 

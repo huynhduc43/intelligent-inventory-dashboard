@@ -184,13 +184,17 @@ describe('vehicle status', { timeout: 30_000 }, () => {
         [id, NOW],
       );
       const blocked = move(id, 'RESERVED').then((r) => r);
-      for (let i = 0; i < 50; i++) {
+      let waiting = false;
+      for (let i = 0; i < 50 && !waiting; i++) {
         const w = await db.query(
           `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%UPDATE vehicle%'`,
         );
-        if (w.rowCount) break;
-        await new Promise((r) => setTimeout(r, 100));
+        waiting = !!w.rowCount;
+        if (!waiting) await new Promise((r) => setTimeout(r, 100));
       }
+      // Without a waiter the race was never exercised; fail rather than pass vacuously.
+      if (!waiting)
+        throw new Error('blocked UPDATE never appeared as a Lock waiter');
       await holder.query('COMMIT');
       const res = await blocked;
       expect(res.status).toBe(409);

@@ -120,7 +120,7 @@ At 25 rps, each poll runs one aggregate over ≤ 2,000 rows (milliseconds). One 
 ### P1: Time-derived tiers must be time-zone-correct
 
 - **Why local calendar days:** managers and DMS exports think in dates ("arrived 1 Aug"). A tier should flip at the dealership's midnight, not at UTC midnight (11:00 in Sydney). Subtracting two dates is immune to DST.
-- **One time-zone source:** Postgres computes `today_local = (now() AT TIME ZONE d.timezone)::date` ([AT TIME ZONE](https://www.postgresql.org/docs/current/functions-datetime.html#FUNCTIONS-DATETIME-ZONECONVERT)). Node never does time-zone maths, so there is only one tzdata version in play. Time zones are validated against `pg_timezone_names` ([docs](https://www.postgresql.org/docs/current/view-pg-timezone-names.html)).
+- **One time-zone source:** Postgres computes `today_local = (now() AT TIME ZONE d.timezone)::date` ([AT TIME ZONE](https://www.postgresql.org/docs/current/functions-datetime.html#FUNCTIONS-DATETIME-ZONECONVERT)). Node never does time-zone maths, so there is only one tzdata version in play. Time zones are validated against `pg_timezone_names` ([docs](https://www.postgresql.org/docs/current/view-pg-timezone-names.html)). (Narrowed by [ADR 0015](../adr/0015-time-zone-must-be-a-zone-name-not-an-abbreviation.md): a name that is also an abbreviation is rejected.)
 - **`stocked_on` is a `date` column.** `date − date` returns integer days ([datetime operators](https://www.postgresql.org/docs/current/functions-datetime.html)), and every age filter becomes a plain, indexable date comparison.
 - **`AgingPolicy`** (pure TypeScript, no I/O) owns `tierOf`, `bucketOf`, `validateThresholds` and `toStockedOnBounds` (turns "tier = AGING" or "age 30–60" into `stocked_on` bounds). SQL only receives the bounds. This is the core business logic and gets the most tests.
 - **Testability:** `now` comes from an injected `Clock` and is passed into the SQL as a parameter, so tests can pin the date.
@@ -171,6 +171,7 @@ Rules: only the owning module writes a table; `dashboard` is the only module tha
 flowchart TD
   auth --> shared
   dealerships --> auth
+  %% superseded by ADR 0014 (docs/adr/0014-dealerships-uses-aging-policy-validate-thresholds.md)
   inventory --> dealerships
   %% superseded by ADR 0013 (docs/adr/0013-actions-read-vehicle-status-in-the-insert.md)
   actions --> inventory

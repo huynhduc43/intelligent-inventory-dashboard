@@ -8,6 +8,10 @@ The backend that shows each dealership how long its vehicles have been in stock 
 One car lot with its own stock, time zone and aging thresholds. Every other record belongs to exactly one.
 _Avoid_: Tenant, store, branch
 
+**Settings**:
+A dealership's time zone and its two aging thresholds, watch and aging days. Any member can read them; only an Admin changes them, and a change applies from the next request.
+_Avoid_: Preferences, configuration
+
 **User**:
 A person who logs in with an email and password. A user exists independently of any dealership.
 _Avoid_: Account, member

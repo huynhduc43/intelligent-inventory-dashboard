@@ -22,20 +22,23 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import { problemContent } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
+import { component } from '../../shared/components.js';
 import { text } from '../../shared/text.js';
 import { UUID } from '../auth/dealership.guard.js';
 import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
 import { ACTION_TYPES, ActionsService } from './actions.service.js';
 
-const createActionSchema = z.strictObject({
-  actionType: z.enum(ACTION_TYPES),
-  note: text().trim().max(1000).nullish(),
-});
+const createActionSchema = z
+  .strictObject({
+    actionType: z.enum(ACTION_TYPES),
+    note: text().trim().max(1000).nullish(),
+  })
+  .meta({ id: 'LogActionRequest' });
 
-const actionOpenApi: SchemaObject = {
+const actionSchema: SchemaObject = {
   type: 'object',
   required: ['id', 'actionType', 'note', 'createdBy', 'createdAt'],
   properties: {
@@ -46,6 +49,7 @@ const actionOpenApi: SchemaObject = {
     createdAt: { type: 'string', format: 'date-time' },
   },
 };
+const actionOpenApi = component('Action', actionSchema);
 
 const pathParams = applyDecorators(
   ApiParam({ name: 'dealershipId', type: 'string', format: 'uuid' }),
@@ -55,12 +59,12 @@ const notFound = ApiResponse({
   status: 404,
   description:
     'Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member',
-  content: problemRef,
+  content: problemContent(404),
 });
 const unauthenticated = ApiResponse({
   status: 401,
   description: 'Unauthenticated',
-  content: problemRef,
+  content: problemContent(401),
 });
 
 const dealershipId = (req: AuthedRequest) => {
@@ -84,19 +88,19 @@ export class ActionsController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (body or query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @unauthenticated
   @ApiResponse({
     status: 403,
     description: 'The caller lacks vehicle_action:create',
-    content: problemRef,
+    content: problemContent(403),
   })
   @notFound
   @ApiResponse({
     status: 409,
     description: 'VEHICLE_NOT_IN_STOCK: the vehicle is RESERVED or SOLD',
-    content: problemRef,
+    content: problemContent(409, 'VEHICLE_NOT_IN_STOCK'),
   })
   async create(
     @Req() req: AuthedRequest,
@@ -123,16 +127,16 @@ export class ActionsController {
   @pathParams
   @ApiOkResponse({
     description: 'Every action of the vehicle, newest first',
-    schema: {
+    schema: component('ActionList', {
       type: 'object',
       required: ['items'],
       properties: { items: { type: 'array', items: actionOpenApi } },
-    },
+    }),
   })
   @ApiResponse({
     status: 400,
     description: 'Validation failed (the route takes no query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @unauthenticated
   @notFound

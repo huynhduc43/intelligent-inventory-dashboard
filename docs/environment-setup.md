@@ -25,7 +25,7 @@ Validated at startup by `apps/api/src/shared/config.ts`; the api exits non-zero 
 4. Seed the demo users: `pnpm --filter @inventory/api db:seed` (see Seed data).
 5. `pnpm dev`, then `curl localhost:3000/health/ready`.
 
-Non-interactive shells (git hooks, agents) do not read `.nvmrc`, so the default Node can be too old. `.npmrc` sets `use-node-version`, so pnpm downloads that Node on first use and runs every script and hook with it; no per-machine step. Bump it together with `.nvmrc` and `engines`. `.npmrc` sets `engine-strict=true`, so `pnpm install` on a Node below the `engines` floor fails at once instead of at the first `crypto.argon2` call.
+Non-interactive shells (git hooks, agents) do not read `.nvmrc`, so the default Node can be too old. `package.json` sets `devEngines.runtime` (`onFail: download`), so pnpm 12 downloads that Node (checksums in `pnpm-lock.yaml`) and runs every script and hook with it; no per-machine step. Bump it together with `.nvmrc` and `engines`, then run `corepack pnpm install`. This only holds under the pinned pnpm: the hooks call `corepack pnpm`, and so should you. A global pnpm older than 12 first on `PATH` (e.g. a standalone install in `~/Library/pnpm`) ignores `devEngines.runtime`; remove it, or check with `corepack pnpm exec node -v`, which must print the pinned version.
 
 Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 

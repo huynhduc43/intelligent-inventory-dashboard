@@ -23,7 +23,11 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { z } from 'zod';
-import { problemRef, ValidationFailedException } from '../../shared/problem.js';
+import {
+  problemContent,
+  ValidationFailedException,
+} from '../../shared/problem.js';
+import { component } from '../../shared/components.js';
 import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
@@ -32,7 +36,7 @@ import { changeStatusSchema, createVehicleSchema } from './vehicles.body.js';
 import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
 
-const vehicleOpenApi: SchemaObject = {
+const vehicleSchema: SchemaObject = {
   type: 'object',
   required: [
     'id',
@@ -87,6 +91,7 @@ const vehicleOpenApi: SchemaObject = {
     },
   },
 };
+const vehicleOpenApi = component('Vehicle', vehicleSchema);
 
 const dealershipParam = ApiParam({
   name: 'dealershipId',
@@ -131,29 +136,29 @@ export class VehiclesController {
   })
   @ApiOkResponse({
     description: 'A page of vehicles and the total matching the filters',
-    schema: {
+    schema: component('VehicleList', {
       type: 'object',
       required: ['items', 'total'],
       properties: {
         items: { type: 'array', items: vehicleOpenApi },
         total: { type: 'integer' },
       },
-    },
+    }),
   })
   @ApiResponse({
     status: 400,
     description: 'Validation failed',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 404,
     description: 'Unknown dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   list(
     @Req() req: AuthedRequest,
@@ -174,29 +179,29 @@ export class VehiclesController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (body or query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 403,
     description: 'The caller lacks vehicle:create',
-    content: problemRef,
+    content: problemContent(403),
   })
   @ApiResponse({
     status: 404,
     description:
       'Unknown or malformed dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   @ApiResponse({
     status: 409,
     description:
       'VIN_ALREADY_IN_STOCK: an IN_STOCK or RESERVED vehicle here has the VIN',
-    content: problemRef,
+    content: problemContent(409, 'VIN_ALREADY_IN_STOCK'),
   })
   async create(
     @Req() req: AuthedRequest,
@@ -228,18 +233,18 @@ export class VehiclesController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (the route takes no query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 404,
     description:
       'Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   get(
     @Req() req: AuthedRequest,
@@ -263,29 +268,29 @@ export class VehiclesController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (body or query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 403,
     description: 'The caller lacks vehicle:change_status',
-    content: problemRef,
+    content: problemContent(403),
   })
   @ApiResponse({
     status: 404,
     description:
       'Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   @ApiResponse({
     status: 409,
     description:
       'INVALID_TRANSITION: the move is not allowed from the current status, including the same status',
-    content: problemRef,
+    content: problemContent(409, 'INVALID_TRANSITION'),
   })
   changeStatus(
     @Req() req: AuthedRequest,

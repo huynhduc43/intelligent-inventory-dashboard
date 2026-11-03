@@ -181,6 +181,7 @@ The author never approves its own work.
 
 - **The `/deliver` evaluation ran once**, so there is no variance estimate.
 - **Later skill changes are not re-measured.** The three fixes made after that evaluation (stop on any conflict with the design, acceptance criteria in the spec, the Contract role reads the invariants), and the later retro changes, have not been through a second evaluation; I waived the rerun for cost each time (e.g. C11, C23, C39).
+- **Issue labels are not specific yet.** `/deliver` files every retro candidate with the same `needs-triage` label (42 issues so far) instead of a label that says what it is or who should take it (`ready-for-agent`, `ready-for-human`, `bug`, …), so sorting them is still manual.
 - **One evaluation finding is still open:** at spec time the agent adds decisions the grill did not settle, instead of asking. The finish fixture and the implementer's scope assertion also need fixing before the next evaluation.
 
 ## Contributing

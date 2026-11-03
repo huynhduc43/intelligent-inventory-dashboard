@@ -54,6 +54,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#79](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79) | Dealership settings: `GET`/`PATCH …/settings` (#14)                                     | `/deliver` under `grill=auto`/`approve=auto`: research note, 12 decisions, ADRs 0014 and 0015, glossary term, two diagrams, contract, implementation on sonnet, two review rounds, tester                                        | `pnpm verify`; two review rounds, 8 findings fixed (C37, C38); Tester passed AC 1–12 against the running API                        | The user chose where `validateThresholds` lives (C35), the modes and the implementer model; the other decisions were the agent's (C36)                                      |
 | [#87](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/87) | Retro follow-ups #81–#83: evidence check, lock-wait helper, CI gate before review       | Diagnosed why three rules recurred after #61, #70 and #68, built a red-capable loop for each, replaced prompt rules with a script, a test helper and an orchestrator step                                                        | `pnpm verify`; each check goes red on #79's recorded failure and green on the fix (C39)                                             | The user asked for the root cause, and waived the `/deliver` eval rerun                                                                                                     |
 | [#90](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/90) | Curl examples for every route, `db:explain` and README `EXPLAIN ANALYZE` evidence (#15) | `/deliver` under `grill=auto`/`approve=auto`, implementer on Sonnet: research note with a real 20k seed, spec in #15, a script that replays the services' own SQL under `EXPLAIN (ANALYZE, BUFFERS)`                             | 1 fix round, 6 findings (C40, C41); tester walked AC 1–5 on a fresh 20k seed, all pass                                              | PNG export setup (C43) and reviewer GitHub write permission (C42); everything else the agent decided                                                                        |
+| [#98](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/98) | Request and 2xx response bodies are named, linked OpenAPI components (#97)              | `/deliver` under `grill=auto`/`approve=auto`, research, diagram and contract roles skipped as unneeded; probed zod `.meta({ id })` before writing the spec; ADR 0016; implementer on Sonnet                                      | 1 fix round, 1 finding (C45); tester checked AC 1–7 on a live `/docs-json`, all pass                                                | The user asked for the fix and allowed skipping roles; the agent decided the rest (C44)                                                                                     |
 
 ## Cases
 
@@ -443,3 +444,21 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** the setup is per machine and already documented; skipping the PNG would leave the spec without its figure.
 - **Verification:** export ran with `~/.venvs/diagrams/bin/python`; the 1000 px copy was read and one label crossed by an arrow was moved before commit.
 - **Outcome:** diagram published under `docs/diagrams/specs/issue-15/`.
+
+### C44: A false negative from the wrong Node version (#98)
+
+- **Problem:** before filing the spec, the orchestrator checked whether a zod `.meta({ id })` turns a request body into a named component. The first run showed no component, which would have pushed the design to a hand-written name map.
+- **AI proposal:** instead of accepting the result, the orchestrator reran with the output visible; the export had failed under Node 23, and the document on disk was the old one. Under `nvm use` (Node 24) the body became `$ref ChangeStatus`.
+- **Decided by:** agent (grill=auto).
+- **Decision and reasoning:** bodies are named by zod `.meta({ id })` with no new code; responses use a small registry like `Problem`'s (ADR 0016).
+- **Verification:** the probe's regenerated `openapi.json` listed `ChangeStatus` under `components.schemas`.
+- **Outcome:** a probe whose output was sent to `/dev/null` nearly settled a design; output now stays visible on such checks.
+
+### C45: Doc impact said "no change" to system-design.md (#98)
+
+- **Problem:** `docs/system-design.md` cited only ADR 0010 for the OpenAPI document, whose "only hand-registered component is `Problem`" the PR made untrue; the PR's **Doc impact** said the file needed no change.
+- **AI proposal:** the implementer left the system description as it was.
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** business review round 1 flagged it (PR comment 6603313523); the system description must match the system (CLAUDE.md docs rule).
+- **Verification:** round 2 business review confirmed the bullet now cites ADR 0016.
+- **Outcome:** one sentence added to the Client stub bullet; Doc impact corrected.

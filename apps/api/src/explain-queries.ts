@@ -2,10 +2,12 @@
 // "Performance evidence"). It calls the real services with a drizzle logger that records each statement, then replays
 // every recorded SELECT through the same pool: pg sends parameterised queries as unnamed prepared statements, which
 // Postgres plans with the actual values, so the replay gets the app's plan. Run it on a seeded database.
-import { sql } from 'drizzle-orm';
+import type { ExecutionContext } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import type { DealershipContext } from './modules/auth/request-context.js';
+import { DealershipGuard } from './modules/auth/dealership.guard.js';
+import type { AuthedRequest } from './modules/auth/request-context.js';
 import { DashboardService } from './modules/dashboard/dashboard.query.js';
 import { VehiclesService } from './modules/inventory/vehicles.service.js';
 import { vehicleListQuery } from './modules/inventory/vehicles.query.js';
@@ -24,25 +26,22 @@ const db = drizzle({
 });
 const clock = new SystemClock();
 
-// The same context query DealershipGuard runs, so today_local is computed in Postgres.
-const { rows } = await db.execute<{
-  timezone: string;
-  watch_days: number;
-  aging_days: number;
-  today_local: string;
-}>(sql`
-  SELECT timezone, watch_days, aging_days,
-         ((${clock.now().toISOString()}::timestamptz AT TIME ZONE timezone)::date)::text AS today_local
-  FROM dealership WHERE id = ${LONDON}`);
-const d = rows[0];
-if (!d) throw new Error('London dealership not found: run db:seed first');
-const ctx: DealershipContext = {
-  role: 'ADMIN',
-  timezone: d.timezone,
-  watchDays: d.watch_days,
-  agingDays: d.aging_days,
-  todayLocal: d.today_local,
-};
+// The context comes from DealershipGuard itself (seeded admin, London), so today_local is computed in Postgres by the
+// guard's own query and cannot drift from it.
+const ADMIN = '00000000-0000-4000-8000-0000000000a1';
+const req = {
+  userId: ADMIN,
+  params: { dealershipId: LONDON },
+} as unknown as AuthedRequest;
+const guard = new DealershipGuard(db, clock, {
+  get: () => 'vehicle:read',
+} as unknown as Reflector);
+await guard.canActivate({
+  switchToHttp: () => ({ getRequest: () => req }),
+  getHandler: () => undefined,
+} as unknown as ExecutionContext);
+const ctx = req.dealership;
+if (!ctx) throw new Error('DealershipGuard set no context');
 
 const vehicles = new VehiclesService(db, clock);
 const dashboard = new DashboardService(db, clock);
@@ -51,10 +50,7 @@ const list = (q: Record<string, string>) => () =>
 const cases: [string, () => Promise<unknown>][] = [
   ['List: default (IN_STOCK, oldest first, limit 50)', list({})],
   ['List: tier=AGING', list({ tier: 'AGING' })],
-  [
-    'List: make=Toyota&model=Corolla',
-    list({ make: 'Toyota', model: 'Corolla' }),
-  ],
+  ['List: make=Ford&model=Focus', list({ make: 'Ford', model: 'Focus' })],
   [
     'List: tier=AGING&hasAction=false',
     list({ tier: 'AGING', hasAction: 'false' }),

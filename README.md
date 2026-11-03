@@ -83,7 +83,7 @@ pnpm --filter @inventory/api exec vitest run -t "tierOf"
 
 ## Performance evidence
 
-Target (§1.4): the dashboard and a 50-row list page answer in p95 ≤ 300 ms at 2,000 in-stock vehicles. The plans below are at **8× that size**: `SEED_VEHICLES_PER_DEALERSHIP=20000`, which is about 16,000 in-stock vehicles per dealership (60,003 vehicles and about 19,000 actions over the three seeded dealerships). Every statement runs in under 50 ms, so the target holds with a wide margin.
+Target (§1.4): the dashboard and a 50-row list page answer in p95 ≤ 300 ms at 2,000 in-stock vehicles. The plans below are at **8× that size**: `SEED_VEHICLES_PER_DEALERSHIP=20000`, which is about 16,000 in-stock vehicles per dealership (60,003 vehicles and about 19,000 actions over the three seeded dealerships). The list page runs in 39 ms and the dashboard request (its three statements) in about 46 ms in total, so both targets hold with a wide margin.
 
 Reproduce (the seed must go into an **empty** database: it adds actions only to a dealership that has none, so seeding 20,000 on top of the default 250 leaves almost no actions):
 
@@ -97,19 +97,20 @@ pnpm --filter @inventory/api db:explain
 
 `db:explain` ([`src/explain-queries.ts`](apps/api/src/explain-queries.ts)) runs `ANALYZE`, then calls the real `VehiclesService.list` and `DashboardService.get` for the London dealership with a logger that records each SQL statement, and replays every recorded `SELECT` as `EXPLAIN (ANALYZE, BUFFERS)` with the same text and parameters. The plans therefore come from the SQL the app really sends and cannot drift from the code. Execution times are from one run on a laptop (PostgreSQL 17.11 in Docker, warm cache, 2026-11-03); yours will differ.
 
-| Case                                       | Plan                                                         | Execution |
-| ------------------------------------------ | ------------------------------------------------------------ | --------- |
-| List, default (in stock, oldest, limit 50) | Seq Scan on `vehicle`, latest-action index lookup per row    | 45 ms     |
-| List, `tier=AGING`                         | Seq Scan, same shape                                         | 25 ms     |
-| List, `make=Toyota&model=Corolla`          | Index Scan on `vehicle_dealership_make_model_idx`            | 0.6 ms    |
-| List, `tier=AGING&hasAction=false`         | Seq Scan, same shape                                         | 19 ms     |
-| Dashboard, KPIs and age buckets            | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 23 ms     |
-| Dashboard, make and model                  | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 5 ms      |
-| Dashboard, current-action counts           | Bitmap Index Scan, then latest-action index lookup per row   | 24 ms     |
+| Case                                        | Plan                                                         | Execution |
+| ------------------------------------------- | ------------------------------------------------------------ | --------- |
+| List, default (in stock, oldest, limit 50)  | Seq Scan on `vehicle`, latest-action index lookup per row    | 39 ms     |
+| List, `tier=AGING`                          | Seq Scan, same shape                                         | 22 ms     |
+| List, `make=Ford&model=Focus`               | Index Scan on `vehicle_dealership_make_model_idx`            | 7 ms      |
+| List, `tier=AGING&hasAction=false`          | Seq Scan, same shape                                         | 18 ms     |
+| Dashboard, KPIs and age buckets             | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 20 ms     |
+| Dashboard, make and model                   | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 5 ms      |
+| Dashboard, current-action counts            | Bitmap Index Scan, then latest-action index lookup per row   | 21 ms     |
+| **Dashboard request, total (3 statements)** |                                                              | **46 ms** |
 
 Reading the plans:
 
-- **List.** The cost is the latest-action lookup (`LEFT JOIN LATERAL … ORDER BY id DESC LIMIT 1`, an index scan on `vehicle_action_vehicle_id_idx` per vehicle) for every matching row before the `LIMIT`, because the total (`count(*) OVER ()`) and the sort sit above the join. It grows linearly with the in-stock count, so it is about 45 ms at 16,000 and a fraction of that at 2,000. The planner picks a Seq Scan of `vehicle` here: that join is estimated at about 10 cost units per row, which swamps the difference between the scan paths, and the seed puts a third of the table in one dealership (at the designed 50 dealerships it would be about 2%). Shown as it comes out, not tuned. Filtering by make and model uses its index and takes under a millisecond.
+- **List.** The cost is the latest-action lookup (`LEFT JOIN LATERAL … ORDER BY id DESC LIMIT 1`, an index scan on `vehicle_action_vehicle_id_idx` per vehicle) for every matching row before the `LIMIT`, because the total (`count(*) OVER ()`) and the sort sit above the join. It grows linearly with the in-stock count, so it is about 39 ms at 16,000 and a fraction of that at 2,000. The planner picks a Seq Scan of `vehicle` here: that join is estimated at about 10 cost units per row, which swamps the difference between the scan paths, and the seed puts a third of the table in one dealership (at the designed 50 dealerships it would be about 2%). Shown as it comes out, not tuned. Filtering by make and model uses its index (about 4,000 matching in-stock rows for a typical pair, so the same per-row lookup applies: 7 ms).
 - **Dashboard.** Three statements in one `REPEATABLE READ` read-only transaction, each a Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` (dealership, status, `stocked_on`), then an aggregate. The "aging with no action" subquery and the current-action counts use the same `vehicle_action_vehicle_id_idx` lookup.
 - **JIT.** PostgreSQL's JIT compiler fires on three statements (the list default and two dashboard statements) because the lookup's cost estimate passes `jit_above_cost`; it adds 5 to 10 ms each. Turning it off is a server tuning decision, outside this evidence.
 
@@ -119,119 +120,118 @@ Reading the plans:
 ```text
 $ nest build && node --env-file-if-exists=.env dist/explain-queries.js
 
-Postgres 17.11, dealership London, today_local 2026-11-03
+Postgres 17.11 (Debian 17.11-1.pgdg13+2), dealership London, today_local 2026-11-03
 
 === List: default (IN_STOCK, oldest first, limit 50) (statement 1 of 1)
-Limit  (cost=169245.35..169245.47 rows=50 width=184) (actual time=44.429..44.435 rows=50 loops=1)
+Limit  (cost=170291.17..170291.29 rows=50 width=185) (actual time=38.684..38.691 rows=50 loops=1)
   Buffers: shared hit=36718
-  ->  Sort  (cost=169245.35..169285.38 rows=16012 width=184) (actual time=35.184..35.187 rows=50 loops=1)
+  ->  Sort  (cost=170291.17..170331.45 rows=16112 width=185) (actual time=31.498..31.501 rows=50 loops=1)
         Sort Key: v.stocked_on, v.id
         Sort Method: top-N heapsort  Memory: 36kB
         Buffers: shared hit=36718
-        ->  WindowAgg  (cost=168342.66..168713.44 rows=16012 width=184) (actual time=25.444..31.160 rows=16020 loops=1)
+        ->  WindowAgg  (cost=169382.90..169755.94 rows=16112 width=185) (actual time=22.230..27.365 rows=16020 loops=1)
               Buffers: shared hit=36718
-              ->  Nested Loop Left Join  (cost=0.29..168153.02 rows=16012 width=128) (actual time=0.038..21.444 rows=16020 loops=1)
+              ->  Nested Loop Left Join  (cost=0.29..169192.02 rows=16112 width=129) (actual time=0.024..18.655 rows=16020 loops=1)
                     Buffers: shared hit=36718
-                    ->  Seq Scan on vehicle v  (cost=0.00..2002.07 rows=16012 width=92) (actual time=0.017..6.525 rows=16020 loops=1)
+                    ->  Seq Scan on vehicle v  (cost=0.00..2002.04 rows=16112 width=92) (actual time=0.010..6.144 rows=16020 loops=1)
                           Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 43985
+                          Rows Removed by Filter: 43983
                           Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=16020)
+                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=16020)
                           Buffers: shared hit=35541
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=16020)
+                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.000..0.000 rows=0 loops=16020)
                                 Index Cond: (vehicle_id = v.id)
                                 Filter: (dealership_id = v.dealership_id)
                                 Buffers: shared hit=35541
-Planning Time: 0.154 ms
+Planning Time: 0.160 ms
 JIT:
   Functions: 16
   Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.725 ms (Deform 0.381 ms), Inlining 0.000 ms, Optimization 0.296 ms, Emission 8.979 ms, Total 10.000 ms
-Execution Time: 45.352 ms
+  Timing: Generation 0.506 ms (Deform 0.241 ms), Inlining 0.000 ms, Optimization 0.352 ms, Emission 6.849 ms, Total 7.707 ms
+Execution Time: 39.268 ms
 
 === List: tier=AGING (statement 1 of 1)
-Limit  (cost=93513.37..93513.50 rows=50 width=184) (actual time=24.653..24.664 rows=50 loops=1)
+Limit  (cost=93451.41..93451.53 rows=50 width=185) (actual time=22.084..22.090 rows=50 loops=1)
   Buffers: shared hit=22182
-  ->  Sort  (cost=93513.37..93535.24 rows=8747 width=184) (actual time=24.651..24.654 rows=50 loops=1)
+  ->  Sort  (cost=93451.41..93473.26 rows=8741 width=185) (actual time=22.084..22.087 rows=50 loops=1)
         Sort Key: v.stocked_on, v.id
         Sort Method: top-N heapsort  Memory: 37kB
         Buffers: shared hit=22182
-        ->  WindowAgg  (cost=93015.36..93222.80 rows=8747 width=184) (actual time=18.510..22.405 rows=8752 loops=1)
+        ->  WindowAgg  (cost=92953.73..93161.04 rows=8741 width=185) (actual time=16.463..19.769 rows=8752 loops=1)
               Buffers: shared hit=22182
-              ->  Nested Loop Left Join  (cost=0.29..92916.66 rows=8747 width=128) (actual time=0.025..16.166 rows=8752 loops=1)
+              ->  Nested Loop Left Join  (cost=0.29..92855.10 rows=8741 width=129) (actual time=0.011..14.459 rows=8752 loops=1)
                     Buffers: shared hit=22182
-                    ->  Seq Scan on vehicle v  (cost=0.00..2152.08 rows=8747 width=92) (actual time=0.007..7.491 rows=8752 loops=1)
+                    ->  Seq Scan on vehicle v  (cost=0.00..2152.05 rows=8741 width=92) (actual time=0.005..7.057 rows=8752 loops=1)
                           Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (stocked_on <= '2026-08-04'::date) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 51253
+                          Rows Removed by Filter: 51251
                           Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=8752)
+                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
                           Buffers: shared hit=21005
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=8752)
+                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
                                 Index Cond: (vehicle_id = v.id)
                                 Filter: (dealership_id = v.dealership_id)
                                 Buffers: shared hit=21005
-Planning Time: 0.159 ms
-Execution Time: 24.786 ms
+Planning Time: 0.139 ms
+Execution Time: 22.119 ms
 
-=== List: make=Toyota&model=Corolla (statement 1 of 1)
-Limit  (cost=7786.58..7786.71 rows=50 width=184) (actual time=0.588..0.591 rows=20 loops=1)
-  Buffers: shared hit=439
-  ->  Sort  (cost=7786.58..7788.19 rows=642 width=184) (actual time=0.588..0.589 rows=20 loops=1)
+=== List: make=Ford&model=Focus (statement 1 of 1)
+Limit  (cost=7739.01..7739.14 rows=50 width=185) (actual time=7.064..7.069 rows=50 loops=1)
+  Buffers: shared hit=9233
+  ->  Sort  (cost=7739.01..7740.61 rows=638 width=185) (actual time=7.063..7.066 rows=50 loops=1)
         Sort Key: v.stocked_on, v.id
-        Sort Method: quicksort  Memory: 27kB
-        Buffers: shared hit=439
-        ->  WindowAgg  (cost=7738.74..7765.26 rows=642 width=184) (actual time=0.570..0.576 rows=20 loops=1)
-              Buffers: shared hit=439
-              ->  Nested Loop Left Join  (cost=0.58..7742.79 rows=642 width=128) (actual time=0.064..0.560 rows=20 loops=1)
-                    Buffers: shared hit=439
-                    ->  Index Scan using vehicle_dealership_make_model_idx on vehicle v  (cost=0.29..1080.98 rows=642 width=92) (actual time=0.054..0.526 rows=20 loops=1)
-                          Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (lower(make) = 'toyota'::text) AND (lower(model) = 'corolla'::text))
+        Sort Method: top-N heapsort  Memory: 38kB
+        Buffers: shared hit=9233
+        ->  WindowAgg  (cost=7691.39..7717.82 rows=638 width=185) (actual time=4.866..6.025 rows=4000 loops=1)
+              Buffers: shared hit=9233
+              ->  Nested Loop Left Join  (cost=0.58..7695.49 rows=638 width=129) (actual time=0.010..3.956 rows=4000 loops=1)
+                    Buffers: shared hit=9233
+                    ->  Index Scan using vehicle_dealership_make_model_idx on vehicle v  (cost=0.29..1075.13 rows=638 width=92) (actual time=0.007..0.761 rows=4000 loops=1)
+                          Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (lower(make) = 'ford'::text) AND (lower(model) = 'focus'::text))
                           Filter: (status = ANY ('{IN_STOCK}'::text[]))
-                          Rows Removed by Filter: 3983
-                          Buffers: shared hit=399
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=20)
-                          Buffers: shared hit=40
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=20)
+                          Buffers: shared hit=398
+                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=4000)
+                          Buffers: shared hit=8835
+                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=4000)
                                 Index Cond: (vehicle_id = v.id)
                                 Filter: (dealership_id = v.dealership_id)
-                                Buffers: shared hit=40
-Planning Time: 0.118 ms
-Execution Time: 0.633 ms
+                                Buffers: shared hit=8835
+Planning Time: 0.099 ms
+Execution Time: 7.091 ms
 
 === List: tier=AGING&hasAction=false (statement 1 of 1)
-Limit  (cost=92916.70..92916.71 rows=1 width=184) (actual time=19.403..19.410 rows=50 loops=1)
+Limit  (cost=92855.15..92855.15 rows=1 width=185) (actual time=17.937..17.942 rows=50 loops=1)
   Buffers: shared hit=22182
-  ->  Sort  (cost=92916.70..92916.71 rows=1 width=184) (actual time=19.402..19.406 rows=50 loops=1)
+  ->  Sort  (cost=92855.15..92855.15 rows=1 width=185) (actual time=17.936..17.939 rows=50 loops=1)
         Sort Key: v.stocked_on, v.id
         Sort Method: top-N heapsort  Memory: 36kB
         Buffers: shared hit=22182
-        ->  WindowAgg  (cost=0.29..92916.69 rows=1 width=184) (actual time=16.969..18.149 rows=5251 loops=1)
+        ->  WindowAgg  (cost=0.29..92855.14 rows=1 width=185) (actual time=15.581..16.603 rows=5251 loops=1)
               Buffers: shared hit=22182
-              ->  Nested Loop Left Join  (cost=0.29..92916.66 rows=1 width=128) (actual time=0.012..15.766 rows=5251 loops=1)
+              ->  Nested Loop Left Join  (cost=0.29..92855.10 rows=1 width=129) (actual time=0.007..14.430 rows=5251 loops=1)
                     Filter: (a.action_type IS NULL)
                     Rows Removed by Filter: 3501
                     Buffers: shared hit=22182
-                    ->  Seq Scan on vehicle v  (cost=0.00..2152.08 rows=8747 width=92) (actual time=0.005..7.299 rows=8752 loops=1)
+                    ->  Seq Scan on vehicle v  (cost=0.00..2152.05 rows=8741 width=92) (actual time=0.004..7.159 rows=8752 loops=1)
                           Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (stocked_on <= '2026-08-04'::date) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 51253
+                          Rows Removed by Filter: 51251
                           Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=8752)
+                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
                           Buffers: shared hit=21005
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=60) (actual time=0.001..0.001 rows=0 loops=8752)
+                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
                                 Index Cond: (vehicle_id = v.id)
                                 Filter: (dealership_id = v.dealership_id)
                                 Buffers: shared hit=21005
-Planning Time: 0.104 ms
-Execution Time: 19.479 ms
+Planning Time: 0.097 ms
+Execution Time: 17.967 ms
 
 === Dashboard (statement 1 of 3)
-Aggregate  (cost=168701.21..168701.25 rows=1 width=44) (actual time=22.500..22.501 rows=1 loops=1)
-  Buffers: shared hit=21417
-  ->  Bitmap Heap Scan on vehicle v  (cost=252.41..1669.59 rows=16012 width=36) (actual time=0.416..1.859 rows=16020 loops=1)
+Aggregate  (cost=169752.26..169752.30 rows=1 width=44) (actual time=19.629..19.630 rows=1 loops=1)
+  Buffers: shared hit=21416
+  ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=36) (actual time=0.390..1.665 rows=16020 loops=1)
         Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-        Heap Blocks: exact=394
-        Buffers: shared hit=412
-        ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..248.41 rows=16012 width=0) (actual time=0.382..0.382 rows=16022 loops=1)
+        Heap Blocks: exact=393
+        Buffers: shared hit=411
+        ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.361..0.362 rows=16020 loops=1)
               Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
               Buffers: shared hit=18
   SubPlan 1
@@ -239,63 +239,63 @@ Aggregate  (cost=168701.21..168701.25 rows=1 width=44) (actual time=22.500..22.5
           Index Cond: (vehicle_id = v.id)
           Filter: (dealership_id = v.dealership_id)
           Buffers: shared hit=21005
-Planning Time: 0.133 ms
+Planning Time: 0.111 ms
 JIT:
   Functions: 15
   Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.903 ms (Deform 0.214 ms), Inlining 0.000 ms, Optimization 0.255 ms, Emission 9.492 ms, Total 10.650 ms
-Execution Time: 23.483 ms
+  Timing: Generation 0.686 ms (Deform 0.168 ms), Inlining 0.000 ms, Optimization 0.307 ms, Emission 8.091 ms, Total 9.085 ms
+Execution Time: 20.360 ms
 
 === Dashboard (statement 2 of 3)
-Sort  (cost=1910.73..1910.79 rows=25 width=18) (actual time=4.963..4.963 rows=5 loops=1)
+Sort  (cost=1918.75..1918.82 rows=25 width=18) (actual time=5.002..5.002 rows=5 loops=1)
   Sort Key: ((count(*))::integer) DESC, make, model
   Sort Method: quicksort  Memory: 25kB
-  Buffers: shared hit=412
-  ->  HashAggregate  (cost=1909.77..1910.15 rows=25 width=18) (actual time=4.952..4.953 rows=5 loops=1)
+  Buffers: shared hit=411
+  ->  HashAggregate  (cost=1917.80..1918.17 rows=25 width=18) (actual time=4.993..4.994 rows=5 loops=1)
         Group Key: make, model
         Batches: 1  Memory Usage: 24kB
-        Buffers: shared hit=412
-        ->  Bitmap Heap Scan on vehicle v  (cost=252.41..1669.59 rows=16012 width=14) (actual time=0.374..1.525 rows=16020 loops=1)
+        Buffers: shared hit=411
+        ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=14) (actual time=0.417..1.532 rows=16020 loops=1)
               Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-              Heap Blocks: exact=394
-              Buffers: shared hit=412
-              ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..248.41 rows=16012 width=0) (actual time=0.345..0.345 rows=16022 loops=1)
+              Heap Blocks: exact=393
+              Buffers: shared hit=411
+              ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.385..0.385 rows=16020 loops=1)
                     Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
                     Buffers: shared hit=18
 Planning:
   Buffers: shared hit=4
-Planning Time: 0.105 ms
-Execution Time: 4.997 ms
+Planning Time: 0.109 ms
+Execution Time: 5.019 ms
 
 === Dashboard (statement 3 of 3)
-GroupAggregate  (cost=168938.73..169058.84 rows=1 width=36) (actual time=22.171..23.769 rows=7 loops=1)
+GroupAggregate  (cost=169991.99..170112.84 rows=1 width=36) (actual time=18.721..20.266 rows=7 loops=1)
   Group Key: (COALESCE(a.action_type, 'NONE'::text))
-  Buffers: shared hit=35953
-  ->  Sort  (cost=168938.73..168978.76 rows=16012 width=32) (actual time=22.125..22.682 rows=16020 loops=1)
+  Buffers: shared hit=35952
+  ->  Sort  (cost=169991.99..170032.27 rows=16112 width=32) (actual time=18.683..19.255 rows=16020 loops=1)
         Sort Key: (COALESCE(a.action_type, 'NONE'::text))
         Sort Method: quicksort  Memory: 385kB
-        Buffers: shared hit=35953
-        ->  Nested Loop Left Join  (cost=252.70..167820.55 rows=16012 width=32) (actual time=5.155..20.866 rows=16020 loops=1)
-              Buffers: shared hit=35953
-              ->  Bitmap Heap Scan on vehicle v  (cost=252.41..1669.59 rows=16012 width=32) (actual time=0.404..1.764 rows=16020 loops=1)
+        Buffers: shared hit=35952
+        ->  Nested Loop Left Join  (cost=257.73..168866.10 rows=16112 width=32) (actual time=4.254..17.611 rows=16020 loops=1)
+              Buffers: shared hit=35952
+              ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=32) (actual time=0.340..1.501 rows=16020 loops=1)
                     Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                    Heap Blocks: exact=394
-                    Buffers: shared hit=412
-                    ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..248.41 rows=16012 width=0) (actual time=0.372..0.372 rows=16022 loops=1)
+                    Heap Blocks: exact=393
+                    Buffers: shared hit=411
+                    ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.314..0.315 rows=16020 loops=1)
                           Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
                           Buffers: shared hit=18
               ->  Limit  (cost=0.29..10.36 rows=1 width=18) (actual time=0.001..0.001 rows=0 loops=16020)
                     Buffers: shared hit=35541
-                    ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=18) (actual time=0.001..0.001 rows=0 loops=16020)
+                    ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=18) (actual time=0.000..0.000 rows=0 loops=16020)
                           Index Cond: (vehicle_id = v.id)
                           Filter: (dealership_id = v.dealership_id)
                           Buffers: shared hit=35541
-Planning Time: 0.093 ms
+Planning Time: 0.090 ms
 JIT:
   Functions: 15
   Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.405 ms (Deform 0.144 ms), Inlining 0.000 ms, Optimization 0.186 ms, Emission 4.565 ms, Total 5.155 ms
-Execution Time: 24.268 ms
+  Timing: Generation 0.371 ms (Deform 0.133 ms), Inlining 0.000 ms, Optimization 0.215 ms, Emission 3.698 ms, Total 4.284 ms
+Execution Time: 20.684 ms
 ```
 
 </details>

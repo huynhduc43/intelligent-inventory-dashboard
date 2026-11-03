@@ -11,18 +11,18 @@ BASE_URL=${BASE_URL:-http://localhost:3000}
 : "${EMAIL:?set EMAIL to a seeded user with every permission, e.g. admin@example.dev}" "${PASSWORD:?set PASSWORD (pnpm db:seed prints them)}"
 
 show() { echo; echo "== $*"; }
-# call METHOD PATH [JSON_BODY]: prints the response body; --fail-with-body exits non-zero on 4xx/5xx after printing it.
+# call METHOD PATH [JSON_BODY]: prints the response body; on 4xx/5xx prints the problem+json body to stderr and fails.
 call() {
-  local method=$1 path=$2 body=${3:-}
-  local args=(-sS --fail-with-body -X "$method" "$BASE_URL$path" -H "Authorization: Bearer $token")
+  local method=$1 path=$2 body=${3:-} out
+  local args=(-sS --fail-with-body -X "$method" "$BASE_URL$path")
+  if [ -n "${token:-}" ]; then args+=(-H "Authorization: Bearer $token"); fi
   if [ -n "$body" ]; then args+=(-H 'Content-Type: application/json' -d "$body"); fi
-  curl "${args[@]}"
+  out=$(curl "${args[@]}") || { echo "$out" >&2; return 1; }
+  echo "$out"
 }
 
 show "POST /api/v1/auth/login"
-login=$(curl -sS --fail-with-body -X POST "$BASE_URL/api/v1/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d "$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" '{email:$e,password:$p}')")
+login=$(call POST /api/v1/auth/login "$(jq -n --arg e "$EMAIL" --arg p "$PASSWORD" '{email:$e,password:$p}')")
 echo "$login" | jq .
 token=$(echo "$login" | jq -r .accessToken)
 
@@ -37,7 +37,7 @@ settings=$(call GET "$base/settings")
 echo "$settings" | jq .
 
 show "PATCH $base/settings (the values just read, so nothing changes)"
-call PATCH "$base/settings" "$(echo "$settings" | jq -c '{watchDays,agingDays}')" | jq .
+call PATCH "$base/settings" "$(echo "$settings" | jq -c '{timezone,watchDays,agingDays}')" | jq .
 
 show "GET $base/dashboard"
 call GET "$base/dashboard" | jq .

@@ -1822,7 +1822,8 @@
                 "type": "object",
                 "properties": {
                   "timezone": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Exact IANA name (case-sensitive); abbreviations such as CET or EST are rejected."
                   },
                   "watchDays": {
                     "type": "integer",
@@ -1835,7 +1836,8 @@
                     "maximum": 9007199254740991
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650."
               }
             }
           }

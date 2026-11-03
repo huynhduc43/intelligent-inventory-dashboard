@@ -207,6 +207,56 @@ describe('D15/D16 route x role', () => {
       expect(new Set(bodies.map(strip)).size).toBe(1);
     });
 
+    it('settings GET and PATCH: roles, non-member 404 with the missing-dealership body, no token 401', async () => {
+      const call = (method: 'get' | 'patch', d: string, user?: string) => {
+        const r = request(app.getHttpServer())[method](
+          `/api/v1/dealerships/${d}/settings`,
+        );
+        return user
+          ? r.set('Authorization', `Bearer ${tokenFor(user, clock)}`)
+          : r;
+      };
+      for (const u of [ADMIN, MANAGER, VIEWER])
+        expect((await call('get', LONDON, u)).status).toBe(200);
+      expect((await call('get', LONDON)).status).toBe(401);
+      expect((await call('patch', LONDON, ADMIN).send({})).status).toBe(200);
+      expectProblem(
+        await call('patch', LONDON, MANAGER).send({}),
+        403,
+        'FORBIDDEN',
+      );
+      expectProblem(
+        await call('patch', LONDON, VIEWER).send({}),
+        403,
+        'FORBIDDEN',
+      );
+      expect((await call('patch', LONDON).send({})).status).toBe(401);
+      const strip = (r: request.Response) =>
+        JSON.stringify({ ...(r.body as object), instance: '' });
+      for (const method of ['get', 'patch'] as const) {
+        const bodies = await Promise.all(
+          [NEW_YORK, '00000000-0000-4000-8000-0000000000ee', 'not-a-uuid'].map(
+            (d) =>
+              method === 'get'
+                ? call(method, d, VIEWER)
+                : call(method, d, VIEWER).send({ watchDays: 10 }),
+          ),
+        );
+        expect(bodies.map((r) => r.status)).toEqual([404, 404, 404]);
+        expect(new Set(bodies.map(strip)).size).toBe(1);
+      }
+      const client = new pg.Client({
+        connectionString: container.getConnectionUri(),
+      });
+      await client.connect();
+      const { rows } = await client.query<{ watch_days: number }>(
+        'SELECT watch_days FROM dealership WHERE id = $1',
+        [NEW_YORK],
+      );
+      await client.end();
+      expect(rows[0]?.watch_days).toBe(45);
+    });
+
     it('POST vehicles: admin and manager 201, viewer 403, non-member 404 with the missing-dealership body, no token 401', async () => {
       let n = 0;
       const post = (d: string, user?: string) => {

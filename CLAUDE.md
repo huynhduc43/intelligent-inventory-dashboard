@@ -37,7 +37,7 @@ Modules under `src/modules/`: `auth`, `dealerships`, `inventory`, `actions`, `da
 
 - **Aging is derived, never stored.** Age = `today_local − stocked_on` (a `date` column). No tier flag, no nightly job.
 - **Time zones are computed only in Postgres** (`now() AT TIME ZONE d.timezone`). Node never does time-zone maths. `now` comes from the injected `Clock` and is passed into SQL as a parameter so tests can pin it.
-- **`AgingPolicy`** (`inventory/domain/aging-policy.ts`) is pure TS: `tierOf`, `bucketOf`, later `validateThresholds`, `toStockedOnBounds`. Tier/age filters become `stocked_on` bounds before reaching SQL. Tiers: `FRESH` < watch ≤ `WATCH` ≤ aging < `AGING` (defaults 60/90, per dealership). Buckets (0–30, 31–60, 61–90, 90+) are fixed and independent of thresholds.
+- **`AgingPolicy`** (`inventory/domain/aging-policy.ts`) is pure TS: `tierOf`, `bucketOf`, `validateThresholds`, `toStockedOnBounds`. Tier/age filters become `stocked_on` bounds before reaching SQL. Tiers: `FRESH` < watch ≤ `WATCH` ≤ aging < `AGING` (defaults 60/90, per dealership). Buckets (0–30, 31–60, 61–90, 90+) are fixed and independent of thresholds.
 - **Race-free writes via conditional SQL, not locks:** status changes are `UPDATE … WHERE status = ANY($allowedFrom)`; action logging is `INSERT … SELECT … WHERE status = 'IN_STOCK'`. 0 rows → re-read: missing → 404, else 409.
 - **Actions are append-only;** the newest by `id` is current. Never update or delete them.
 - **Lifecycle:** `IN_STOCK ⇄ RESERVED`, either → `SOLD` (terminal, sets `sold_at`). Same-state transitions are 409.

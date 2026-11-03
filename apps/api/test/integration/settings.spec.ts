@@ -145,12 +145,12 @@ describe('dealership settings', { timeout: 30_000 }, () => {
   });
 
   it('PATCH changes the time zone and returns the new local date', async () => {
-    const res = await patch({ timezone: 'Asia/Ho_Chi_Minh' });
+    const res = await patch({ timezone: 'America/New_York' });
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      timezone: 'Asia/Ho_Chi_Minh',
-      todayLocal: '2026-03-10',
+      timezone: 'America/New_York',
+      todayLocal: '2026-03-09',
     });
     expect((await patch({ timezone: 'Etc/UTC' })).status).toBe(200);
   });
@@ -212,5 +212,31 @@ describe('dealership settings', { timeout: 30_000 }, () => {
     const r = await row();
     expect(r?.watch_days ?? 0).toBeGreaterThanOrEqual(1);
     expect(r?.watch_days ?? 0).toBeLessThan(r?.aging_days ?? 0);
+  });
+
+  it('a threshold check violated by a racing commit is 422 THRESHOLDS_INVALID, not 500', async () => {
+    await db.query('BEGIN');
+    await db.query('UPDATE dealership SET aging_days = 61 WHERE id = $1', [
+      LONDON,
+    ]);
+    // The guard reads the committed 60/90, so 89 passes validateThresholds; the UPDATE then blocks on the row lock.
+    const pending = patch({ watchDays: 89 }).then((r) => r);
+    for (let i = 0; i < 100; i++) {
+      const { rowCount } = await db.query(
+        `SELECT 1 FROM pg_stat_activity WHERE wait_event_type = 'Lock'`,
+      );
+      if (rowCount) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    await db.query('COMMIT');
+
+    const res = await pending;
+
+    expectProblem(res, 422, 'THRESHOLDS_INVALID');
+    expect(res.body).toMatchObject({
+      detail:
+        'watchDays must be at least 1, less than agingDays, and agingDays at most 3650.',
+    });
+    expect(await row()).toMatchObject({ watch_days: 60, aging_days: 61 });
   });
 });

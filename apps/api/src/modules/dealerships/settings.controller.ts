@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiOkResponse,
   ApiParam,
   ApiResponse,
@@ -24,11 +23,21 @@ import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
 import { SettingsService } from './settings.service.js';
 
-const patchSchema = z.strictObject({
-  timezone: text().optional(),
-  watchDays: z.int().optional(),
-  agingDays: z.int().optional(),
-});
+const patchSchema = z
+  .strictObject({
+    timezone: text()
+      .meta({
+        description:
+          'Exact IANA name (case-sensitive); abbreviations such as CET or EST are rejected.',
+      })
+      .optional(),
+    watchDays: z.int().optional(),
+    agingDays: z.int().optional(),
+  })
+  .meta({
+    description:
+      'Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650.',
+  });
 
 const settingsOpenApi: SchemaObject = {
   type: 'object',
@@ -39,22 +48,6 @@ const settingsOpenApi: SchemaObject = {
     watchDays: { type: 'integer' },
     agingDays: { type: 'integer' },
     todayLocal: { type: 'string', format: 'date' },
-  },
-};
-
-const patchOpenApi: SchemaObject = {
-  type: 'object',
-  additionalProperties: false,
-  description:
-    'Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650.',
-  properties: {
-    timezone: {
-      type: 'string',
-      description:
-        'Exact IANA name (case-sensitive); abbreviations such as CET or EST are rejected.',
-    },
-    watchDays: { type: 'integer' },
-    agingDays: { type: 'integer' },
   },
 };
 
@@ -103,7 +96,6 @@ export class SettingsController {
 
   @Patch()
   @RequirePermission('settings:update')
-  @ApiBody({ schema: patchOpenApi })
   @ApiOkResponse({
     description: 'The settings after the change (`{}` changes nothing)',
     schema: settingsOpenApi,

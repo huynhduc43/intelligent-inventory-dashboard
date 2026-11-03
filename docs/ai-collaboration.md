@@ -471,3 +471,12 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** a per-response example is the only way one shared schema can show different statuses; reusing `buildProblem` keeps the example's `type`, `title` and `code` equal to what the API sends. Dropping the 100–599 bounds was rejected: it hides the bug and loses information.
 - **Verification:** `openapi.spec.ts` › gives every problem+json response an example whose status is its own, which fails on the previous commit with every error response listed.
 - **Outcome:** examples show the real status and code. No reviewer or the Tester caught it: they checked the document, not what Swagger UI renders from it.
+
+### C47: The Node pin had only ever been verified under pnpm 9 (#100)
+
+- **Problem:** C44's Node 23 failure came back although #32 pinned Node with `use-node-version` in `.npmrc`. Under the pinned pnpm 12, `corepack pnpm exec node -v` printed `v23.10.0` and `pnpm config get use-node-version` printed `undefined`.
+- **AI proposal:** the user asked for a root cause, not a retry. The agent ran the same command under the bare `pnpm` on `PATH` (a global pnpm 9.11.0, which honours the setting: `v24.15.0`) and under `corepack pnpm` (12.16.1: `v23.10.0`), then tried each candidate pin in a one-file fixture. Only `devEngines.runtime` ran Node 24 under pnpm 12. #36 had verified, and rejected `devEngines.runtime`, with the bare pnpm 9, and the git hooks also called bare `pnpm`, so every check stayed green.
+- **Decided by:** user (asked for the fix and for the global pnpm 9 to be removed).
+- **Decision and reasoning:** `devEngines.runtime` with `onFail: download` keeps "no per-machine step" and locks the Node tarballs by checksum; the hooks now call `corepack pnpm`, so they test what agents run.
+- **Verification:** from a Node 23.10 shell, `corepack pnpm exec node -v` (root, `--filter @inventory/api` and inside `apps/api`) prints `v24.15.0`, and `corepack pnpm --filter @inventory/api openapi:export` succeeds.
+- **Outcome:** the Node pin now works under pnpm 12. A fix verified with a different tool from the one the project pins proves nothing; check the version of the tool that ran the check.

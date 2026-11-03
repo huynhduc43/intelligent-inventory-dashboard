@@ -13,17 +13,17 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
-  type SchemaObject,
 } from '@nestjs/swagger';
 import { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
+import { component } from '../../shared/components.js';
 import { noQuery } from '../../shared/query.js';
 import { text } from '../../shared/text.js';
 import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
 import { SettingsService } from './settings.service.js';
 
-const patchSchema = z
+const updateSettingsSchema = z
   .strictObject({
     timezone: text()
       .meta({
@@ -35,11 +35,12 @@ const patchSchema = z
     agingDays: z.int().optional(),
   })
   .meta({
+    id: 'UpdateSettingsRequest',
     description:
       'Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650.',
   });
 
-const settingsOpenApi: SchemaObject = {
+const settingsOpenApi = component('Settings', {
   type: 'object',
   required: ['name', 'timezone', 'watchDays', 'agingDays', 'todayLocal'],
   properties: {
@@ -49,7 +50,7 @@ const settingsOpenApi: SchemaObject = {
     agingDays: { type: 'integer' },
     todayLocal: { type: 'string', format: 'date' },
   },
-};
+});
 
 const context = (req: AuthedRequest) => {
   if (!req.dealershipId || !req.dealership)
@@ -129,7 +130,8 @@ export class SettingsController {
   update(
     @Req() req: AuthedRequest,
     @Query({ schema: noQuery }) _query: z.infer<typeof noQuery>,
-    @Body({ schema: patchSchema }) body: z.infer<typeof patchSchema>,
+    @Body({ schema: updateSettingsSchema })
+    body: z.infer<typeof updateSettingsSchema>,
   ) {
     const { id, ctx } = context(req);
     return this.settings.update(id, ctx, body);

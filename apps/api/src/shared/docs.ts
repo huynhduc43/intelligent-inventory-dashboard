@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { z } from 'zod';
 import { AppModule } from '../app.module.js';
+import { componentSchemas } from './components.js';
 import { loadConfig } from './config.js';
 import { problemRef, problemSchema } from './problem.js';
 
@@ -33,6 +34,7 @@ export function buildDocument(app: INestApplication): OpenAPIObject {
   document.components ??= {};
   document.components.schemas = {
     ...document.components.schemas,
+    ...componentSchemas,
     Problem: z.toJSONSchema(problemSchema, {
       target: 'openapi-3.0',
     }) as SchemaObject,

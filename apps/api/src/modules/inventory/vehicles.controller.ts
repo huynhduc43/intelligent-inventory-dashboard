@@ -24,6 +24,7 @@ import {
 import type { Response } from 'express';
 import { z } from 'zod';
 import { problemRef, ValidationFailedException } from '../../shared/problem.js';
+import { component } from '../../shared/components.js';
 import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
 import { UUID } from '../auth/dealership.guard.js';
@@ -32,7 +33,7 @@ import { changeStatusSchema, createVehicleSchema } from './vehicles.body.js';
 import { vehicleListQuery } from './vehicles.query.js';
 import { VehiclesService } from './vehicles.service.js';
 
-const vehicleOpenApi: SchemaObject = {
+const vehicleSchema: SchemaObject = {
   type: 'object',
   required: [
     'id',
@@ -87,6 +88,7 @@ const vehicleOpenApi: SchemaObject = {
     },
   },
 };
+const vehicleOpenApi = component('Vehicle', vehicleSchema);
 
 const dealershipParam = ApiParam({
   name: 'dealershipId',
@@ -131,14 +133,14 @@ export class VehiclesController {
   })
   @ApiOkResponse({
     description: 'A page of vehicles and the total matching the filters',
-    schema: {
+    schema: component('VehicleList', {
       type: 'object',
       required: ['items', 'total'],
       properties: {
         items: { type: 'array', items: vehicleOpenApi },
         total: { type: 'integer' },
       },
-    },
+    }),
   })
   @ApiResponse({
     status: 400,

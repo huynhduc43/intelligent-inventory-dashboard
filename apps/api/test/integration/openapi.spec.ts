@@ -65,6 +65,102 @@ describe('openapi document', () => {
   });
 });
 
+describe('openapi named components', () => {
+  interface Ref {
+    $ref: string;
+  }
+  const walk = (v: unknown, f: (o: Record<string, unknown>) => void): void => {
+    if (Array.isArray(v))
+      v.forEach((x) => {
+        walk(x, f);
+      });
+    else if (v && typeof v === 'object') {
+      f(v as Record<string, unknown>);
+      Object.values(v).forEach((x) => {
+        walk(x, f);
+      });
+    }
+  };
+  let doc: Doc;
+  beforeAll(async () => {
+    doc = JSON.parse(JSON.stringify(await generateOpenApi())) as Doc;
+  });
+  const ops = () =>
+    Object.entries(doc.paths)
+      .filter(([path]) => path.startsWith('/api/v1'))
+      .flatMap(([, item]) => Object.values(item as Record<string, never>)) as {
+      requestBody?: { content: Record<string, { schema: unknown }> };
+      responses: Record<
+        string,
+        { content?: Record<string, { schema: unknown }> }
+      >;
+    }[];
+  const ref = (n: string) => ({ $ref: `#/components/schemas/${n}` });
+
+  it('refers to a named component from every request body', () => {
+    const bodies = ops().flatMap((o) =>
+      o.requestBody ? [o.requestBody.content['application/json']?.schema] : [],
+    );
+    expect(bodies).toHaveLength(5);
+    for (const b of bodies)
+      expect(JSON.stringify(b)).toMatch(
+        /^\{"\$ref":"#\/components\/schemas\/\w+"\}$/,
+      );
+  });
+
+  it('refers to a named component from every 2xx response body', () => {
+    const schemas = ops().flatMap((o) =>
+      Object.entries(o.responses)
+        .filter(([s]) => s.startsWith('2'))
+        .flatMap(([, r]) =>
+          r.content ? [r.content['application/json']?.schema] : [],
+        ),
+    );
+    expect(schemas.length).toBeGreaterThanOrEqual(9);
+    for (const s of schemas) expect(s).toHaveProperty('$ref');
+  });
+
+  it('resolves every $ref to a component', () => {
+    const names = new Set(Object.keys(doc.components?.schemas ?? {}));
+    walk(doc, (o) => {
+      if (typeof o.$ref === 'string')
+        expect(names.has(o.$ref.replace('#/components/schemas/', ''))).toBe(
+          true,
+        );
+    });
+  });
+
+  it('registers exactly the documented names', () => {
+    expect(Object.keys(doc.components?.schemas ?? {}).sort()).toEqual(
+      [
+        'AccessToken',
+        'Action',
+        'ActionList',
+        'CreateVehicleRequest',
+        'Dashboard',
+        'LogActionRequest',
+        'LoginRequest',
+        'Me',
+        'Problem',
+        'Settings',
+        'ChangeVehicleStatusRequest',
+        'UpdateSettingsRequest',
+        'Vehicle',
+        'VehicleList',
+      ].sort(),
+    );
+  });
+
+  it('lists elements by reference', () => {
+    const s = doc.components?.schemas as Record<
+      string,
+      { properties: { items: { items: Ref } } }
+    >;
+    expect(s.VehicleList?.properties.items.items).toEqual(ref('Vehicle'));
+    expect(s.ActionList?.properties.items.items).toEqual(ref('Action'));
+  });
+});
+
 describe('openapi per-route statuses', () => {
   it('documents only the statuses each route can return', async () => {
     const doc = JSON.parse(JSON.stringify(await generateOpenApi())) as Doc;

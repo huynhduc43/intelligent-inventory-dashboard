@@ -10,24 +10,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 254
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 128
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
           }
@@ -38,20 +21,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "accessToken",
-                    "expiresIn"
-                  ],
-                  "properties": {
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "expiresIn": {
-                      "type": "integer",
-                      "description": "Seconds"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AccessToken"
                 }
               }
             }
@@ -112,61 +82,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "user",
-                    "memberships"
-                  ],
-                  "properties": {
-                    "user": {
-                      "type": "object",
-                      "required": [
-                        "id",
-                        "email",
-                        "displayName"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string"
-                        },
-                        "displayName": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "memberships": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "dealershipId",
-                          "name",
-                          "role",
-                          "permissions"
-                        ],
-                        "properties": {
-                          "dealershipId": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "role": {
-                            "type": "string"
-                          },
-                          "permissions": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Me"
                 }
               }
             }
@@ -343,120 +259,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "items",
-                    "total"
-                  ],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "id",
-                          "vin",
-                          "make",
-                          "model",
-                          "modelYear",
-                          "mileage",
-                          "listPrice",
-                          "status",
-                          "stockedOn",
-                          "daysInStock",
-                          "tier",
-                          "currentAction"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "vin": {
-                            "type": "string"
-                          },
-                          "make": {
-                            "type": "string"
-                          },
-                          "model": {
-                            "type": "string"
-                          },
-                          "modelYear": {
-                            "type": "integer"
-                          },
-                          "mileage": {
-                            "type": "integer"
-                          },
-                          "listPrice": {
-                            "type": "string",
-                            "nullable": true,
-                            "description": "Decimal string, e.g. \"23995.00\""
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "IN_STOCK",
-                              "RESERVED",
-                              "SOLD"
-                            ]
-                          },
-                          "stockedOn": {
-                            "type": "string",
-                            "format": "date"
-                          },
-                          "daysInStock": {
-                            "type": "integer"
-                          },
-                          "tier": {
-                            "type": "string",
-                            "enum": [
-                              "FRESH",
-                              "WATCH",
-                              "AGING"
-                            ]
-                          },
-                          "currentAction": {
-                            "type": "object",
-                            "nullable": true,
-                            "required": [
-                              "actionType",
-                              "note",
-                              "createdBy",
-                              "createdAt"
-                            ],
-                            "properties": {
-                              "actionType": {
-                                "type": "string",
-                                "enum": [
-                                  "PRICE_REDUCTION_PLANNED",
-                                  "TRANSFER",
-                                  "AUCTION",
-                                  "PROMOTION",
-                                  "MONITOR",
-                                  "OTHER"
-                                ]
-                              },
-                              "note": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "createdBy": {
-                                "type": "string",
-                                "format": "uuid"
-                              },
-                              "createdAt": {
-                                "type": "string",
-                                "format": "date-time"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "total": {
-                      "type": "integer"
-                    }
-                  }
+                  "$ref": "#/components/schemas/VehicleList"
                 }
               }
             }
@@ -529,53 +332,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "vin": {
-                    "type": "string",
-                    "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
-                    "description": "Trimmed and upper-cased before the check; 17 characters, letters and digits except I, O and Q"
-                  },
-                  "make": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "model": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "modelYear": {
-                    "type": "integer",
-                    "minimum": 1900,
-                    "maximum": 2100
-                  },
-                  "mileage": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 2147483647
-                  },
-                  "listPrice": {
-                    "nullable": true,
-                    "type": "string",
-                    "pattern": "^(0|[1-9]\\d{0,9})(\\.\\d{1,2})?$"
-                  },
-                  "stockedOn": {
-                    "type": "string",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-                  }
-                },
-                "required": [
-                  "vin",
-                  "make",
-                  "model",
-                  "modelYear",
-                  "mileage",
-                  "stockedOn"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CreateVehicleRequest"
               }
             }
           }
@@ -586,105 +343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "vin",
-                    "make",
-                    "model",
-                    "modelYear",
-                    "mileage",
-                    "listPrice",
-                    "status",
-                    "stockedOn",
-                    "daysInStock",
-                    "tier",
-                    "currentAction"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "vin": {
-                      "type": "string"
-                    },
-                    "make": {
-                      "type": "string"
-                    },
-                    "model": {
-                      "type": "string"
-                    },
-                    "modelYear": {
-                      "type": "integer"
-                    },
-                    "mileage": {
-                      "type": "integer"
-                    },
-                    "listPrice": {
-                      "type": "string",
-                      "nullable": true,
-                      "description": "Decimal string, e.g. \"23995.00\""
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "IN_STOCK",
-                        "RESERVED",
-                        "SOLD"
-                      ]
-                    },
-                    "stockedOn": {
-                      "type": "string",
-                      "format": "date"
-                    },
-                    "daysInStock": {
-                      "type": "integer"
-                    },
-                    "tier": {
-                      "type": "string",
-                      "enum": [
-                        "FRESH",
-                        "WATCH",
-                        "AGING"
-                      ]
-                    },
-                    "currentAction": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "actionType",
-                        "note",
-                        "createdBy",
-                        "createdAt"
-                      ],
-                      "properties": {
-                        "actionType": {
-                          "type": "string",
-                          "enum": [
-                            "PRICE_REDUCTION_PLANNED",
-                            "TRANSFER",
-                            "AUCTION",
-                            "PROMOTION",
-                            "MONITOR",
-                            "OTHER"
-                          ]
-                        },
-                        "note": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Vehicle"
                 }
               }
             }
@@ -789,105 +448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "vin",
-                    "make",
-                    "model",
-                    "modelYear",
-                    "mileage",
-                    "listPrice",
-                    "status",
-                    "stockedOn",
-                    "daysInStock",
-                    "tier",
-                    "currentAction"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "vin": {
-                      "type": "string"
-                    },
-                    "make": {
-                      "type": "string"
-                    },
-                    "model": {
-                      "type": "string"
-                    },
-                    "modelYear": {
-                      "type": "integer"
-                    },
-                    "mileage": {
-                      "type": "integer"
-                    },
-                    "listPrice": {
-                      "type": "string",
-                      "nullable": true,
-                      "description": "Decimal string, e.g. \"23995.00\""
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "IN_STOCK",
-                        "RESERVED",
-                        "SOLD"
-                      ]
-                    },
-                    "stockedOn": {
-                      "type": "string",
-                      "format": "date"
-                    },
-                    "daysInStock": {
-                      "type": "integer"
-                    },
-                    "tier": {
-                      "type": "string",
-                      "enum": [
-                        "FRESH",
-                        "WATCH",
-                        "AGING"
-                      ]
-                    },
-                    "currentAction": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "actionType",
-                        "note",
-                        "createdBy",
-                        "createdAt"
-                      ],
-                      "properties": {
-                        "actionType": {
-                          "type": "string",
-                          "enum": [
-                            "PRICE_REDUCTION_PLANNED",
-                            "TRANSFER",
-                            "AUCTION",
-                            "PROMOTION",
-                            "MONITOR",
-                            "OTHER"
-                          ]
-                        },
-                        "note": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Vehicle"
                 }
               }
             }
@@ -971,21 +532,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "IN_STOCK",
-                      "RESERVED",
-                      "SOLD"
-                    ]
-                  }
-                },
-                "required": [
-                  "status"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ChangeVehicleStatusRequest"
               }
             }
           }
@@ -996,105 +543,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "vin",
-                    "make",
-                    "model",
-                    "modelYear",
-                    "mileage",
-                    "listPrice",
-                    "status",
-                    "stockedOn",
-                    "daysInStock",
-                    "tier",
-                    "currentAction"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "vin": {
-                      "type": "string"
-                    },
-                    "make": {
-                      "type": "string"
-                    },
-                    "model": {
-                      "type": "string"
-                    },
-                    "modelYear": {
-                      "type": "integer"
-                    },
-                    "mileage": {
-                      "type": "integer"
-                    },
-                    "listPrice": {
-                      "type": "string",
-                      "nullable": true,
-                      "description": "Decimal string, e.g. \"23995.00\""
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "IN_STOCK",
-                        "RESERVED",
-                        "SOLD"
-                      ]
-                    },
-                    "stockedOn": {
-                      "type": "string",
-                      "format": "date"
-                    },
-                    "daysInStock": {
-                      "type": "integer"
-                    },
-                    "tier": {
-                      "type": "string",
-                      "enum": [
-                        "FRESH",
-                        "WATCH",
-                        "AGING"
-                      ]
-                    },
-                    "currentAction": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "actionType",
-                        "note",
-                        "createdBy",
-                        "createdAt"
-                      ],
-                      "properties": {
-                        "actionType": {
-                          "type": "string",
-                          "enum": [
-                            "PRICE_REDUCTION_PLANNED",
-                            "TRANSFER",
-                            "AUCTION",
-                            "PROMOTION",
-                            "MONITOR",
-                            "OTHER"
-                          ]
-                        },
-                        "note": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "createdBy": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Vehicle"
                 }
               }
             }
@@ -1190,160 +639,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "asOf",
-                    "timezone",
-                    "thresholds",
-                    "summary",
-                    "ageBuckets",
-                    "byMakeModel",
-                    "actionStats"
-                  ],
-                  "properties": {
-                    "asOf": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "timezone": {
-                      "type": "string"
-                    },
-                    "thresholds": {
-                      "type": "object",
-                      "required": [
-                        "watchDays",
-                        "agingDays"
-                      ],
-                      "properties": {
-                        "watchDays": {
-                          "type": "integer"
-                        },
-                        "agingDays": {
-                          "type": "integer"
-                        }
-                      }
-                    },
-                    "summary": {
-                      "type": "object",
-                      "required": [
-                        "totalInStock",
-                        "byTier",
-                        "agingWithoutAction",
-                        "avgDaysInStock"
-                      ],
-                      "properties": {
-                        "totalInStock": {
-                          "type": "integer"
-                        },
-                        "byTier": {
-                          "type": "object",
-                          "required": [
-                            "FRESH",
-                            "WATCH",
-                            "AGING"
-                          ],
-                          "properties": {
-                            "FRESH": {
-                              "type": "integer"
-                            },
-                            "WATCH": {
-                              "type": "integer"
-                            },
-                            "AGING": {
-                              "type": "integer"
-                            }
-                          }
-                        },
-                        "agingWithoutAction": {
-                          "type": "integer"
-                        },
-                        "avgDaysInStock": {
-                          "type": "number",
-                          "nullable": true,
-                          "description": "One decimal; null when there is no stock."
-                        }
-                      }
-                    },
-                    "ageBuckets": {
-                      "type": "array",
-                      "description": "Always four, in order, zero-filled.",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "bucket",
-                          "count"
-                        ],
-                        "properties": {
-                          "bucket": {
-                            "type": "string",
-                            "enum": [
-                              "0-30",
-                              "31-60",
-                              "61-90",
-                              "90+"
-                            ]
-                          },
-                          "count": {
-                            "type": "integer"
-                          }
-                        }
-                      }
-                    },
-                    "byMakeModel": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "make",
-                          "model",
-                          "count",
-                          "aging"
-                        ],
-                        "properties": {
-                          "make": {
-                            "type": "string"
-                          },
-                          "model": {
-                            "type": "string"
-                          },
-                          "count": {
-                            "type": "integer"
-                          },
-                          "aging": {
-                            "type": "integer"
-                          }
-                        }
-                      }
-                    },
-                    "actionStats": {
-                      "type": "array",
-                      "description": "Always seven, NONE first, zero-filled.",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "actionType",
-                          "count"
-                        ],
-                        "properties": {
-                          "actionType": {
-                            "type": "string",
-                            "enum": [
-                              "NONE",
-                              "PRICE_REDUCTION_PLANNED",
-                              "TRANSFER",
-                              "AUCTION",
-                              "PROMOTION",
-                              "MONITOR",
-                              "OTHER"
-                            ]
-                          },
-                          "count": {
-                            "type": "integer"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/Dashboard"
                 }
               }
             }
@@ -1427,29 +723,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "actionType": {
-                    "type": "string",
-                    "enum": [
-                      "PRICE_REDUCTION_PLANNED",
-                      "TRANSFER",
-                      "AUCTION",
-                      "PROMOTION",
-                      "MONITOR",
-                      "OTHER"
-                    ]
-                  },
-                  "note": {
-                    "nullable": true,
-                    "type": "string",
-                    "maxLength": 1000
-                  }
-                },
-                "required": [
-                  "actionType"
-                ],
-                "additionalProperties": false
+                "$ref": "#/components/schemas/LogActionRequest"
               }
             }
           }
@@ -1460,42 +734,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "actionType",
-                    "note",
-                    "createdBy",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "integer"
-                    },
-                    "actionType": {
-                      "type": "string",
-                      "enum": [
-                        "PRICE_REDUCTION_PLANNED",
-                        "TRANSFER",
-                        "AUCTION",
-                        "PROMOTION",
-                        "MONITOR",
-                        "OTHER"
-                      ]
-                    },
-                    "note": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdBy": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Action"
                 }
               }
             }
@@ -1598,53 +837,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "id",
-                          "actionType",
-                          "note",
-                          "createdBy",
-                          "createdAt"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "actionType": {
-                            "type": "string",
-                            "enum": [
-                              "PRICE_REDUCTION_PLANNED",
-                              "TRANSFER",
-                              "AUCTION",
-                              "PROMOTION",
-                              "MONITOR",
-                              "OTHER"
-                            ]
-                          },
-                          "note": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "createdBy": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/ActionList"
                 }
               }
             }
@@ -1720,33 +913,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "name",
-                    "timezone",
-                    "watchDays",
-                    "agingDays",
-                    "todayLocal"
-                  ],
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "timezone": {
-                      "type": "string",
-                      "description": "IANA name"
-                    },
-                    "watchDays": {
-                      "type": "integer"
-                    },
-                    "agingDays": {
-                      "type": "integer"
-                    },
-                    "todayLocal": {
-                      "type": "string",
-                      "format": "date"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Settings"
                 }
               }
             }
@@ -1819,25 +986,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "timezone": {
-                    "type": "string",
-                    "description": "Exact IANA name (case-sensitive); abbreviations such as CET or EST are rejected."
-                  },
-                  "watchDays": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
-                  },
-                  "agingDays": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
-                  }
-                },
-                "additionalProperties": false,
-                "description": "Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650."
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
               }
             }
           }
@@ -1848,33 +997,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "name",
-                    "timezone",
-                    "watchDays",
-                    "agingDays",
-                    "todayLocal"
-                  ],
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "timezone": {
-                      "type": "string",
-                      "description": "IANA name"
-                    },
-                    "watchDays": {
-                      "type": "integer"
-                    },
-                    "agingDays": {
-                      "type": "integer"
-                    },
-                    "todayLocal": {
-                      "type": "string",
-                      "format": "date"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Settings"
                 }
               }
             }
@@ -2460,6 +1583,567 @@
       }
     },
     "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "additionalProperties": false
+      },
+      "CreateVehicleRequest": {
+        "type": "object",
+        "properties": {
+          "vin": {
+            "type": "string",
+            "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
+            "description": "Trimmed and upper-cased before the check; 17 characters, letters and digits except I, O and Q"
+          },
+          "make": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "modelYear": {
+            "type": "integer",
+            "minimum": 1900,
+            "maximum": 2100
+          },
+          "mileage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "listPrice": {
+            "nullable": true,
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d{0,9})(\\.\\d{1,2})?$"
+          },
+          "stockedOn": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          }
+        },
+        "required": [
+          "vin",
+          "make",
+          "model",
+          "modelYear",
+          "mileage",
+          "stockedOn"
+        ],
+        "additionalProperties": false
+      },
+      "ChangeVehicleStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "RESERVED",
+              "SOLD"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "LogActionRequest": {
+        "type": "object",
+        "properties": {
+          "actionType": {
+            "type": "string",
+            "enum": [
+              "PRICE_REDUCTION_PLANNED",
+              "TRANSFER",
+              "AUCTION",
+              "PROMOTION",
+              "MONITOR",
+              "OTHER"
+            ]
+          },
+          "note": {
+            "nullable": true,
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "actionType"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "description": "Exact IANA name (case-sensitive); abbreviations such as CET or EST are rejected."
+          },
+          "watchDays": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "agingDays": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "additionalProperties": false,
+        "description": "Every field optional; absent means unchanged. Thresholds are validated as the merged pair: 1 <= watchDays < agingDays <= 3650."
+      },
+      "Action": {
+        "type": "object",
+        "required": [
+          "id",
+          "actionType",
+          "note",
+          "createdBy",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "actionType": {
+            "type": "string",
+            "enum": [
+              "PRICE_REDUCTION_PLANNED",
+              "TRANSFER",
+              "AUCTION",
+              "PROMOTION",
+              "MONITOR",
+              "OTHER"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ActionList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            }
+          }
+        }
+      },
+      "AccessToken": {
+        "type": "object",
+        "required": [
+          "accessToken",
+          "expiresIn"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "description": "Seconds"
+          }
+        }
+      },
+      "Me": {
+        "type": "object",
+        "required": [
+          "user",
+          "memberships"
+        ],
+        "properties": {
+          "user": {
+            "type": "object",
+            "required": [
+              "id",
+              "email",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            }
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "dealershipId",
+                "name",
+                "role",
+                "permissions"
+              ],
+              "properties": {
+                "dealershipId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "required": [
+          "name",
+          "timezone",
+          "watchDays",
+          "agingDays",
+          "todayLocal"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA name"
+          },
+          "watchDays": {
+            "type": "integer"
+          },
+          "agingDays": {
+            "type": "integer"
+          },
+          "todayLocal": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Dashboard": {
+        "type": "object",
+        "required": [
+          "asOf",
+          "timezone",
+          "thresholds",
+          "summary",
+          "ageBuckets",
+          "byMakeModel",
+          "actionStats"
+        ],
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "thresholds": {
+            "type": "object",
+            "required": [
+              "watchDays",
+              "agingDays"
+            ],
+            "properties": {
+              "watchDays": {
+                "type": "integer"
+              },
+              "agingDays": {
+                "type": "integer"
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "totalInStock",
+              "byTier",
+              "agingWithoutAction",
+              "avgDaysInStock"
+            ],
+            "properties": {
+              "totalInStock": {
+                "type": "integer"
+              },
+              "byTier": {
+                "type": "object",
+                "required": [
+                  "FRESH",
+                  "WATCH",
+                  "AGING"
+                ],
+                "properties": {
+                  "FRESH": {
+                    "type": "integer"
+                  },
+                  "WATCH": {
+                    "type": "integer"
+                  },
+                  "AGING": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "agingWithoutAction": {
+                "type": "integer"
+              },
+              "avgDaysInStock": {
+                "type": "number",
+                "nullable": true,
+                "description": "One decimal; null when there is no stock."
+              }
+            }
+          },
+          "ageBuckets": {
+            "type": "array",
+            "description": "Always four, in order, zero-filled.",
+            "items": {
+              "type": "object",
+              "required": [
+                "bucket",
+                "count"
+              ],
+              "properties": {
+                "bucket": {
+                  "type": "string",
+                  "enum": [
+                    "0-30",
+                    "31-60",
+                    "61-90",
+                    "90+"
+                  ]
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "byMakeModel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "make",
+                "model",
+                "count",
+                "aging"
+              ],
+              "properties": {
+                "make": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "aging": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "actionStats": {
+            "type": "array",
+            "description": "Always seven, NONE first, zero-filled.",
+            "items": {
+              "type": "object",
+              "required": [
+                "actionType",
+                "count"
+              ],
+              "properties": {
+                "actionType": {
+                  "type": "string",
+                  "enum": [
+                    "NONE",
+                    "PRICE_REDUCTION_PLANNED",
+                    "TRANSFER",
+                    "AUCTION",
+                    "PROMOTION",
+                    "MONITOR",
+                    "OTHER"
+                  ]
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "required": [
+          "id",
+          "vin",
+          "make",
+          "model",
+          "modelYear",
+          "mileage",
+          "listPrice",
+          "status",
+          "stockedOn",
+          "daysInStock",
+          "tier",
+          "currentAction"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vin": {
+            "type": "string"
+          },
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "modelYear": {
+            "type": "integer"
+          },
+          "mileage": {
+            "type": "integer"
+          },
+          "listPrice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decimal string, e.g. \"23995.00\""
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "RESERVED",
+              "SOLD"
+            ]
+          },
+          "stockedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysInStock": {
+            "type": "integer"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "FRESH",
+              "WATCH",
+              "AGING"
+            ]
+          },
+          "currentAction": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "actionType",
+              "note",
+              "createdBy",
+              "createdAt"
+            ],
+            "properties": {
+              "actionType": {
+                "type": "string",
+                "enum": [
+                  "PRICE_REDUCTION_PLANNED",
+                  "TRANSFER",
+                  "AUCTION",
+                  "PROMOTION",
+                  "MONITOR",
+                  "OTHER"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "nullable": true
+              },
+              "createdBy": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "VehicleList": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vehicle"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
       "Problem": {
         "type": "object",
         "properties": {

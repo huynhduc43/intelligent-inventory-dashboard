@@ -17,15 +17,18 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
+import { component } from '../../shared/components.js';
 import { text } from '../../shared/text.js';
 import { AuthService } from './auth.service.js';
 import { Public } from './decorators.js';
 import type { AuthedRequest } from './request-context.js';
 
-const loginSchema = z.strictObject({
-  email: text().min(1).max(254),
-  password: text().min(1).max(128),
-});
+const loginSchema = z
+  .strictObject({
+    email: text().min(1).max(254),
+    password: text().min(1).max(128),
+  })
+  .meta({ id: 'LoginRequest' });
 
 @ApiTags('auth')
 @Controller()
@@ -40,14 +43,14 @@ export class AuthController {
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({
     description: 'Access token',
-    schema: {
+    schema: component('AccessToken', {
       type: 'object',
       required: ['accessToken', 'expiresIn'],
       properties: {
         accessToken: { type: 'string' },
         expiresIn: { type: 'integer', description: 'Seconds' },
       },
-    },
+    }),
   })
   @ApiResponse({
     status: 400,
@@ -73,7 +76,7 @@ export class AuthController {
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({
     description: 'The caller and their dealership memberships',
-    schema: {
+    schema: component('Me', {
       type: 'object',
       required: ['user', 'memberships'],
       properties: {
@@ -100,7 +103,7 @@ export class AuthController {
           },
         },
       },
-    },
+    }),
   })
   @ApiResponse({
     status: 401,

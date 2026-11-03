@@ -24,18 +24,21 @@ import type { Response } from 'express';
 import { z } from 'zod';
 import { problemRef } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
+import { component } from '../../shared/components.js';
 import { text } from '../../shared/text.js';
 import { UUID } from '../auth/dealership.guard.js';
 import { RequirePermission } from '../auth/decorators.js';
 import type { AuthedRequest } from '../auth/request-context.js';
 import { ACTION_TYPES, ActionsService } from './actions.service.js';
 
-const createActionSchema = z.strictObject({
-  actionType: z.enum(ACTION_TYPES),
-  note: text().trim().max(1000).nullish(),
-});
+const createActionSchema = z
+  .strictObject({
+    actionType: z.enum(ACTION_TYPES),
+    note: text().trim().max(1000).nullish(),
+  })
+  .meta({ id: 'LogActionRequest' });
 
-const actionOpenApi: SchemaObject = {
+const actionSchema: SchemaObject = {
   type: 'object',
   required: ['id', 'actionType', 'note', 'createdBy', 'createdAt'],
   properties: {
@@ -46,6 +49,7 @@ const actionOpenApi: SchemaObject = {
     createdAt: { type: 'string', format: 'date-time' },
   },
 };
+const actionOpenApi = component('Action', actionSchema);
 
 const pathParams = applyDecorators(
   ApiParam({ name: 'dealershipId', type: 'string', format: 'uuid' }),
@@ -123,11 +127,11 @@ export class ActionsController {
   @pathParams
   @ApiOkResponse({
     description: 'Every action of the vehicle, newest first',
-    schema: {
+    schema: component('ActionList', {
       type: 'object',
       required: ['items'],
       properties: { items: { type: 'array', items: actionOpenApi } },
-    },
+    }),
   })
   @ApiResponse({
     status: 400,

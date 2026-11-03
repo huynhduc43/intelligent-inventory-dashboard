@@ -178,6 +178,26 @@ describe('dashboard', () => {
     ]);
   });
 
+  it('groups make and model case-insensitively like the list filter, showing the most common spelling (#105)', async () => {
+    await insert(30, 10, { make: 'toyota', model: 'corolla' });
+    try {
+      const { body } = await dash();
+      expect(body.byMakeModel).toContainEqual({
+        make: 'Toyota',
+        model: 'Corolla',
+        count: 4,
+        aging: 3,
+      });
+      expect(body.byMakeModel).toHaveLength(3);
+      const list = await get(
+        `/api/v1/dealerships/${LONDON}/vehicles?make=toyota&model=corolla`,
+      );
+      expect((list.body as { total: number }).total).toBe(4);
+    } finally {
+      await db.query('DELETE FROM vehicle WHERE id = $1', [vid(30)]);
+    }
+  });
+
   it('counts each vehicle by its latest action, NONE first, seven entries', async () => {
     const { body } = await dash();
     expect(body.actionStats).toEqual([

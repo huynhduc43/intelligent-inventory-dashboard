@@ -124,11 +124,12 @@ SELECT id, dealership_id, action_type, note, author, created_at FROM r
 WHERE author IS NOT NULL AND NOT EXISTS (
   SELECT 1 FROM vehicle_action a WHERE a.vehicle_id = r.id AND a.action_type = r.action_type AND a.created_at = r.created_at)`;
 
-/** Returns the password of each user this run inserted (none on a re-run). */
+/** Returns the password of each user this run inserted (none on a re-run); `report` gets one line per dealership. */
 export async function seed(
   client: pg.ClientBase,
   fixedPassword?: string,
   vehiclesPerDealership = 250,
+  report: (line: string) => void = () => undefined,
 ): Promise<{ email: string; password: string }[]> {
   if (fixedPassword !== undefined && fixedPassword.length < 15) {
     throw new Error('SEED_PASSWORD must be at least 15 characters');
@@ -157,20 +158,27 @@ export async function seed(
       [USERS[u][0], DEALERSHIPS[d][0], role],
     );
   }
-  for (const [dealershipId] of DEALERSHIPS) {
-    await client.query(SEED_VEHICLES, [
+  for (const [dealershipId, name] of DEALERSHIPS) {
+    const vehicles = await client.query(SEED_VEHICLES, [
       dealershipId,
       vehiclesPerDealership,
       USERS[0][0],
     ]);
+    const added = `${name}: ${String(vehicles.rowCount ?? 0)} vehicles added`;
     const seeded = await client.query(
       'SELECT 1 FROM vehicle_action WHERE dealership_id = $1 LIMIT 1',
       [dealershipId],
     );
-    if (seeded.rowCount) continue;
-    for (const round of [1, 2, 3]) {
-      await client.query(SEED_ACTIONS, [dealershipId, round]);
+    if (seeded.rowCount) {
+      report(`${added}, actions skipped (the dealership already has some)`);
+      continue;
     }
+    let actions = 0;
+    for (const round of [1, 2, 3]) {
+      actions +=
+        (await client.query(SEED_ACTIONS, [dealershipId, round])).rowCount ?? 0;
+    }
+    report(`${added}, ${String(actions)} actions added`);
   }
   return created;
 }
@@ -192,14 +200,19 @@ if (import.meta.main) {
         'SEED_VEHICLES_PER_DEALERSHIP must be an integer from 0 to 1000000',
       );
     }
-    const created = await seed(client, fixed === '' ? undefined : fixed, count);
+    const created = await seed(
+      client,
+      fixed === '' ? undefined : fixed,
+      count,
+      (line) => process.stdout.write(`${line}\n`),
+    );
     for (const { email, password } of created) {
       process.stdout.write(`${email}  ${password}\n`);
     }
     process.stdout.write(
       created.length
-        ? 'Seeded (passwords printed once)\n'
-        : 'Nothing to seed\n',
+        ? 'New users seeded (passwords printed once)\n'
+        : 'No new users\n',
     );
   } catch (e) {
     process.stderr.write(`${e instanceof Error ? e.message : String(e)}\n`);

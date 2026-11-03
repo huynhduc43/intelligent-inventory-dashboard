@@ -4,5 +4,13 @@
     "mattpocock-skills@claude-plugins-official": true,
     "diagram-design@diagram-design": true,
     "ponytail@ponytail": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(gh pr comment *)",
+      "Bash(gh pr review *)",
+      "Bash(gh api graphql *)",
+      "Bash(gh api repos/*/pulls/*/comments *)"
+    ]
   }
 }

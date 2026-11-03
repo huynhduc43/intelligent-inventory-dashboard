@@ -143,6 +143,25 @@ describe('seed', () => {
     expect(await n()).toBe(3 * 2001);
   });
 
+  it('reports the vehicles and actions it added per dealership, and skipped actions on a re-run', async () => {
+    await client.query('DELETE FROM vehicle_action');
+    await client.query('DELETE FROM vehicle');
+    const first: string[] = [];
+    await seed(client, undefined, 250, (l) => first.push(l));
+    const second: string[] = [];
+    await seed(client, undefined, 300, (l) => second.push(l));
+
+    expect(first).toHaveLength(3);
+    for (const l of first)
+      expect(l).toMatch(/: 251 vehicles added, [1-9]\d* actions added$/);
+    expect(second).toEqual(
+      ['London', 'New York', 'Sydney'].map(
+        (d) =>
+          `${d}: 50 vehicles added, actions skipped (the dealership already has some)`,
+      ),
+    );
+  });
+
   it('gives about 40% of in-stock Aging vehicles an action history, in order, once', async () => {
     await client.query('DELETE FROM vehicle_action');
     await client.query('DELETE FROM vehicle');

@@ -59,4 +59,4 @@ Vitest, two projects in `apps/api/vitest.config.ts`:
 - `test/unit/**/*.spec.ts`: pure logic, no I/O. Runs on pre-push.
 - `test/integration/**/*.spec.ts`: real Postgres via Testcontainers (needs Docker).
 
-Coverage (`pnpm test:cov`, gated in CI): **80%** lines, branches, functions and statements globally; **100%** for `src/modules/*/domain/**`. `main.ts`, `*.module.ts` and `src/shared/schema.ts` (declarations only; its migration is checked by the DB integration test) are excluded.
+Coverage (`pnpm test:cov`, gated in CI): **80%** lines, branches, functions and statements globally; **100%** for `src/modules/*/domain/**`. `main.ts`, `export-openapi.ts`, `explain-queries.ts`, `*.module.ts` and `src/shared/schema.ts` (declarations only; its migration is checked by the DB integration test) are excluded.

@@ -143,9 +143,17 @@ export function describeException(
   };
 }
 
-/** OpenAPI `content` for a problem+json response. */
-export const problemRef = {
-  'application/problem+json': {
-    schema: { $ref: '#/components/schemas/Problem' },
-  },
-};
+/** OpenAPI `content` for a problem+json response; the example carries the real status, since Swagger UI otherwise samples `status` as its maximum, 599. */
+export function problemContent(status: number, code = codeForStatus(status)) {
+  return {
+    'application/problem+json': {
+      schema: { $ref: '#/components/schemas/Problem' },
+      example: buildProblem(
+        status,
+        code,
+        'Human-readable explanation of this occurrence.',
+        '0b6f2c9e-4a1d-4f3b-9c8e-2d7a5e1f3b40',
+      ),
+    },
+  };
+}

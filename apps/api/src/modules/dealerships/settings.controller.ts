@@ -15,7 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import { problemContent } from '../../shared/problem.js';
 import { component } from '../../shared/components.js';
 import { noQuery } from '../../shared/query.js';
 import { text } from '../../shared/text.js';
@@ -75,17 +75,17 @@ export class SettingsController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (the route takes no query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 404,
     description: 'Unknown dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   get(
     @Req() req: AuthedRequest,
@@ -104,28 +104,28 @@ export class SettingsController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (body or query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 403,
     description: 'The caller lacks settings:update',
-    content: problemRef,
+    content: problemContent(403),
   })
   @ApiResponse({
     status: 404,
     description: 'Unknown dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   @ApiResponse({
     status: 422,
     description:
       'THRESHOLDS_INVALID (merged pair outside 1 <= watchDays < agingDays <= 3650) or TIMEZONE_INVALID',
-    content: problemRef,
+    content: problemContent(422, 'THRESHOLDS_INVALID'),
   })
   update(
     @Req() req: AuthedRequest,

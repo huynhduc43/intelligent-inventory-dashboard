@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import { problemContent } from '../../shared/problem.js';
 import { noQuery } from '../../shared/query.js';
 import { component } from '../../shared/components.js';
 import { text } from '../../shared/text.js';
@@ -59,12 +59,12 @@ const notFound = ApiResponse({
   status: 404,
   description:
     'Unknown or malformed dealership or vehicle, a vehicle of another dealership, or the caller is not a member',
-  content: problemRef,
+  content: problemContent(404),
 });
 const unauthenticated = ApiResponse({
   status: 401,
   description: 'Unauthenticated',
-  content: problemRef,
+  content: problemContent(401),
 });
 
 const dealershipId = (req: AuthedRequest) => {
@@ -88,19 +88,19 @@ export class ActionsController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (body or query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @unauthenticated
   @ApiResponse({
     status: 403,
     description: 'The caller lacks vehicle_action:create',
-    content: problemRef,
+    content: problemContent(403),
   })
   @notFound
   @ApiResponse({
     status: 409,
     description: 'VEHICLE_NOT_IN_STOCK: the vehicle is RESERVED or SOLD',
-    content: problemRef,
+    content: problemContent(409, 'VEHICLE_NOT_IN_STOCK'),
   })
   async create(
     @Req() req: AuthedRequest,
@@ -136,7 +136,7 @@ export class ActionsController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (the route takes no query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @unauthenticated
   @notFound

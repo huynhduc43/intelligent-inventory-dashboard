@@ -462,3 +462,12 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** business review round 1 flagged it (PR comment 6603313523); the system description must match the system (CLAUDE.md docs rule).
 - **Verification:** round 2 business review confirmed the bullet now cites ADR 0016.
 - **Outcome:** one sentence added to the Client stub bullet; Doc impact corrected.
+
+### C46: Every error example showed status 599 (#98)
+
+- **Problem:** after both reviews and the Tester passed, the user saw `status: 599` on every failed response in Swagger UI. Root cause: all error responses share `$ref Problem` with no `example`, `Problem.status` is `int().min(100).max(599)`, and Swagger UI's sample generator sets a number to its `minimum` and then overwrites it with its `maximum`.
+- **AI proposal:** replace the shared `problemRef` constant with `problemContent(status, code = codeForStatus(status))`, whose example is built by the filter's own `buildProblem`; routes with a specific code (401 `INVALID_CREDENTIALS`, the three 409s, 422 `THRESHOLDS_INVALID`) pass it.
+- **Decided by:** user (reported it and asked for the fix); the agent chose the approach.
+- **Decision and reasoning:** a per-response example is the only way one shared schema can show different statuses; reusing `buildProblem` keeps the example's `type`, `title` and `code` equal to what the API sends. Dropping the 100–599 bounds was rejected: it hides the bug and loses information.
+- **Verification:** `openapi.spec.ts` › gives every problem+json response an example whose status is its own, which fails on the previous commit with every error response listed.
+- **Outcome:** examples show the real status and code. No reviewer or the Tester caught it: they checked the document, not what Swagger UI renders from it.

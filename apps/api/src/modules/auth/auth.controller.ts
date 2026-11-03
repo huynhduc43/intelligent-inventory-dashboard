@@ -16,7 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import { problemContent } from '../../shared/problem.js';
 import { component } from '../../shared/components.js';
 import { text } from '../../shared/text.js';
 import { AuthService } from './auth.service.js';
@@ -55,17 +55,17 @@ export class AuthController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Invalid credentials',
-    content: problemRef,
+    content: problemContent(401, 'INVALID_CREDENTIALS'),
   })
   @ApiResponse({
     status: 429,
     description: 'Too many attempts',
-    content: problemRef,
+    content: problemContent(429),
   })
   login(@Body({ schema: loginSchema }) body: z.infer<typeof loginSchema>) {
     return this.auth.login(body.email, body.password);
@@ -108,7 +108,7 @@ export class AuthController {
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   me(@Req() req: AuthedRequest) {
     return this.auth.me(req.userId);

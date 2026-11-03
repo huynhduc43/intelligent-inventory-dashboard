@@ -8,7 +8,7 @@ import {
   type SchemaObject,
 } from '@nestjs/swagger';
 import type { z } from 'zod';
-import { problemRef } from '../../shared/problem.js';
+import { problemContent } from '../../shared/problem.js';
 import { component } from '../../shared/components.js';
 import { noQuery } from '../../shared/query.js';
 import { RequirePermission } from '../auth/decorators.js';
@@ -127,17 +127,17 @@ export class DashboardController {
   @ApiResponse({
     status: 400,
     description: 'Validation failed (the route takes no query parameters)',
-    content: problemRef,
+    content: problemContent(400),
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthenticated',
-    content: problemRef,
+    content: problemContent(401),
   })
   @ApiResponse({
     status: 404,
     description: 'Unknown dealership, or the caller is not a member',
-    content: problemRef,
+    content: problemContent(404),
   })
   get(
     @Req() req: AuthedRequest,

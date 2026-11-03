@@ -57,11 +57,40 @@ describe('openapi document', () => {
     };
     expect(content.content['application/problem+json']).toEqual({
       schema: { $ref: '#/components/schemas/Problem' },
+      example: expect.objectContaining({
+        status: 401,
+        code: 'UNAUTHENTICATED',
+      }) as unknown,
     });
     expect(generated.components?.schemas?.Problem).toMatchObject({
       type: 'object',
       required: ['type', 'title', 'status', 'detail', 'instance', 'code'],
     });
+  });
+
+  // Without an example, Swagger UI samples Problem.status from its range and shows 599 on every error.
+  it('gives every problem+json response an example whose status is its own', () => {
+    const mismatches = Object.entries(generated.paths).flatMap(([path, ops]) =>
+      Object.entries(
+        ops as Record<
+          string,
+          {
+            responses: Record<
+              string,
+              { content?: Record<string, { example?: { status?: number } }> }
+            >;
+          }
+        >,
+      ).flatMap(([method, op]) =>
+        Object.entries(op.responses).flatMap(([status, response]) => {
+          const problem = response.content?.['application/problem+json'];
+          return problem && problem.example?.status !== Number(status)
+            ? [`${method.toUpperCase()} ${path} ${status}`]
+            : [];
+        }),
+      ),
+    );
+    expect(mismatches).toEqual([]);
   });
 });
 

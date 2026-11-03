@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { AppModule } from '../app.module.js';
 import { componentSchemas } from './components.js';
 import { loadConfig } from './config.js';
-import { problemRef, problemSchema } from './problem.js';
+import { problemContent, problemSchema } from './problem.js';
 
 // src/shared and dist/shared are both two levels below the package root.
 const { version } = JSON.parse(
@@ -26,7 +26,7 @@ export function buildDocument(app: INestApplication): OpenAPIObject {
     .addGlobalResponse({
       status: 500,
       description: 'Unexpected error',
-      content: problemRef,
+      content: problemContent(500),
     })
     .build();
   const document = SwaggerModule.createDocument(app, config);

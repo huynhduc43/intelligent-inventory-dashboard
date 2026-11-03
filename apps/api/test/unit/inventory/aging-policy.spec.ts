@@ -2,6 +2,7 @@ import {
   bucketOf,
   tierOf,
   toStockedOnBounds,
+  validateThresholds,
 } from '../../../src/modules/inventory/domain/aging-policy.js';
 
 describe('tierOf', () => {
@@ -104,5 +105,20 @@ describe('toStockedOnBounds', () => {
     expect(toStockedOnBounds('2026-01-01', { minAgeDays: 1 }, t)).toEqual({
       stockedOnMax: '2025-12-31',
     });
+  });
+});
+
+describe('validateThresholds', () => {
+  it.each([
+    [0, 90, false],
+    [1, 90, true],
+    [60, 3650, true],
+    [60, 3651, false],
+    [90, 90, false],
+    [89, 90, true],
+    [60.5, 90, false],
+    [100, 60, false],
+  ])('watch %s aging %s -> %s', (watch, aging, ok) => {
+    expect(validateThresholds({ watch, aging })).toBe(ok);
   });
 });

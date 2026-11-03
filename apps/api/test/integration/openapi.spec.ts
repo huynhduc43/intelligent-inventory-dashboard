@@ -27,10 +27,11 @@ describe('openapi document', () => {
     expect(generated).toEqual(committed);
   });
 
-  it('lists the auth, actions, dashboard, inventory and health routes', () => {
+  it('lists the auth, actions, dashboard, settings, inventory and health routes', () => {
     expect(Object.keys(generated.paths).sort()).toEqual([
       '/api/v1/auth/login',
       '/api/v1/dealerships/{dealershipId}/dashboard',
+      '/api/v1/dealerships/{dealershipId}/settings',
       '/api/v1/dealerships/{dealershipId}/vehicles',
       '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}',
       '/api/v1/dealerships/{dealershipId}/vehicles/{vehicleId}/actions',

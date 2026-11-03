@@ -18,7 +18,14 @@ A REST API (NestJS 12, TypeScript) on PostgreSQL. The System Design Document is 
 
 ## Getting started
 
-The quickest run is `docker compose up --build`: Postgres, migrations, then the API on port 3000. To develop with Node on the host:
+The quickest run is Docker Compose: Postgres, migrations, then the API on port 3000. The second command adds the demo users, vehicles and action history, and prints the users' passwords once:
+
+```sh
+docker compose up --build -d
+docker compose run --rm migrate node db/seed.ts
+```
+
+To develop with Node on the host:
 
 ```sh
 nvm use
@@ -52,27 +59,21 @@ Try every route with curl (needs `jq`; `pnpm db:seed` prints the passwords). The
 EMAIL=admin@example.dev PASSWORD=<its password> bash docs/api/curl-examples.sh
 ```
 
-Production build:
+Production build (Node does not read `.env` by itself, so pass it, or set `DATABASE_URL` and `JWT_SECRET` in the environment):
 
 ```sh
 pnpm build
-node apps/api/dist/main.js
+node --env-file=apps/api/.env apps/api/dist/main.js
 ```
 
-## Scripts
+## Testing
 
-Run from the repo root; Turborepo runs them in every workspace package.
-
-| Command                 | Does                                                     |
-| ----------------------- | -------------------------------------------------------- |
-| `pnpm dev`              | Start the API in watch mode                              |
-| `pnpm build`            | Compile to `apps/api/dist`                               |
-| `pnpm lint`             | ESLint, zero warnings allowed                            |
-| `pnpm typecheck`        | `tsc --noEmit`                                           |
-| `pnpm test`             | Unit tests                                               |
-| `pnpm test:integration` | Integration tests against real Postgres (needs Docker)   |
-| `pnpm test:cov`         | All tests with coverage: 80% global, 100% on domain code |
-| `pnpm format`           | Prettier                                                 |
+```sh
+pnpm test               # unit tests, no I/O
+pnpm test:integration   # against a real PostgreSQL 17 in a throwaway container (Testcontainers; needs Docker running)
+pnpm test:cov           # every test with coverage; fails under 80% globally or 100% on src/modules/*/domain/**
+pnpm verify             # what CI runs: frozen install, format check, lint, typecheck, test:cov (needs Docker)
+```
 
 Run one test file or test by name:
 
@@ -81,21 +82,23 @@ pnpm --filter @inventory/api exec vitest run test/unit/inventory/aging-policy.sp
 pnpm --filter @inventory/api exec vitest run -t "tierOf"
 ```
 
+For an end-to-end check against the running API, use the curl script in [Getting started](#getting-started).
+
+## Scripts
+
+Run from the repo root; Turborepo runs them in every workspace package. Test scripts are in [Testing](#testing).
+
+| Command          | Does                          |
+| ---------------- | ----------------------------- |
+| `pnpm dev`       | Start the API in watch mode   |
+| `pnpm build`     | Compile to `apps/api/dist`    |
+| `pnpm lint`      | ESLint, zero warnings allowed |
+| `pnpm typecheck` | `tsc --noEmit`                |
+| `pnpm format`    | Prettier                      |
+
 ## Performance evidence
 
 Target (§1.4): the dashboard and a 50-row list page answer in p95 ≤ 300 ms at 2,000 in-stock vehicles. The plans below are at **8× that size**: `SEED_VEHICLES_PER_DEALERSHIP=20000`, which is about 16,000 in-stock vehicles per dealership (60,003 vehicles and about 19,000 actions over the three seeded dealerships). The list page runs in 39 ms and the dashboard request (its three statements) in about 46 ms in total, so both targets hold with a wide margin.
-
-Reproduce (the seed must go into an **empty** database: it adds actions only to a dealership that has none, so seeding 20,000 on top of the default 250 leaves almost no actions):
-
-```sh
-docker compose down -v && docker compose up -d postgres
-cp apps/api/.env.example apps/api/.env
-pnpm --filter @inventory/api db:migrate
-SEED_VEHICLES_PER_DEALERSHIP=20000 pnpm --filter @inventory/api db:seed
-pnpm --filter @inventory/api db:explain
-```
-
-`db:explain` ([`src/explain-queries.ts`](apps/api/src/explain-queries.ts)) runs `ANALYZE`, then calls the real `VehiclesService.list` and `DashboardService.get` for the London dealership with a logger that records each SQL statement, and replays every recorded `SELECT` as `EXPLAIN (ANALYZE, BUFFERS)` with the same text and parameters. The plans therefore come from the SQL the app really sends and cannot drift from the code. Execution times are from one run on a laptop (PostgreSQL 17.11 in Docker, warm cache, 2026-11-03); yours will differ.
 
 | Case                                        | Plan                                                         | Execution |
 | ------------------------------------------- | ------------------------------------------------------------ | --------- |
@@ -108,206 +111,7 @@ pnpm --filter @inventory/api db:explain
 | Dashboard, current-action counts            | Bitmap Index Scan, then latest-action index lookup per row   | 21 ms     |
 | **Dashboard request, total (3 statements)** |                                                              | **45 ms** |
 
-Reading the plans:
-
-- **List.** The cost is the latest-action lookup (`LEFT JOIN LATERAL … ORDER BY id DESC LIMIT 1`, an index scan on `vehicle_action_vehicle_id_idx` per vehicle) for every matching row before the `LIMIT`, because the total (`count(*) OVER ()`) and the sort sit above the join. It grows linearly with the in-stock count, so it is about 39 ms at 16,000 and a fraction of that at 2,000. The planner picks a Seq Scan of `vehicle` here: that join is estimated at about 10 cost units per row, which swamps the difference between the scan paths, and the seed puts a third of the table in one dealership (at the designed 50 dealerships it would be about 2%). Shown as it comes out, not tuned. Filtering by make and model uses its index (about 4,000 matching in-stock rows for a typical pair, so the same per-row lookup applies: 7 ms).
-- **Dashboard.** Three statements in one `REPEATABLE READ` read-only transaction, each a Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` (dealership, status, `stocked_on`), then an aggregate. The "aging with no action" subquery and the current-action counts use the same `vehicle_action_vehicle_id_idx` lookup.
-- **JIT.** PostgreSQL's JIT compiler fires on three statements (the list default and two dashboard statements) because the lookup's cost estimate passes `jit_above_cost`; it adds 5 to 10 ms each. Turning it off is a server tuning decision, outside this evidence.
-
-<details>
-<summary>Full <code>db:explain</code> output</summary>
-
-```text
-$ nest build && node --env-file-if-exists=.env dist/explain-queries.js
-
-Postgres 17.11 (Debian 17.11-1.pgdg13+2), dealership London, today_local 2026-11-03
-
-=== List: default (IN_STOCK, oldest first, limit 50) (statement 1 of 1)
-Limit  (cost=170291.17..170291.29 rows=50 width=185) (actual time=38.684..38.691 rows=50 loops=1)
-  Buffers: shared hit=36718
-  ->  Sort  (cost=170291.17..170331.45 rows=16112 width=185) (actual time=31.498..31.501 rows=50 loops=1)
-        Sort Key: v.stocked_on, v.id
-        Sort Method: top-N heapsort  Memory: 36kB
-        Buffers: shared hit=36718
-        ->  WindowAgg  (cost=169382.90..169755.94 rows=16112 width=185) (actual time=22.230..27.365 rows=16020 loops=1)
-              Buffers: shared hit=36718
-              ->  Nested Loop Left Join  (cost=0.29..169192.02 rows=16112 width=129) (actual time=0.024..18.655 rows=16020 loops=1)
-                    Buffers: shared hit=36718
-                    ->  Seq Scan on vehicle v  (cost=0.00..2002.04 rows=16112 width=92) (actual time=0.010..6.144 rows=16020 loops=1)
-                          Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 43983
-                          Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=16020)
-                          Buffers: shared hit=35541
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.000..0.000 rows=0 loops=16020)
-                                Index Cond: (vehicle_id = v.id)
-                                Filter: (dealership_id = v.dealership_id)
-                                Buffers: shared hit=35541
-Planning Time: 0.160 ms
-JIT:
-  Functions: 16
-  Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.506 ms (Deform 0.241 ms), Inlining 0.000 ms, Optimization 0.352 ms, Emission 6.849 ms, Total 7.707 ms
-Execution Time: 39.268 ms
-
-=== List: tier=AGING (statement 1 of 1)
-Limit  (cost=93451.41..93451.53 rows=50 width=185) (actual time=22.084..22.090 rows=50 loops=1)
-  Buffers: shared hit=22182
-  ->  Sort  (cost=93451.41..93473.26 rows=8741 width=185) (actual time=22.084..22.087 rows=50 loops=1)
-        Sort Key: v.stocked_on, v.id
-        Sort Method: top-N heapsort  Memory: 37kB
-        Buffers: shared hit=22182
-        ->  WindowAgg  (cost=92953.73..93161.04 rows=8741 width=185) (actual time=16.463..19.769 rows=8752 loops=1)
-              Buffers: shared hit=22182
-              ->  Nested Loop Left Join  (cost=0.29..92855.10 rows=8741 width=129) (actual time=0.011..14.459 rows=8752 loops=1)
-                    Buffers: shared hit=22182
-                    ->  Seq Scan on vehicle v  (cost=0.00..2152.05 rows=8741 width=92) (actual time=0.005..7.057 rows=8752 loops=1)
-                          Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (stocked_on <= '2026-08-04'::date) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 51251
-                          Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
-                          Buffers: shared hit=21005
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
-                                Index Cond: (vehicle_id = v.id)
-                                Filter: (dealership_id = v.dealership_id)
-                                Buffers: shared hit=21005
-Planning Time: 0.139 ms
-Execution Time: 22.119 ms
-
-=== List: make=Ford&model=Focus (statement 1 of 1)
-Limit  (cost=7739.01..7739.14 rows=50 width=185) (actual time=7.064..7.069 rows=50 loops=1)
-  Buffers: shared hit=9233
-  ->  Sort  (cost=7739.01..7740.61 rows=638 width=185) (actual time=7.063..7.066 rows=50 loops=1)
-        Sort Key: v.stocked_on, v.id
-        Sort Method: top-N heapsort  Memory: 38kB
-        Buffers: shared hit=9233
-        ->  WindowAgg  (cost=7691.39..7717.82 rows=638 width=185) (actual time=4.866..6.025 rows=4000 loops=1)
-              Buffers: shared hit=9233
-              ->  Nested Loop Left Join  (cost=0.58..7695.49 rows=638 width=129) (actual time=0.010..3.956 rows=4000 loops=1)
-                    Buffers: shared hit=9233
-                    ->  Index Scan using vehicle_dealership_make_model_idx on vehicle v  (cost=0.29..1075.13 rows=638 width=92) (actual time=0.007..0.761 rows=4000 loops=1)
-                          Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (lower(make) = 'ford'::text) AND (lower(model) = 'focus'::text))
-                          Filter: (status = ANY ('{IN_STOCK}'::text[]))
-                          Buffers: shared hit=398
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=4000)
-                          Buffers: shared hit=8835
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=4000)
-                                Index Cond: (vehicle_id = v.id)
-                                Filter: (dealership_id = v.dealership_id)
-                                Buffers: shared hit=8835
-Planning Time: 0.099 ms
-Execution Time: 7.091 ms
-
-=== List: tier=AGING&hasAction=false (statement 1 of 1)
-Limit  (cost=92855.15..92855.15 rows=1 width=185) (actual time=17.937..17.942 rows=50 loops=1)
-  Buffers: shared hit=22182
-  ->  Sort  (cost=92855.15..92855.15 rows=1 width=185) (actual time=17.936..17.939 rows=50 loops=1)
-        Sort Key: v.stocked_on, v.id
-        Sort Method: top-N heapsort  Memory: 36kB
-        Buffers: shared hit=22182
-        ->  WindowAgg  (cost=0.29..92855.14 rows=1 width=185) (actual time=15.581..16.603 rows=5251 loops=1)
-              Buffers: shared hit=22182
-              ->  Nested Loop Left Join  (cost=0.29..92855.10 rows=1 width=129) (actual time=0.007..14.430 rows=5251 loops=1)
-                    Filter: (a.action_type IS NULL)
-                    Rows Removed by Filter: 3501
-                    Buffers: shared hit=22182
-                    ->  Seq Scan on vehicle v  (cost=0.00..2152.05 rows=8741 width=92) (actual time=0.004..7.159 rows=8752 loops=1)
-                          Filter: ((status = ANY ('{IN_STOCK}'::text[])) AND (stocked_on <= '2026-08-04'::date) AND (dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid))
-                          Rows Removed by Filter: 51251
-                          Buffers: shared hit=1177
-                    ->  Limit  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
-                          Buffers: shared hit=21005
-                          ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=61) (actual time=0.001..0.001 rows=0 loops=8752)
-                                Index Cond: (vehicle_id = v.id)
-                                Filter: (dealership_id = v.dealership_id)
-                                Buffers: shared hit=21005
-Planning Time: 0.097 ms
-Execution Time: 17.967 ms
-
-=== Dashboard (statement 1 of 3)
-Aggregate  (cost=169752.26..169752.30 rows=1 width=44) (actual time=19.629..19.630 rows=1 loops=1)
-  Buffers: shared hit=21416
-  ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=36) (actual time=0.390..1.665 rows=16020 loops=1)
-        Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-        Heap Blocks: exact=393
-        Buffers: shared hit=411
-        ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.361..0.362 rows=16020 loops=1)
-              Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-              Buffers: shared hit=18
-  SubPlan 1
-    ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=0) (actual time=0.001..0.001 rows=0 loops=8752)
-          Index Cond: (vehicle_id = v.id)
-          Filter: (dealership_id = v.dealership_id)
-          Buffers: shared hit=21005
-Planning Time: 0.111 ms
-JIT:
-  Functions: 15
-  Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.686 ms (Deform 0.168 ms), Inlining 0.000 ms, Optimization 0.307 ms, Emission 8.091 ms, Total 9.085 ms
-Execution Time: 20.360 ms
-
-=== Dashboard (statement 2 of 3)
-Sort  (cost=1916.13..1916.19 rows=25 width=136) (actual time=3.818..3.818 rows=5 loops=1)
-  Sort Key: ((sum(g.count))::integer) DESC, (lower(g.make)), (lower(g.model))
-  Sort Method: quicksort  Memory: 25kB
-  Buffers: shared hit=411
-  ->  GroupAggregate  (cost=1914.36..1915.55 rows=25 width=136) (actual time=3.793..3.811 rows=5 loops=1)
-        Group Key: (lower(g.make)), (lower(g.model))
-        Buffers: shared hit=411
-        ->  Sort  (cost=1914.36..1914.42 rows=25 width=90) (actual time=3.778..3.779 rows=5 loops=1)
-              Sort Key: (lower(g.make)), (lower(g.model)), g.count DESC, g.make
-              Sort Method: quicksort  Memory: 25kB
-              Buffers: shared hit=411
-              ->  Subquery Scan on g  (cost=1913.15..1913.78 rows=25 width=90) (actual time=3.770..3.773 rows=5 loops=1)
-                    Buffers: shared hit=411
-                    ->  HashAggregate  (cost=1913.15..1913.40 rows=25 width=26) (actual time=3.768..3.769 rows=5 loops=1)
-                          Group Key: v.make, v.model
-                          Batches: 1  Memory Usage: 24kB
-                          Buffers: shared hit=411
-                          ->  Bitmap Heap Scan on vehicle v  (cost=253.27..1671.71 rows=16096 width=14) (actual time=0.309..1.192 rows=16020 loops=1)
-                                Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                                Heap Blocks: exact=393
-                                Buffers: shared hit=411
-                                ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..249.25 rows=16096 width=0) (actual time=0.284..0.284 rows=16020 loops=1)
-                                      Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                                      Buffers: shared hit=18
-Planning:
-  Buffers: shared hit=4
-Planning Time: 0.100 ms
-Execution Time: 3.852 ms
-
-=== Dashboard (statement 3 of 3)
-GroupAggregate  (cost=169991.99..170112.84 rows=1 width=36) (actual time=18.721..20.266 rows=7 loops=1)
-  Group Key: (COALESCE(a.action_type, 'NONE'::text))
-  Buffers: shared hit=35952
-  ->  Sort  (cost=169991.99..170032.27 rows=16112 width=32) (actual time=18.683..19.255 rows=16020 loops=1)
-        Sort Key: (COALESCE(a.action_type, 'NONE'::text))
-        Sort Method: quicksort  Memory: 385kB
-        Buffers: shared hit=35952
-        ->  Nested Loop Left Join  (cost=257.73..168866.10 rows=16112 width=32) (actual time=4.254..17.611 rows=16020 loops=1)
-              Buffers: shared hit=35952
-              ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=32) (actual time=0.340..1.501 rows=16020 loops=1)
-                    Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                    Heap Blocks: exact=393
-                    Buffers: shared hit=411
-                    ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.314..0.315 rows=16020 loops=1)
-                          Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                          Buffers: shared hit=18
-              ->  Limit  (cost=0.29..10.36 rows=1 width=18) (actual time=0.001..0.001 rows=0 loops=16020)
-                    Buffers: shared hit=35541
-                    ->  Index Scan using vehicle_action_vehicle_id_idx on vehicle_action a  (cost=0.29..10.36 rows=1 width=18) (actual time=0.000..0.000 rows=0 loops=16020)
-                          Index Cond: (vehicle_id = v.id)
-                          Filter: (dealership_id = v.dealership_id)
-                          Buffers: shared hit=35541
-Planning Time: 0.090 ms
-JIT:
-  Functions: 15
-  Options: Inlining false, Optimization false, Expressions true, Deforming true
-  Timing: Generation 0.371 ms (Deform 0.133 ms), Inlining 0.000 ms, Optimization 0.215 ms, Emission 3.698 ms, Total 4.284 ms
-Execution Time: 20.684 ms
-```
-
-</details>
+How to reproduce it, how to read the plans and the full `db:explain` output: [`docs/performance.md`](docs/performance.md).
 
 ## Project structure
 
@@ -329,27 +133,60 @@ docs/
 
 ## AI Collaboration Narrative
 
-The code, tests and docs here were written by an AI agent (Claude Code, Claude Opus) that I directed. I owned the decisions and the verification. The evidence, case by case with links, is in [`docs/ai-collaboration.md`](docs/ai-collaboration.md).
+The code, tests and docs here were written by an AI agent (Claude Code, Claude Opus) that I directed. I owned the design, the workflow the agents follow and every change to it, and the verification; agents wrote the code and other agents checked it. The evidence, 50 cases with links, is in [`docs/ai-collaboration.md`](docs/ai-collaboration.md).
 
 ![Claude Code usage for this project over 7 days: 5h 45m agent time, $198.88, 315.1M tokens, 59 sessions](docs/images/ponytail-card.png)
 
 _Measured with [ponytail](https://ponytail.dev) over the last 7 days of the build: 59 agent sessions, 5h 45m of agent time._
 
-**Strategy: decide first, then let the agent build inside the decisions.**
+### Strategy for guiding the AI
+
+Decide first, then let the agent build inside the decisions.
 
 - **Design before code.** The agent researched primary sources and drafted the design ([`backend-architecture.md`](docs/research/backend-architecture.md)). Every decision is numbered and marked as mine (**U**, 14 of 19) or the agent's assumption (**A**, 5), and the assumptions are listed in the System Design Document. Later decisions are ADRs.
 - **Rules the agent can't miss.** `CLAUDE.md` holds the invariants that are easy to get wrong (aging is derived, time zones only in Postgres, race-free conditional writes, 404 for non-members, append-only actions), so every session and every agent starts from them.
-- **One requirement at a time, through fixed roles.** The `/deliver` skill (`.claude/skills/deliver/`) takes one issue through analyst, architect, contract, implementer, code reviewer, business reviewer and tester. Its gates can stop for my approval (`grill=manual`, `approve=manual`) or let the agent take its own recommendation (`auto`). So far everything after the design research ran in `auto`: the agent made the build decisions and picked the contract options, and the independent reviewers below were the check. When an agent hits a choice the spec doesn't settle, it stops with `decision-needed` instead of guessing.
+- **One requirement at a time, through fixed roles.** I built the `/deliver` skill (`.claude/skills/deliver/`), which takes one issue through analyst, architect, contract, implementer, code reviewer, business reviewer and tester. Its gates can stop for my approval (`grill=manual`, `approve=manual`) or let the agent take its own recommendation (`auto`). Inside the design, the builds ran in `auto`: the agent picked implementation details and contract options, and the independent reviewers below were the check. What stayed with me: the design, every change to how the agents work, the decisions after each evaluation, and every merge. When an agent hits a choice the spec doesn't settle, or a conflict with the design, it stops for me instead of guessing.
 
-**Verification: the author never approves its own work.**
+### Verifying and refining its output
+
+The author never approves its own work.
 
 - Reviewers and the tester are separate agents, spawned fresh with only the PR and the issue. They treat the author's description and passing tests as claims to check. The code reviewer hunts defects and over-engineering; the business reviewer checks the PR against the issue, the contract, the design and the docs; the tester runs the API on a real Postgres and walks each acceptance criterion with `curl`.
 - Findings go back to a fresh implementer, and the next review looks only at the fixes, for at most three rounds before I'm asked.
-- Machines check what they can: strict TypeScript, ESLint with zero warnings, Prettier, commitlint and branch-name hooks, CI, and a coverage gate (80% global, 100% on the pure domain rules). Integration tests run against real Postgres (Testcontainers), because the rules under test are SQL date maths and constraints.
+- **What it caught.** On the first feature (#17), the reviewers found three problems the implementer's own tests passed: a Drizzle `$onUpdate` timestamp that bypassed the injected `Clock` (now [ADR 0002](docs/adr/0002-updated-at-set-from-clock.md)), a primary key name that differed from the agreed contract while the PR claimed "no deviations", and a coverage exclusion the documented standard didn't allow. All three were fixed in one round.
 
-**What it caught.** On the first feature (#17), the reviewers found three problems the implementer's own tests passed: a Drizzle `$onUpdate` timestamp that bypassed the injected `Clock` (now [ADR 0002](docs/adr/0002-updated-at-set-from-clock.md)), a primary key name that differed from the agreed contract while the PR claimed "no deviations", and a coverage exclusion the documented standard didn't allow. All three were fixed in one round.
+**Refining the workflow itself.** `/deliver` is not a fixed prompt: I kept correcting it when it failed.
 
-**Keeping quality and docs honest.** Each PR lists its **Doc impact** (design doc, diagrams, ADRs, Status), and the business reviewer treats a missing update as a finding. After each PR the agent runs a retrospective and proposes changes to its own instructions and checks; I approve them first. I also checked the workflow against a second AI's advice and adopted only what fitted the design ([case C6](docs/ai-collaboration.md)).
+- **A retro after every PR, approved by me.** The agent proposes changes to its own instructions and checks; I apply, change or skip each one (C11: three applied, one skipped as not worth its cost).
+- **Hands-on fixes when the workflow went wrong.** Agents had merged four PRs onto a red `dev` without reading CI. I had `pnpm verify` start with the same frozen install as CI, and a PR now counts as done only when its checks are green (C23). An implementer once reported `pnpm verify` green while it had failed; its evidence must now include the command's output (C12).
+- **Mechanisms over reminders.** When three mistakes that had been fixed came back, I asked for a root-cause diagnosis: each earlier fix was a sentence in the prompt of the agent that broke the rule, and nothing failed when it skipped it. They became a script (`check-evidence.mjs`), a test helper and an orchestrator step (C39).
+- **Skill changes measured, not assumed.** I ran a `/deliver` change through `skill-creator` evals against a frozen copy of the old skill: 6 steps, 46 assertions, **94%** for the new skill against 68% for the old one and 85% with its sub-skills removed ([report](.claude/evals/deliver/REPORT.md)). It ran once, because each run costs many tokens; the limits are under [Known issues](#known-issues-and-limits).
+- I also checked the workflow against a second AI's advice and adopted only what fitted the design (C6).
+
+### Ensuring the final quality of the code
+
+- **Machines check what they can:** strict TypeScript, ESLint with zero warnings, Prettier, commitlint and branch-name hooks, CI, and a coverage gate (80% global, 100% on the pure domain rules). Integration tests run against real Postgres (Testcontainers), because the rules under test are SQL date maths and constraints.
+- **Docs move with the code.** Each PR lists its **Doc impact** (design doc, diagrams, ADRs, Status), and the business reviewer treats a missing update as a finding.
+- **The AI's mistakes are on record.** The log keeps the cases where the agent was wrong, not only where it was right: a "verify passed" that had failed (C12), a PR-body edit it reported but never made (C20), tests that could not fail (C34, C37).
+
+## Known issues and limits
+
+**Product**
+
+- **Deferred by design.** Refresh tokens, ETag/304, keyset pagination, CSV import, `If-Match`, an audit table and OpenTelemetry are out of the MVP, each with the trigger that would bring it in ([§6](docs/research/backend-architecture.md#6-alternatives-and-when-wed-use-them)).
+- **Shortcuts marked in code** (`shortcut:` comments):
+  - the login throttler keeps its counts in memory, per process ([`auth.controller.ts`](apps/api/src/modules/auth/auth.controller.ts));
+  - a vehicle's action history is returned whole, without paging ([`actions.service.ts`](apps/api/src/modules/actions/actions.service.ts));
+  - problem+json `type` URIs use a placeholder domain ([`problem.ts`](apps/api/src/shared/problem.ts));
+  - an idle Postgres client's error is swallowed, not logged ([`db.ts`](apps/api/src/shared/db.ts)). Its comment says "once pino lands", but pino has landed, so the comment is out of date.
+- **Query plans not tuned.** With the demo seed the list query picks a Seq Scan, and PostgreSQL's JIT adds 5–10 ms to three statements; both are inside the target ([`docs/performance.md`](docs/performance.md)).
+
+**AI process**
+
+- **The `/deliver` evaluation ran once**, so there is no variance estimate.
+- **Later skill changes are not re-measured.** The three fixes made after that evaluation (stop on any conflict with the design, acceptance criteria in the spec, the Contract role reads the invariants), and the later retro changes, have not been through a second evaluation; I waived the rerun for cost each time (e.g. C11, C23, C39).
+- **Issue labels are not specific yet.** `/deliver` files every retro candidate with the same `needs-triage` label (42 issues so far) instead of a label that says what it is or who should take it (`ready-for-agent`, `ready-for-human`, `bug`, …), so sorting them is still manual.
+- **One evaluation finding is still open:** at spec time the agent adds decisions the grill did not settle, instead of asking. The finish fixture and the implementer's scope assertion also need fixing before the next evaluation.
 
 ## Contributing
 

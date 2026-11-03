@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg, { Pool } from 'pg';
 import { createDb, type Db } from '../../src/shared/db.js';
@@ -228,6 +229,47 @@ describe('database', () => {
       await insertVehicle({ status: 'SOLD', soldAt: '2026-02-01T00:00:00Z' });
 
       await expect(insertVehicle()).resolves.toMatchObject({ rowCount: 1 });
+    });
+  });
+
+  describe('migration 0002 (make/model whitespace backfill)', () => {
+    it('trims and collapses whitespace runs, leaving clean rows alone', async () => {
+      const sqlText = await readFile(
+        new URL(
+          '../../db/migrations/0002_collapse_make_model_whitespace.sql',
+          import.meta.url,
+        ),
+        'utf8',
+      );
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const d = await client.query<{ id: string }>(
+          `INSERT INTO dealership (name, timezone) VALUES ('M', 'Europe/London') RETURNING id`,
+        );
+        const u = await client.query<{ id: string }>(
+          `INSERT INTO app_user (email, display_name, password_hash) VALUES ('m@example.com', 'M', 'x') RETURNING id`,
+        );
+        await client.query(
+          `INSERT INTO vehicle (dealership_id, vin, make, model, model_year, mileage, status, stocked_on, updated_by)
+           VALUES ($1, '1HGCM82633A004352', E' Land \\t Rover ', E'Range  Rover\\nSport', 2020, 0, 'IN_STOCK', '2026-01-01', $2),
+                  ($1, '1HGCM82633A004353', 'Honda', 'Accord', 2020, 0, 'IN_STOCK', '2026-01-01', $2)`,
+          [d.rows[0]?.id, u.rows[0]?.id],
+        );
+        const r = await client.query(sqlText);
+        const { rows } = await client.query<{ make: string; model: string }>(
+          'SELECT make, model FROM vehicle ORDER BY vin',
+        );
+
+        expect(r.rowCount).toBe(1);
+        expect(rows).toEqual([
+          { make: 'Land Rover', model: 'Range Rover Sport' },
+          { make: 'Honda', model: 'Accord' },
+        ]);
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+      }
     });
   });
 

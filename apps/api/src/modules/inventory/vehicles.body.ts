@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { text } from '../../shared/text.js';
+import { name } from '../../shared/text.js';
 
 export const createVehicleSchema = z
   .strictObject({
@@ -15,8 +15,8 @@ export const createVehicleSchema = z
         description:
           'Trimmed and upper-cased before the check; 17 characters, letters and digits except I, O and Q',
       }),
-    make: text().trim().min(1).max(100),
-    model: text().trim().min(1).max(100),
+    make: name().min(1).max(100),
+    model: name().min(1).max(100),
     modelYear: z.int().min(1900).max(2100),
     mileage: z.int().min(0).max(2147483647),
     listPrice: z

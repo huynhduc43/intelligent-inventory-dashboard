@@ -60,15 +60,22 @@ export class DashboardService {
             count(*) FILTER (WHERE ${days} BETWEEN 61 AND 90)::int AS b2,
             count(*) FILTER (WHERE ${days} > 90)::int AS b3
           FROM vehicle v WHERE ${inStock}`);
+        // Case-insensitive like the list filter, under each group's most common stored spelling (ADR 0017).
+        // Grouping stored values first keeps lower() off every row.
         const m = await tx.execute<{
           make: string;
           model: string;
           count: number;
           aging: number;
         }>(sql`
-          SELECT v.make, v.model, count(*)::int AS count, count(*) FILTER (WHERE ${aging})::int AS aging
-          FROM vehicle v WHERE ${inStock}
-          GROUP BY v.make, v.model ORDER BY count DESC, v.make, v.model`);
+          SELECT (array_agg(g.make ORDER BY g.count DESC, g.make))[1] AS make,
+            (array_agg(g.model ORDER BY g.count DESC, g.model))[1] AS model,
+            sum(g.count)::int AS count, sum(g.aging)::int AS aging
+          FROM (
+            SELECT v.make, v.model, count(*) AS count, count(*) FILTER (WHERE ${aging}) AS aging
+            FROM vehicle v WHERE ${inStock} GROUP BY v.make, v.model
+          ) g
+          GROUP BY lower(g.make), lower(g.model) ORDER BY count DESC, lower(g.make), lower(g.model)`);
         // Read-only LATERAL on vehicle_action for the latest action by id (ADR 0011).
         const a = await tx.execute<{ action_type: string; count: number }>(sql`
           SELECT coalesce(la.action_type, 'NONE') AS action_type, count(*)::int AS count

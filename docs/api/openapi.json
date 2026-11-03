@@ -186,9 +186,9 @@
             "name": "make",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive, exact.",
+            "description": "Case-insensitive, exact, after trimming and collapsing inner whitespace.",
             "schema": {
-              "description": "Case-insensitive, exact.",
+              "description": "Case-insensitive, exact, after trimming and collapsing inner whitespace.",
               "type": "string",
               "minLength": 1,
               "maxLength": 100
@@ -198,9 +198,9 @@
             "name": "model",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive, exact.",
+            "description": "Case-insensitive, exact, after trimming and collapsing inner whitespace.",
             "schema": {
-              "description": "Case-insensitive, exact.",
+              "description": "Case-insensitive, exact, after trimming and collapsing inner whitespace.",
               "type": "string",
               "minLength": 1,
               "maxLength": 100

@@ -57,6 +57,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#98](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/98)   | Request and 2xx response bodies are named, linked OpenAPI components (#97)              | `/deliver` under `grill=auto`/`approve=auto`, research, diagram and contract roles skipped as unneeded; probed zod `.meta({ id })` before writing the spec; ADR 0016; implementer on Sonnet                                                            | 1 fix round, 1 finding (C45); tester checked AC 1–7 on a live `/docs-json`, all pass                                                | The user asked for the fix and allowed skipping roles; the agent decided the rest (C44)                                                                                     |
 | [#104](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/104) | SDD: assumptions with reasons, trade-offs, Build for the Future, GenAI section          | Reviewed `system-design.md` against the user's checklist without editing, proposed checklist changes, then rewrote §6–§8 from the architecture doc, the code and this log                                                                              | `pnpm verify`; §7 facts checked against the code and the README's Performance evidence                                              | The checklist, what each section must answer, and the instruction to include the AI's own mistakes (C48)                                                                    |
 | [#106](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/106) | README against the brief: build, run, test and the AI Collaboration Narrative           | Checked the README against the brief without editing, ran the Compose seed in the production image, then added the seed and `--env-file` steps, a Testing section, a Known issues section and moved the full `EXPLAIN` output to `docs/performance.md` | `pnpm verify`; `node db/seed.ts` run in the built image against a throwaway Postgres                                                | That the Narrative must not read as little human direction: tell how `/deliver` was built and refined, and list the evaluation's limits (C49)                               |
+| [#107](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/107) | Dashboard groups make and model case-insensitively; intake collapses whitespace (#105)  | Direct session: two numbered questions, user took both recommendations; `db:explain` caught a 2× slowdown in the first query, rewritten before the PR                                                                                                  | `pnpm verify` (359 tests); `db:explain` 3.84 → 3.85 ms on the make/model statement (C49)                                            | Both options (C49)                                                                                                                                                          |
 
 ## Cases
 
@@ -256,7 +257,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decided by:** agent (approve=auto).
 - **Decision and reasoning:** following the design is the smaller change; case-folding belongs with vehicle create (build step 6), where input is normalised.
 - **Verification:** [`Chosen:` comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/issues/10#issuecomment-6577921997).
-- **Outcome:** no code; revisit when `POST /vehicles` lands.
+- **Outcome:** no code; revisit when `POST /vehicles` lands. `POST /vehicles` landed (#59) without revisiting it; fixed in #105 (ADR 0017).
 
 ### C23: Agents merged four PRs on a red `dev` and never read CI (#46)
 
@@ -492,7 +493,16 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Verification:** `pnpm verify`; every §7 claim was checked against the code (`vehicles.query.ts`, `vehicles.service.ts`, `schema.ts`, `db.ts`) or the README's Performance evidence, and the §8.6 claims against the outcomes of the cases they cite.
 - **Outcome:** `system-design.md` §6–§8 rewritten; section numbers unchanged. A second checklist from the user added §1's problem, goals, scope and functional and non-functional requirements, and turned §6.1 into one row per ambiguity in the brief (age baseline, the exact 90-day boundary, time zones, allowed statuses and actions, history versus overwrite, missing vehicles, who may read or write, invalid action requests, input data and import).
 
-### C49: A Narrative that undersold the human's part (#106)
+### C49: Make and model grouped case-insensitively, whitespace collapsed on write (#105)
+
+- **Problem:** C22 deferred case-folding to `POST /vehicles`, which landed (#59) without it, so the dashboard still grouped "Toyota" and "toyota" as two rows while the list filter matched both. The issue also found that inner whitespace ("Land Rover") split values everywhere.
+- **AI proposal:** group the dashboard by `lower()` and show the most common spelling (option A, smallest, no contract change), and collapse inner whitespace on intake and in the filters, with a backfill migration.
+- **Decided by:** user, choosing the recommended option for both questions.
+- **Decision and reasoning:** grouping case-insensitively makes the dashboard agree with the list filter without a read before every insert; whitespace has one obviously right form, so it is normalised at the source.
+- **Verification:** integration tests for the merged `byMakeModel` row and the list filter, the backfill migration, and a unit test for the intake normalisation. `db:explain` showed the first query (`mode()` with `GROUP BY lower()` on every row) doubling the statement time (3.8 → 7.7 ms at 16,000 in-stock rows), so it was rewritten to group stored values first (3.85 ms).
+- **Outcome:** ADR 0017; `system-design.md` §6.1 no longer lists a known gap.
+
+### C50: A Narrative that undersold the human's part (#106)
 
 - **Problem:** the user asked whether the README met the brief. The agent found two run instructions that failed (the Compose path had no seed, so nobody could log in; `node apps/api/dist/main.js` from the root starts without `DATABASE_URL` or `JWT_SECRET`) and flagged that "everything after the design research ran in `auto`" could read as little human direction.
 - **AI proposal:** fix both instructions, add a Testing section, move the full `EXPLAIN` output out of the README, rename the Narrative's parts to the brief's wording, and add one short "where I stepped in" paragraph.

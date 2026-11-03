@@ -107,9 +107,9 @@ Target (§1.4): the dashboard and a 50-row list page answer in p95 ≤ 300 ms at
 | List, `make=Ford&model=Focus`               | Index Scan on `vehicle_dealership_make_model_idx`            | 7 ms      |
 | List, `tier=AGING&hasAction=false`          | Seq Scan, same shape                                         | 18 ms     |
 | Dashboard, KPIs and age buckets             | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 20 ms     |
-| Dashboard, make and model                   | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 5 ms      |
+| Dashboard, make and model                   | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 4 ms      |
 | Dashboard, current-action counts            | Bitmap Index Scan, then latest-action index lookup per row   | 21 ms     |
-| **Dashboard request, total (3 statements)** |                                                              | **46 ms** |
+| **Dashboard request, total (3 statements)** |                                                              | **45 ms** |
 
 How to reproduce it, how to read the plans and the full `db:explain` output: [`docs/performance.md`](docs/performance.md).
 
@@ -133,7 +133,11 @@ docs/
 
 ## AI Collaboration Narrative
 
-The code, tests and docs here were written by an AI agent (Claude Code, Claude Opus) that I directed. I owned the design, the workflow the agents follow and every change to it, and the verification; agents wrote the code and other agents checked it. The evidence, 49 cases with links, is in [`docs/ai-collaboration.md`](docs/ai-collaboration.md).
+The code, tests and docs here were written by an AI agent (Claude Code, Claude Opus) that I directed. I owned the design, the workflow the agents follow and every change to it, and the verification; agents wrote the code and other agents checked it. The evidence, 50 cases with links, is in [`docs/ai-collaboration.md`](docs/ai-collaboration.md).
+
+![Claude Code usage for this project over 7 days: 5h 45m agent time, $198.88, 315.1M tokens, 59 sessions](docs/images/ponytail-card.png)
+
+_Measured with [ponytail](https://ponytail.dev) over the last 7 days of the build: 59 agent sessions, 5h 45m of agent time._
 
 ### Strategy for guiding the AI
 

@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How the EXPLAIN ANALYZE plans are captured</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --color-paper: #f5f5f5;
+        --color-ink: #2d3142;
+        --color-muted: #4f5d75;
+        --color-accent: #bf4520;
+        --font-sans: 'Geist', system-ui, sans-serif;
+        --font-serif: 'Instrument Serif', serif;
+        --font-mono: 'Geist Mono', ui-monospace, monospace;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-paper);
+        color: var(--color-ink);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+      }
+
+      .frame {
+        max-width: 1200px;
+        width: 100%;
+        min-width: 0;
+      }
+      .diagram-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--color-ink);
+        margin-bottom: 1.5rem;
+      }
+
+      svg {
+        width: 100%;
+        min-width: 960px;
+        display: block;
+      }
+      @media print {
+        .diagram-container {
+          overflow-x: visible;
+        }
+        svg {
+          min-width: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Flowchart · README performance evidence (#15)</p>
+      <h1>How the EXPLAIN ANALYZE plans are captured</h1>
+
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 1016"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="explain-capture-title explain-capture-desc"
+        >
+          <title id="explain-capture-title">
+            How the EXPLAIN ANALYZE plans are captured
+          </title>
+          <desc id="explain-capture-desc">
+            An empty database is migrated and seeded with 20,000 vehicles per
+            dealership; the db:explain script runs ANALYZE, calls the real list
+            and dashboard services while a drizzle logger records each
+            statement's SQL text and params, replays each as EXPLAIN (ANALYZE,
+            BUFFERS) with the same text and params through pg, and the printed
+            plans go into the README against the 300 ms p95 target.
+          </desc>
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#4f5d75" />
+            </marker>
+            <marker
+              id="arrow-accent"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#bf4520" />
+            </marker>
+          </defs>
+
+          <rect width="100%" height="100%" fill="#f5f5f5" />
+
+          <!-- Phase zones (painted first) -->
+          <rect
+            x="40"
+            y="24"
+            width="880"
+            height="276"
+            rx="6"
+            fill="rgba(45,49,66,0.02)"
+            stroke="rgba(45,49,66,0.15)"
+            stroke-width="1"
+          />
+          <text
+            x="56"
+            y="44"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            1 · SEED AN EMPTY DATABASE
+          </text>
+
+          <rect
+            x="40"
+            y="324"
+            width="880"
+            height="484"
+            rx="6"
+            fill="rgba(45,49,66,0.02)"
+            stroke="rgba(45,49,66,0.15)"
+            stroke-width="1"
+          />
+          <text
+            x="56"
+            y="344"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            2 · THE EXPLAIN SCRIPT
+          </text>
+          <text
+            x="400"
+            y="360"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+          >
+            pnpm --filter @inventory/api db:explain = nest build &amp;&amp; node
+            dist/explain-queries.js
+          </text>
+
+          <rect
+            x="40"
+            y="832"
+            width="880"
+            height="108"
+            rx="6"
+            fill="rgba(45,49,66,0.02)"
+            stroke="rgba(45,49,66,0.15)"
+            stroke-width="1"
+          />
+          <text
+            x="56"
+            y="852"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            3 · README
+          </text>
+
+          <!-- Arrows (behind nodes) -->
+          <line
+            x1="380"
+            y1="104"
+            x2="380"
+            y2="136"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="380"
+            y1="184"
+            x2="380"
+            y2="216"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="380"
+            y1="280"
+            x2="380"
+            y2="376"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="380"
+            y1="424"
+            x2="380"
+            y2="456"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="380"
+            y1="584"
+            x2="380"
+            y2="616"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <line
+            x1="380"
+            y1="672"
+            x2="380"
+            y2="704"
+            stroke="#bf4520"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <line
+            x1="380"
+            y1="784"
+            x2="380"
+            y2="864"
+            stroke="#4f5d75"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+
+          <!-- Arrow labels -->
+          <rect x="388" y="594" width="88" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="432"
+            y="603"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.12em"
+          >
+            EACH STATEMENT
+          </text>
+
+          <rect x="388" y="682" width="84" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="430"
+            y="691"
+            fill="#bf4520"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.12em"
+          >
+            TEXT + PARAMS
+          </text>
+
+          <rect x="388" y="818" width="84" height="12" rx="2" fill="#f5f5f5" />
+          <text
+            x="430"
+            y="827"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.12em"
+          >
+            PLANS + TIMES
+          </text>
+
+          <!-- 1 · Empty database (start oval) -->
+          <rect
+            x="200"
+            y="56"
+            width="360"
+            height="48"
+            rx="20"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="77"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Drop the database volume
+          </text>
+          <text
+            x="380"
+            y="92"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            docker compose down -v → empty DB
+          </text>
+
+          <!-- Migrate -->
+          <rect
+            x="200"
+            y="136"
+            width="360"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="157"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Migrate
+          </text>
+          <text
+            x="380"
+            y="172"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            db:migrate
+          </text>
+
+          <!-- Seed -->
+          <rect
+            x="200"
+            y="216"
+            width="360"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="237"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Seed 20,000 vehicles per dealership
+          </text>
+          <text
+            x="380"
+            y="252"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            SEED_VEHICLES_PER_DEALERSHIP=20000 db:seed
+          </text>
+          <text
+            x="380"
+            y="266"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            3 dealerships · ~60k vehicles · ~19k actions
+          </text>
+
+          <!-- 2 · ANALYZE -->
+          <rect
+            x="200"
+            y="376"
+            width="360"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="397"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Refresh planner statistics
+          </text>
+          <text
+            x="380"
+            y="412"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            ANALYZE vehicle, vehicle_action
+          </text>
+
+          <!-- Real services -->
+          <rect
+            x="200"
+            y="456"
+            width="360"
+            height="128"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="477"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Call the real services for London
+          </text>
+          <text
+            x="380"
+            y="494"
+            fill="#2d3142"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            VehiclesService.list × 4 · DashboardService.get
+          </text>
+          <text
+            x="380"
+            y="510"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            list · default IN_STOCK, oldest first, limit 50
+          </text>
+          <text
+            x="380"
+            y="523"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            list · tier=AGING
+          </text>
+          <text
+            x="380"
+            y="536"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            list · make + model
+          </text>
+          <text
+            x="380"
+            y="549"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            list · tier=AGING &amp; hasAction=false
+          </text>
+          <text
+            x="380"
+            y="562"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            dashboard · 3 SELECTs, one REPEATABLE READ READ ONLY tx
+          </text>
+          <text
+            x="380"
+            y="575"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            one warm-up call per case
+          </text>
+
+          <!-- Drizzle logger (focal) -->
+          <rect
+            x="200"
+            y="616"
+            width="360"
+            height="56"
+            rx="6"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="639"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Drizzle logger records each statement
+          </text>
+          <text
+            x="380"
+            y="655"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            SQL text + params, exactly as the app sent them
+          </text>
+
+          <!-- Replay as EXPLAIN -->
+          <rect
+            x="200"
+            y="704"
+            width="360"
+            height="80"
+            rx="6"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="725"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            Replay each SELECT and print the plan
+          </text>
+          <text
+            x="380"
+            y="742"
+            fill="#2d3142"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            EXPLAIN (ANALYZE, BUFFERS) &lt;same text&gt;
+          </text>
+          <text
+            x="380"
+            y="756"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            same params through pg · unnamed prepared statement
+          </text>
+          <text
+            x="380"
+            y="770"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            → custom plan built with the real values
+          </text>
+
+          <!-- 3 · README (end oval) -->
+          <rect
+            x="200"
+            y="864"
+            width="360"
+            height="56"
+            rx="20"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <text
+            x="380"
+            y="887"
+            fill="#2d3142"
+            font-size="12"
+            font-weight="600"
+            font-family="'Geist', sans-serif"
+            text-anchor="middle"
+          >
+            README · Performance evidence
+          </text>
+          <text
+            x="380"
+            y="903"
+            fill="#4f5d75"
+            font-size="9"
+            font-family="'Geist Mono', monospace"
+            text-anchor="middle"
+          >
+            plans + execution-time table vs §1.4: p95 ≤ 300 ms
+          </text>
+
+          <!-- Callout 1: why an empty database -->
+          <text
+            x="604"
+            y="76"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            Start from an empty volume: the seed
+          </text>
+          <text
+            x="604"
+            y="94"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            adds actions only to a dealership that
+          </text>
+          <text
+            x="604"
+            y="112"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            has none, so re-seeding over the default
+          </text>
+          <text
+            x="604"
+            y="130"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            250 leaves only ~233 actions.
+          </text>
+          <path
+            d="M 600 88 Q 584 82 566 80"
+            fill="none"
+            stroke="rgba(45,49,66,0.40)"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+          />
+          <circle cx="564" cy="80" r="2" fill="#2d3142" />
+
+          <!-- Callout 2: why the plans match -->
+          <text
+            x="604"
+            y="700"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            Same text, same params, same unnamed
+          </text>
+          <text
+            x="604"
+            y="718"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            statement: Postgres plans both at Bind
+          </text>
+          <text
+            x="604"
+            y="736"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            with the real values, so EXPLAIN shows
+          </text>
+          <text
+            x="604"
+            y="754"
+            fill="#2d3142"
+            font-size="14"
+            font-style="italic"
+            font-family="'Instrument Serif', serif"
+          >
+            the plan the app actually gets.
+          </text>
+          <path
+            d="M 600 726 Q 584 742 566 744"
+            fill="none"
+            stroke="rgba(45,49,66,0.40)"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+          />
+          <circle cx="564" cy="744" r="2" fill="#2d3142" />
+
+          <!-- Legend -->
+          <line
+            x1="40"
+            y1="964"
+            x2="920"
+            y2="964"
+            stroke="rgba(45,49,66,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="980"
+            fill="#4f5d75"
+            font-size="8"
+            font-family="'Geist Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            LEGEND
+          </text>
+
+          <rect
+            x="40"
+            y="992"
+            width="24"
+            height="12"
+            rx="6"
+            fill="rgba(45,49,66,0.03)"
+            stroke="rgba(45,49,66,0.30)"
+            stroke-width="1"
+          />
+          <text
+            x="72"
+            y="1002"
+            fill="#4f5d75"
+            font-size="8.5"
+            font-family="'Geist', sans-serif"
+          >
+            Start / end
+          </text>
+
+          <rect
+            x="168"
+            y="992"
+            width="24"
+            height="12"
+            rx="2"
+            fill="#ffffff"
+            stroke="#2d3142"
+            stroke-width="1"
+          />
+          <text
+            x="200"
+            y="1002"
+            fill="#4f5d75"
+            font-size="8.5"
+            font-family="'Geist', sans-serif"
+          >
+            Step
+          </text>
+
+          <rect
+            x="264"
+            y="992"
+            width="24"
+            height="12"
+            rx="2"
+            fill="rgba(191,69,32,0.08)"
+            stroke="#bf4520"
+            stroke-width="1"
+          />
+          <text
+            x="296"
+            y="1002"
+            fill="#4f5d75"
+            font-size="8.5"
+            font-family="'Geist', sans-serif"
+          >
+            Capture point
+          </text>
+
+          <line
+            x1="400"
+            y1="998"
+            x2="428"
+            y2="998"
+            stroke="#bf4520"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <text
+            x="436"
+            y="1002"
+            fill="#4f5d75"
+            font-size="8.5"
+            font-family="'Geist', sans-serif"
+          >
+            Recorded SQL replayed
+          </text>
+
+          <rect
+            x="560"
+            y="992"
+            width="24"
+            height="12"
+            rx="2"
+            fill="rgba(45,49,66,0.02)"
+            stroke="rgba(45,49,66,0.15)"
+            stroke-width="1"
+          />
+          <text
+            x="592"
+            y="1002"
+            fill="#4f5d75"
+            font-size="8.5"
+            font-family="'Geist', sans-serif"
+          >
+            Phase
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

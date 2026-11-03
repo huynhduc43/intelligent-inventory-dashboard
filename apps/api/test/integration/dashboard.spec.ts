@@ -21,6 +21,7 @@ import {
   tokenFor,
   VIEWER,
 } from './support/auth.js';
+import { expectProblem } from './support/problem.js';
 
 // London, clock 2026-07-01 12:00Z => local today 2026-07-01. Thresholds 60/90.
 const TODAY = '2026-07-01';
@@ -246,14 +247,14 @@ describe('dashboard', () => {
     ).toBe(401);
     const other = await raw(NEW_YORK);
     const unknown = await raw('00000000-0000-4000-8000-00000000ffff');
-    expect(other.status).toBe(404);
-    expect(unknown.status).toBe(404);
+    expectProblem(other, 404, 'NOT_FOUND');
+    expectProblem(unknown, 404, 'NOT_FOUND');
     expect({ ...(other.body as object), instance: '' }).toEqual({
       ...(unknown.body as object),
       instance: '',
     });
     const q = await get(`/api/v1/dealerships/${LONDON}/dashboard?x=1`);
-    expect(q.status).toBe(400);
+    expectProblem(q, 400, 'VALIDATION_FAILED');
     expect((q.body as { code: string }).code).toBe('VALIDATION_FAILED');
   });
 });

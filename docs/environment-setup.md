@@ -33,6 +33,19 @@ Re-run step 3 whenever a PR adds a migration under `apps/api/db/migrations/`.
 
 After migrating, `pnpm --filter @inventory/api db:seed` creates the London, New York and Sydney dealerships and `admin@`, `manager@`, `viewer@example.dev` users. It is idempotent and never changes existing rows. Set `SEED_PASSWORD` (at least 15 characters) to give new users that password; otherwise a random password per new user is printed once, and not again on re-runs. It also adds `SEED_VEHICLES_PER_DEALERSHIP` (default 250) demo vehicles per dealership with deterministic ids, ages 0 to 200 days, four in-stock vehicles at exactly watch−1, watch, aging and aging+1 days, 10% `RESERVED` and 10% `SOLD`, and one re-acquired VIN (a `SOLD` row bought back); a re-run adds only missing rows. Ages are fixed on the day of seeding. Set `SEED_VEHICLES_PER_DEALERSHIP=2000` to seed enough rows for `EXPLAIN ANALYZE`.
 
+## Diagram export (PNG)
+
+`diagram-design` exports SVG with no extra setup; PNG needs Playwright and Chromium in the Python that runs the export. The skill never installs them. One-off, per machine:
+
+```sh
+python3 -m venv ~/.venvs/diagrams
+~/.venvs/diagrams/bin/pip install playwright
+~/.venvs/diagrams/bin/playwright install chromium
+~/.venvs/diagrams/bin/python -c "import playwright"   # must exit 0
+```
+
+Run the export with `~/.venvs/diagrams/bin/python` (or put its `bin` first on `PATH`). Check the setup with `/diagram-design:doctor`. Agents must not borrow another tool's Python environment or browser cache; if the import fails, stop and tell the user.
+
 ## Docker Compose
 
 `docker compose up --build` starts `postgres`, runs the one-off `migrate` service, then starts `api` on port 3000. Compose sets a dev-only `JWT_SECRET`; nothing else is needed. To log in, seed once after the stack is up: `docker compose run --rm -e SEED_PASSWORD=<at least 15 characters> migrate node db/seed.ts` (without `SEED_PASSWORD` the random passwords are printed once). `docker compose down -v` also drops the database volume.

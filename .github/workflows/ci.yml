@@ -19,6 +19,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: node --test '.claude/skills/deliver/*.test.mjs'
       # Coverage thresholds are enforced here; integration tests use Testcontainers (Docker is available on ubuntu-latest).
       - run: pnpm test:cov
 

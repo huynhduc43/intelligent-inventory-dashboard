@@ -1,6 +1,7 @@
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { Pool } from 'pg';
+import pg, { Pool } from 'pg';
 import { createDb, type Db } from '../../src/shared/db.js';
+import { whileRowLocked } from './support/lock.js';
 import { startMigratedPostgres, testConfig } from './support/postgres.js';
 
 describe('database', () => {
@@ -228,6 +229,45 @@ describe('database', () => {
 
       await expect(insertVehicle()).resolves.toMatchObject({ rowCount: 1 });
     });
+  });
+
+  describe('whileRowLocked (race-test helper)', () => {
+    let a: string;
+    let b: string;
+    const rename = (id: string) => () =>
+      pool.query(`UPDATE dealership SET name = 'Renamed' WHERE id = $1`, [id]);
+    const lockA = (holder: pg.Client) =>
+      holder.query(`UPDATE dealership SET name = 'Held' WHERE id = $1`, [a]);
+
+    beforeAll(async () => {
+      const { rows } = await pool.query<{ id: string }>(
+        `INSERT INTO dealership (name, timezone)
+         VALUES ('A', 'Europe/London'), ('B', 'Europe/London') RETURNING id`,
+      );
+      [a, b] = rows.map((r) => r.id) as [string, string];
+    });
+
+    it('returns the contender result once it waited on the lock', async () => {
+      const res = await whileRowLocked(
+        container.getConnectionUri(),
+        lockA,
+        rename(a),
+        '%UPDATE dealership%',
+      );
+
+      expect(res.rowCount).toBe(1);
+    }, 10_000);
+
+    it('throws when the contender never waits on the lock', async () => {
+      await expect(
+        whileRowLocked(
+          container.getConnectionUri(),
+          lockA,
+          rename(b),
+          '%UPDATE dealership%',
+        ),
+      ).rejects.toThrow('the race was not exercised');
+    }, 10_000);
   });
 
   describe('statement timeout', () => {

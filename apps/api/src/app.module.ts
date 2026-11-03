@@ -3,6 +3,7 @@ import { RouterModule } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { ActionsModule } from './modules/actions/actions.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { DealershipsModule } from './modules/dealerships/dealerships.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -33,11 +34,13 @@ export class AppModule {
           { path: 'api/v1', module: InventoryModule },
           { path: 'api/v1', module: DashboardModule },
           { path: 'api/v1', module: ActionsModule },
+          { path: 'api/v1', module: DealershipsModule },
         ]),
         AuthModule,
         InventoryModule,
         DashboardModule,
         ActionsModule,
+        DealershipsModule,
         HealthModule,
       ],
     };

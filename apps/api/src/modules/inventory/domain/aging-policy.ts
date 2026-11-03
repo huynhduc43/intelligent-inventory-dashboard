@@ -62,3 +62,13 @@ export function toStockedOnBounds(
     ...(stockedOnMax && { stockedOnMax }),
   };
 }
+
+export const MAX_AGING_DAYS = 3650;
+
+/** D3: `1 ≤ watch < aging ≤ 3650`. Also keeps values away from the smallint columns' range limit. */
+export const validateThresholds = (t: Thresholds): boolean =>
+  Number.isInteger(t.watch) &&
+  Number.isInteger(t.aging) &&
+  t.watch >= 1 &&
+  t.watch < t.aging &&
+  t.aging <= MAX_AGING_DAYS;

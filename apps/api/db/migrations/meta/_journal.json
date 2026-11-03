@@ -15,6 +15,13 @@
       "when": 1793623208803,
       "tag": "0001_vehicle_action_tenancy_fk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793717768038,
+      "tag": "0002_collapse_make_model_whitespace",
+      "breakpoints": true
     }
   ]
 }

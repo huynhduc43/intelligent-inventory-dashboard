@@ -255,7 +255,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decided by:** agent (approve=auto).
 - **Decision and reasoning:** following the design is the smaller change; case-folding belongs with vehicle create (build step 6), where input is normalised.
 - **Verification:** [`Chosen:` comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/issues/10#issuecomment-6577921997).
-- **Outcome:** no code; revisit when `POST /vehicles` lands.
+- **Outcome:** no code; revisit when `POST /vehicles` lands. `POST /vehicles` landed (#59) without revisiting it; fixed in #105 (ADR 0017).
 
 ### C23: Agents merged four PRs on a red `dev` and never read CI (#46)
 
@@ -490,3 +490,12 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** keep trade-offs inside §6 rather than as their own section; give every assumption its reason and design impact; add Build for the Future with a clear line between current and future solutions, without building any of them; include the AI's own mistakes in the GenAI section.
 - **Verification:** `pnpm verify`; every §7 claim was checked against the code (`vehicles.query.ts`, `vehicles.service.ts`, `schema.ts`, `db.ts`) or the README's Performance evidence, and the §8.6 claims against the outcomes of the cases they cite.
 - **Outcome:** `system-design.md` §6–§8 rewritten; section numbers unchanged. A second checklist from the user added §1's problem, goals, scope and functional and non-functional requirements, and turned §6.1 into one row per ambiguity in the brief (age baseline, the exact 90-day boundary, time zones, allowed statuses and actions, history versus overwrite, missing vehicles, who may read or write, invalid action requests, input data and import).
+
+### C49: Make and model grouped case-insensitively, whitespace collapsed on write (#105)
+
+- **Problem:** C22 deferred case-folding to `POST /vehicles`, which landed (#59) without it, so the dashboard still grouped "Toyota" and "toyota" as two rows while the list filter matched both. The issue also found that inner whitespace ("Land Rover") split values everywhere.
+- **AI proposal:** group the dashboard by `lower()` and show the most common spelling (option A, smallest, no contract change), and collapse inner whitespace on intake and in the filters, with a backfill migration.
+- **Decided by:** user, choosing the recommended option for both questions.
+- **Decision and reasoning:** grouping case-insensitively makes the dashboard agree with the list filter without a read before every insert; whitespace has one obviously right form, so it is normalised at the source.
+- **Verification:** integration tests for the merged `byMakeModel` row and the list filter, the backfill migration, and a unit test for the intake normalisation; `db:explain` on the dashboard statement.
+- **Outcome:** ADR 0017; `system-design.md` §6.1 no longer lists a known gap.

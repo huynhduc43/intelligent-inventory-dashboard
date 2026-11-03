@@ -29,3 +29,16 @@ describe('createVehicleSchema vin', () => {
     expect(r.error?.issues[0]?.path).toEqual(['vin']);
   });
 });
+
+describe('createVehicleSchema make and model', () => {
+  it('trims and collapses inner whitespace runs to one space', () => {
+    const r = createVehicleSchema.parse({
+      ...ok,
+      make: ' Land \t Rover ',
+      model: 'Range  Rover\nSport',
+    });
+
+    expect(r.make).toBe('Land Rover');
+    expect(r.model).toBe('Range Rover Sport');
+  });
+});

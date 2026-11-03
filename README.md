@@ -104,9 +104,9 @@ pnpm --filter @inventory/api db:explain
 | List, `make=Ford&model=Focus`               | Index Scan on `vehicle_dealership_make_model_idx`            | 7 ms      |
 | List, `tier=AGING&hasAction=false`          | Seq Scan, same shape                                         | 18 ms     |
 | Dashboard, KPIs and age buckets             | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 20 ms     |
-| Dashboard, make and model                   | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 5 ms      |
+| Dashboard, make and model                   | Bitmap Index Scan on `vehicle_dealership_status_stocked_idx` | 4 ms      |
 | Dashboard, current-action counts            | Bitmap Index Scan, then latest-action index lookup per row   | 21 ms     |
-| **Dashboard request, total (3 statements)** |                                                              | **46 ms** |
+| **Dashboard request, total (3 statements)** |                                                              | **45 ms** |
 
 Reading the plans:
 
@@ -247,25 +247,34 @@ JIT:
 Execution Time: 20.360 ms
 
 === Dashboard (statement 2 of 3)
-Sort  (cost=1918.75..1918.82 rows=25 width=18) (actual time=5.002..5.002 rows=5 loops=1)
-  Sort Key: ((count(*))::integer) DESC, make, model
+Sort  (cost=1916.13..1916.19 rows=25 width=136) (actual time=3.818..3.818 rows=5 loops=1)
+  Sort Key: ((sum(g.count))::integer) DESC, (lower(g.make)), (lower(g.model))
   Sort Method: quicksort  Memory: 25kB
   Buffers: shared hit=411
-  ->  HashAggregate  (cost=1917.80..1918.17 rows=25 width=18) (actual time=4.993..4.994 rows=5 loops=1)
-        Group Key: make, model
-        Batches: 1  Memory Usage: 24kB
+  ->  GroupAggregate  (cost=1914.36..1915.55 rows=25 width=136) (actual time=3.793..3.811 rows=5 loops=1)
+        Group Key: (lower(g.make)), (lower(g.model))
         Buffers: shared hit=411
-        ->  Bitmap Heap Scan on vehicle v  (cost=257.44..1676.12 rows=16112 width=14) (actual time=0.417..1.532 rows=16020 loops=1)
-              Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-              Heap Blocks: exact=393
+        ->  Sort  (cost=1914.36..1914.42 rows=25 width=90) (actual time=3.778..3.779 rows=5 loops=1)
+              Sort Key: (lower(g.make)), (lower(g.model)), g.count DESC, g.make
+              Sort Method: quicksort  Memory: 25kB
               Buffers: shared hit=411
-              ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..253.41 rows=16112 width=0) (actual time=0.385..0.385 rows=16020 loops=1)
-                    Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
-                    Buffers: shared hit=18
+              ->  Subquery Scan on g  (cost=1913.15..1913.78 rows=25 width=90) (actual time=3.770..3.773 rows=5 loops=1)
+                    Buffers: shared hit=411
+                    ->  HashAggregate  (cost=1913.15..1913.40 rows=25 width=26) (actual time=3.768..3.769 rows=5 loops=1)
+                          Group Key: v.make, v.model
+                          Batches: 1  Memory Usage: 24kB
+                          Buffers: shared hit=411
+                          ->  Bitmap Heap Scan on vehicle v  (cost=253.27..1671.71 rows=16096 width=14) (actual time=0.309..1.192 rows=16020 loops=1)
+                                Recheck Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
+                                Heap Blocks: exact=393
+                                Buffers: shared hit=411
+                                ->  Bitmap Index Scan on vehicle_dealership_status_stocked_idx  (cost=0.00..249.25 rows=16096 width=0) (actual time=0.284..0.284 rows=16020 loops=1)
+                                      Index Cond: ((dealership_id = '00000000-0000-4000-8000-0000000000d1'::uuid) AND (status = 'IN_STOCK'::text))
+                                      Buffers: shared hit=18
 Planning:
   Buffers: shared hit=4
-Planning Time: 0.109 ms
-Execution Time: 5.019 ms
+Planning Time: 0.100 ms
+Execution Time: 3.852 ms
 
 === Dashboard (statement 3 of 3)
 GroupAggregate  (cost=169991.99..170112.84 rows=1 width=36) (actual time=18.721..20.266 rows=7 loops=1)

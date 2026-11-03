@@ -199,6 +199,8 @@ describe('vehicles list and detail', () => {
     expect((await page('?make=bmw')).total).toBe(5);
     expect((await page('?make=toyota&model=COROLLA')).items).toHaveLength(1);
     expect((await page('?make=bm')).items).toEqual([]);
+    // trimmed like intake (#105)
+    expect((await page('?make=%20toyota%20')).total).toBe(1);
   });
 
   it('filters by tier, with every row matching', async () => {

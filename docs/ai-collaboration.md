@@ -51,6 +51,7 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 | [#56](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/56) | Spec diagrams move from the `assets` branch into `docs/diagrams/specs/`          | Copied the 22 files, rewrote the `/deliver` publishing rule to commit diagrams on the PR branch and link them by commit permalink, removed `tools/push-assets.sh`                                                                | `pnpm verify`; moved PNGs match the `assets` branch                                                                                 | The user chose the move and kept spec diagrams out of the design doc; waived the `/deliver` eval rerun (C27)                                                                |
 | [#59](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/59) | Vehicle intake: `POST …/vehicles` with VIN rules (#12)                           | `/deliver` under `grill=auto`/`approve=auto`: research note, 9 decisions, glossary terms, diagram, contract, implementation on sonnet, three review rounds, tester                                                               | `pnpm verify`; three review rounds, 8 findings fixed (C28–C30); Tester passed AC 1–13 against the running API                       | None: decisions and the contract were the agent's recommendations (`approve=auto`, C31); the user chose the modes and the implementer model                                 |
 | [#66](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/66) | Vehicle status lifecycle: `PATCH …/vehicles/{v}/status` (#13)                    | `/deliver` under `grill=auto`/`approve=auto`: no research note (the design settled it), 7 decisions, glossary terms, two diagrams, contract, implementation on sonnet, two review rounds, tester                                 | `pnpm verify`; two review rounds, 4 findings fixed (C33, C34); Tester passed AC 1–11 against the running API                        | None: decisions and the contract choice were the agent's recommendations (`approve=auto`, C32); the user chose the modes and the implementer model                          |
+| [#79](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79) | Dealership settings: `GET`/`PATCH …/settings` (#14)                              | `/deliver` under `grill=auto`/`approve=auto`: research note, 12 decisions, ADRs 0014 and 0015, glossary term, two diagrams, contract, implementation on sonnet, two review rounds, tester                                        | `pnpm verify`; two review rounds, 8 findings fixed (C37, C38); Tester passed AC 1–12 against the running API                        | The user chose where `validateThresholds` lives (C35), the modes and the implementer model; the other decisions were the agent's (C36)                                      |
 
 ## Cases
 
@@ -359,3 +360,39 @@ Every entry links to an issue, PR or comment, so a claim here can be checked aga
 - **Decision and reasoning:** advance the clock 3 days and assert the sold vehicle stays at 6 while an in-stock control grows by 3; fix the doc text and relabel figure 3; the orchestrator fixed the PR body.
 - **Verification:** round 2 business review `clean`.
 - **Outcome:** user story 5 is now proven by a test; docs match `RETURNING id` plus the detail read.
+
+### C35: `validateThresholds` and the module graph (#79)
+
+- **Problem:** the issue asked where `validateThresholds` belongs: P1 puts it in `AgingPolicy` (`inventory`), §4.2 draws `inventory → dealerships`, so `dealerships` importing it looked like a cycle.
+- **AI proposal:** the orchestrator checked the code first: `inventory` imports nothing from `dealerships` (thresholds come from `DealershipGuard`), so the §4.2 edge does not exist. It recommended keeping the rule in `AgingPolicy` and recording the real edges. Because every option changed the design, it asked the user despite `grill=auto`.
+- **Decided by:** user.
+- **Decision and reasoning:** option A: `validateThresholds` stays in `AgingPolicy`; `dealerships` imports only that pure function; no cycle. Splitting the aging rules across modules, or putting business rules in `shared`, was rejected.
+- **Verification:** both reviewers checked the imports against ADR 0014; `pnpm verify`.
+- **Outcome:** [ADR 0014](adr/0014-dealerships-uses-aging-policy-validate-thresholds.md); §4.2 edge marked superseded; `docs/system-design.md` dependencies corrected.
+
+### C36: Time-zone names that are also abbreviations are rejected (#79)
+
+- **Problem:** research found that `AT TIME ZONE` reads `CET`, `EST`, `UTC` and similar names as fixed-offset abbreviations, so a dealership stored as `CET` would get the wrong local date on summer nights, the error P1 exists to prevent.
+- **AI proposal:** the research agent offered "reject" or "accept and document"; the orchestrator chose to reject any name in `pg_timezone_abbrevs`, in the same SQL statement as the write, with `Etc/UTC` as the accepted spelling.
+- **Decided by:** agent (grill=auto).
+- **Decision and reasoning:** correctness of `todayLocal` beats accepting a short alias; validation stays in Postgres.
+- **Verification:** `settings.spec.ts` and the Tester's `curl` run: `CET`, `EST`, `UTC`, `UTC+5`, wrong case → `422 TIMEZONE_INVALID`; `Etc/UTC` → `200` ([tester](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#issuecomment-6593467684)).
+- **Outcome:** [ADR 0015](adr/0015-time-zone-must-be-a-zone-name-not-an-abbreviation.md), narrowing P1.
+
+### C37: Tenancy and time-zone tests that could not fail (#79)
+
+- **Problem:** the only "non-member" test sent a malformed id, which the guard rejects before checking membership, and the settings routes had no `rbac.spec.ts` row; the "`todayLocal` in the new zone" test switched London to Ho Chi Minh City, which share the date at the pinned instant. The implementer had flagged the first gap itself and left it.
+- **AI proposal:** both reviewers asked for a real cross-dealership member and identical 404 bodies; the business reviewer asked for a zone whose date differs ([comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#discussion_r4449998196), [comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#discussion_r4449998355), [comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#discussion_r4449998596)).
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** add the rbac row (all roles, no token, member of another dealership, unknown and malformed ids, row unchanged after the refused PATCH) and switch London to `America/New_York`.
+- **Verification:** round 2 reviews `clean` on these threads; Tester AC 6 and AC 11.
+- **Outcome:** AC 6 and AC 11 are now proven by tests that fail if the rule breaks.
+
+### C38: Forcing the `23514` race, then proving it was forced (#79)
+
+- **Problem:** the `23514` → `422 THRESHOLDS_INVALID` mapping only ran if two concurrent PATCHes happened to interleave. The first fix held a row lock, but if the poll never saw the PATCH waiting it committed anyway, and the earlier `validateThresholds` check returned the same 422, so the test still passed without running the mapping.
+- **AI proposal:** round 1 reviewers asked for a deterministic race ([comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#discussion_r4449998988)); the round 2 code reviewer asked to assert the lock wait was seen ([comment](https://github.com/huynhduc43/intelligent-inventory-dashboard/pull/79#discussion_r4450049378)).
+- **Decided by:** agent (approve=auto).
+- **Decision and reasoning:** keep the concurrent test for the never-500 property; add a lock-held test that asserts a `blocked` flag before `COMMIT`.
+- **Verification:** round 3 reviews `clean`; CI green.
+- **Outcome:** Decision 8 is covered by a test that fails if the backstop is bypassed. Same pattern as C33: a race test must prove the race happened.

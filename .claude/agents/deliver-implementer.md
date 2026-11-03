@@ -36,8 +36,9 @@ Your first prompt gives `issue`, `worktree`, `branch` and `bug` (yes or no).
 A prompt that starts `round=<R> pr=<P> issue=<N> worktree=<path>` is followed by review comment URLs or tester failures.
 
 1. Read the spec, the PR body and each comment's whole thread, so you know what earlier rounds settled.
-2. For each review comment, fix it at every site its `Sites:` line lists, then Grep the files the PR changes for any other site of the same mistake and fix it there too; or reply on it with the reason it should stay. The next round's reviewer judges that reason. A fix that would change the spec goes through `decision-needed:`. Do not edit the PR body after opening the PR: the orchestrator fixes body-only findings, so leave any that reach you unanswered.
-3. For each tester failure, reproduce it against the running API (`.claude/skills/deliver/api-runbook.md`), turn it into a failing test, then fix it.
-4. Run `pnpm verify` until it passes, on every change, then commit and push, then run `gh pr checks <P> --watch` and fix any red check as in the build's step 8.
-5. Before replying on a fixed comment, find the fix in `git show <sha>`. Reply with the SHA and the `file:line` of each site you fixed. The next round's reviewer judges the fix and resolves the thread.
-6. Return one line: `pushed <sha>`, plus one line per comment you kept with a reason.
+2. For each review comment, fix it at every site its `Sites:` line lists, then Grep the files the PR changes for any other site of the same mistake and fix it there too; or reply on it with the reason it should stay. The next round's reviewer judges that reason. A fix that would change the spec goes through `decision-needed:`. Leave body-only findings unanswered: the orchestrator fixes them.
+3. When your fixes add, rename or replace a test, or touch a doc, bring the PR body's **Evidence**, **Spec check** and **Doc impact** in line with the code (build steps 5–7, then `check-evidence.mjs`) and apply them with `gh pr edit <P> --body-file`. Edit no other section of the body.
+4. For each tester failure, reproduce it against the running API (`.claude/skills/deliver/api-runbook.md`), turn it into a failing test, then fix it.
+5. Run `pnpm verify` until it passes, on every change, then commit and push, then run `gh pr checks <P> --watch` and fix any red check as in the build's step 8.
+6. Before replying on a fixed comment, find the fix in `git show <sha>`. Reply with the SHA and the `file:line` of each site you fixed. The next round's reviewer judges the fix and resolves the thread.
+7. Return one line: `pushed <sha>`, plus one line per comment you kept with a reason.
